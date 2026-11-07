@@ -23,6 +23,14 @@ ProfileName = Literal["short_blocks", "reading_support", "dyslexia_ui"]
 
 # MVP methods the sampler rotates through (PRD §5); the rest are roadmap.
 LIVE_METHODS: tuple[Method, ...] = ("ACTIVE_RECALL", "PRACTICE_TEST", "FEYNMAN")
+# How a method reads mid-sentence in plan reasons and reflections.
+METHOD_LABELS: dict[Method, str] = {
+    "ACTIVE_RECALL": "active recall",
+    "PRACTICE_TEST": "practice test",
+    "FEYNMAN": "Feynman",
+    "SPACED_FLASHCARDS": "spaced flashcards",
+    "BLURTING": "blurting",
+}
 
 
 # ---- Mirrored from PRD §11 -------------------------------------------------

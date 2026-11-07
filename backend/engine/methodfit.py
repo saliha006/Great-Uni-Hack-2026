@@ -6,6 +6,7 @@ from datetime import datetime
 from engine.priors import METHOD_TECHNIQUE, PRIOR_MEAN, PRIOR_STRENGTH, SHORT_BLOCKS
 from engine.types import (
     LIVE_METHODS,
+    METHOD_LABELS,
     Confidence,
     Method,
     MethodStats,
@@ -41,7 +42,7 @@ def _mean(stats: MethodStats) -> float:
 
 
 def _label(method: Method) -> str:
-    return method.replace("_", " ").lower()
+    return METHOD_LABELS[method]
 
 
 def _trial_running(plan: Plan | None, now: datetime) -> bool:

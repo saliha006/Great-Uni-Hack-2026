@@ -9,6 +9,7 @@ from engine.methodfit import prior_stats
 from engine.types import (
     LIVE_METHODS,
     LLM,
+    METHOD_LABELS,
     Decision,
     Diagnosis,
     Method,
@@ -38,7 +39,7 @@ SCHEMA = {
 
 
 def _label(method: Method) -> str:
-    return method.replace("_", " ").lower()
+    return METHOD_LABELS[method]
 
 
 def _second_best(stats: dict[Method, MethodStats], current: Method) -> Method:
