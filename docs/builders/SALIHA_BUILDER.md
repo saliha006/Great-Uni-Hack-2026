@@ -132,3 +132,4 @@ Firecrawl URL ingestion → `/dev/usage` UI → Insights polish → delayed prob
 - ✅ S1–S4 · real API on SQLite + engine, `app/llm.py`, demo bank, idempotent probe, Feynman coverage, dev story · 16:15
 - ✂️ S-L · Lovable cut (past cutoff) · 15:30
 - ✅ S6 · README (run, demo steps, scoring, honest limits) + `scripts/attention_burst.py` · 16:25
+- ✅ P1 · API security: dev route gating, hand-written rate limits (off by default), size caps, headers, log redaction, Feynman quote check, LLM usage log · 17:05
