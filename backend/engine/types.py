@@ -18,6 +18,8 @@ EventType = Literal[
 ]
 ItemKind = Literal["RECALL_PROMPT", "MCQ", "SHORT_ANSWER", "PROBLEM", "FEYNMAN_BRIEF"]
 Tier = Literal["fast", "smart"]
+# Support needs the student opts into; never a diagnosis (CLAUDE.md honesty rule).
+ProfileName = Literal["short_blocks", "reading_support", "dyslexia_ui"]
 
 # MVP methods the sampler rotates through (PRD §5); the rest are roadmap.
 LIVE_METHODS: tuple[Method, ...] = ("ACTIVE_RECALL", "PRACTICE_TEST", "FEYNMAN")
@@ -142,6 +144,7 @@ class SubjectCtx(BaseModel):
     sampler_round: int = 0
     current_plan: Plan | None = None
     focus_window_min: int = 20
+    profiles: tuple[ProfileName, ...] = ()
 
 
 class SessionCtx(BaseModel):

@@ -3,7 +3,7 @@ import math
 import random
 from datetime import datetime
 
-from engine.priors import METHOD_TECHNIQUE, PRIOR_MEAN, PRIOR_STRENGTH
+from engine.priors import METHOD_TECHNIQUE, PRIOR_MEAN, PRIOR_STRENGTH, SHORT_BLOCKS
 from engine.types import (
     LIVE_METHODS,
     Confidence,
@@ -52,7 +52,7 @@ def _trial_running(plan: Plan | None, now: datetime) -> bool:
 def choose_plan(
     subject: SubjectCtx, stats: dict[Method, MethodStats], history: list[SessionSummary], rng: random.Random
 ) -> Plan:
-    minutes = subject.focus_window_min
+    minutes = SHORT_BLOCKS.session_minutes if "short_blocks" in subject.profiles else subject.focus_window_min
     current = subject.current_plan
     if _trial_running(current, subject.now):
         return current.model_copy(update={
