@@ -8,9 +8,13 @@ import { Progress } from './pages/Progress'
 import { Questions } from './pages/Questions'
 import { Dashboard } from './pages/Dashboard'
 import { PageShell } from './components/PageShell'
+import { Tour } from './components/Tour'
+import { Tools } from './pages/Tools'
 
 export function App() {
   return (
+    <>
+    <Tour />
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/study" element={<Home />} />
@@ -20,6 +24,7 @@ export function App() {
       <Route path="/progress" element={<Progress />} />
       <Route path="/questions" element={<Questions />} />
       <Route path="/dev" element={<Dev />} />
+      <Route path="/tools" element={<Tools />} />
       <Route
         path="*"
         element={
@@ -30,5 +35,6 @@ export function App() {
         }
       />
     </Routes>
+    </>
   )
 }

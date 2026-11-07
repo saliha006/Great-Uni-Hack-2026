@@ -34,11 +34,36 @@ export interface Item {
   difficulty: 1 | 2 | 3 | 4 | 5
   expected_seconds: number
   hint?: string | null
+  adapt?: Adapt | null
+  progress?: AnswerResult | null
 }
+export interface Hint { level: number; text: string; quote?: string | null; source?: string | null }
+export interface Adapt { state: 'EASED' | 'RESTORED'; reason: string }
 export interface Done { done: true }
 export type NextItem = Item | Done
-export interface AnswerBody { item_id: number; answer: string; latency_ms: number; self_grade?: 0 | 0.5 | 1 | null }
-export interface AnswerResult { score: number; correct?: boolean | null; feedback?: string | null; reveal?: string | null }
+export interface AnswerBody { item_id: number; answer: string; latency_ms: number; self_grade?: 0 | 0.5 | 1 | null; guided?: boolean; skip?: boolean }
+export interface AnswerResult {
+  score: number; correct?: boolean | null; feedback?: string | null; reveal?: string | null
+  // Hint ladder (guided answers). done_with_item undefined = the item is over (legacy and mock).
+  attempt?: number | null; max_attempts?: number | null; hint_level?: number | null; hint?: Hint | null
+  eliminated?: string[] | null; explanation?: string | null; quotes?: string[] | null; example?: string | null
+  why_wrong?: string | null; source?: string | null; signal?: 'ATTEMPT' | 'ANSWER_SEEKING' | 'REPEAT' | null
+  can_skip?: boolean | null; done_with_item?: boolean | null
+}
+export interface Quote { text: string; quote: string; chunk_idx: number; label: string }
+export interface QuizQuestion { qid: string; kind: 'MCQ' | 'SHORT_ANSWER' | 'RECALL_PROMPT'; prompt: string; options?: string[] | null }
+export interface AskResult {
+  intent: 'ASK' | 'QUIZ' | 'REFUSED_CURRENT' | 'NOT_IN_NOTES' | 'BLOCKED'
+  message?: string | null; answer: Quote[]; hint?: Hint | null; quiz?: QuizQuestion[] | null
+  grounded_by?: 'llm' | 'extractive' | null
+}
+export type StudyKind = 'quiz' | 'flashcards' | 'paper'
+export interface StudyItem {
+  qid: string; kind: 'MCQ' | 'SHORT_ANSWER' | 'RECALL_PROMPT' | 'FLASHCARD'; prompt: string; options?: string[] | null
+  back?: string | null; quote?: string | null; source: string; marks?: number | null; section?: string | null
+}
+export interface StudySet { kind: StudyKind; title: string; minutes: number; items: StudyItem[] }
+export interface Persona { key: string; name: string; label: string; blurb: string }
 export type EventType = 'ITEM_SHOWN' | 'ITEM_ANSWERED' | 'TAB_BLUR' | 'TAB_FOCUS' | 'IDLE' | 'BREAK_START' | 'BREAK_END' | 'VOICE_TURN'
 export interface SessionEvent { type: EventType; ts: string; item_id?: number | null; latency_ms?: number | null; payload?: Record<string, unknown> | null }
 export interface AttentionReading { state: AttentionStateName; latency_cv: number | null; latency_ratio: number | null; idle_count: number; blur_count: number; window_n: number }

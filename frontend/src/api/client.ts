@@ -2,7 +2,7 @@
 import { mock, mockClock, mockHasSeeded } from './mock'
 import { getLocal } from '../lib/local'
 import type {
-  AdvanceDaysResult, AnswerBody, AnswerResult, EventsResult, FeynmanResult, FeynmanTurn, Insights, Item,
+  AdvanceDaysResult, AnswerBody, AnswerResult, AskResult, Persona, StudyKind, StudySet, EventsResult, FeynmanResult, FeynmanTurn, Insights, Item,
   Method, NextItem, ProbeBody, Reflection, Session, SessionEvent, SessionResult, SignedUrl, Subject,
   SubjectKind, SubjectState, SubjectSummary,
 } from './types'
@@ -51,7 +51,7 @@ export const api = {
   createSubject: (b: { name: string; kind: SubjectKind; exam_date?: string | null }) =>
     usingMock ? viaMock(() => mock.createSubject(b)) : post<Subject>('/subjects', b),
   listSubjects: () => (usingMock ? viaMock(mock.listSubjects) : http<SubjectSummary[]>('/subjects')),
-  addMaterial: (id: number, b: { title?: string; text?: string }) =>
+  addMaterial: (id: number, b: { title?: string; text?: string; pdf_base64?: string }) =>
     usingMock ? viaMock(() => mock.addMaterial(id, b)) : post<{ material_id: number; chunk_count: number }>(`/subjects/${id}/material`, b),
   subjectState: (id: number) => (usingMock ? viaMock(() => mock.subjectState(id)) : http<SubjectState>(`/subjects/${id}/state`)),
   createSession: (b: { subject_id: number; method?: Method }) =>
@@ -69,12 +69,26 @@ export const api = {
   reflections: (id: number) => (usingMock ? viaMock(() => mock.reflections(id)) : http<Reflection[]>(`/subjects/${id}/reflections`)),
   reflect: (b: { subject_id: number; trigger: 'MANUAL' | 'WEEKLY' }) =>
     usingMock ? viaMock(() => mock.reflect(b)) : post<Reflection>('/agent/reflect', b),
-  devSeed: () => (usingMock ? viaMock(mock.devSeed) : post<{ subject_ids: number[] }>('/dev/seed')),
+  devSeed: (persona?: string) =>
+    usingMock ? viaMock<SeedResult>(mock.devSeed) : post<SeedResult>('/dev/seed', persona ? { persona } : {}),
+  devPersonas: () => (usingMock ? Promise.resolve(MOCK_PERSONAS) : http<Persona[]>('/dev/personas')),
+  // Tutor and study tools ground every line in the notes server-side, so the in-browser mock can't fake them.
+  ask: (subjectId: number, question: string, sessionId?: number) =>
+    usingMock ? Promise.resolve(MOCK_ASK) : post<AskResult>(`/subjects/${subjectId}/ask`, { question, session_id: sessionId ?? null }),
+  quizAnswer: (subjectId: number, b: { qid: string; answer: string; latency_ms: number; previous: string[] }) =>
+    usingMock ? Promise.reject(new ApiError(NEEDS_BACKEND, 503)) : post<AnswerResult>(`/subjects/${subjectId}/quiz-answer`, b),
+  studySet: (subjectId: number, kind: StudyKind) =>
+    usingMock ? Promise.reject(new ApiError(NEEDS_BACKEND, 503)) : post<StudySet>(`/subjects/${subjectId}/study-set`, { kind }),
   devAdvanceDays: (days: number) =>
     usingMock ? viaMock(() => mock.devAdvanceDays({ days })) : post<AdvanceDaysResult>('/dev/advance-days', { days }),
   devReset: () => (usingMock ? viaMock(mock.devReset) : post<{ ok: boolean }>('/dev/reset')),
   devUsage: () => (usingMock ? viaMock(mock.devUsage) : http<Record<string, number>>('/dev/usage')),
 }
+
+type SeedResult = { subject_ids: number[]; name?: string; label?: string }
+const NEEDS_BACKEND = 'This needs the live backend (it quotes your own notes). Run the backend to try it.'
+const MOCK_ASK: AskResult = { intent: 'NOT_IN_NOTES', message: NEEDS_BACKEND, answer: [] }
+const MOCK_PERSONAS: Persona[] = [{ key: 'ada', name: 'Ada', label: 'The full story', blurb: 'The demo student.' }]
 
 // Dev clock: the backend shifts "now" with advance-days; the mock does the same locally.
 export const clockNow = () => (usingMock ? mockClock() : new Date().toISOString())
