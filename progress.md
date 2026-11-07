@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 15:52 | @yehor | @saliha @maxym | ⚠️ conflict | Attention fix (`add9ff4`): `scripts/attention_burst.py` on the 45 s demo recall items now goes FOCUSED ×8 → **LAPSED at answer 9 → `BREAK`** (was answer 11). It skips DRIFTING/EASIER because the burst is ~3.5× expected; for an EASIER beat first, use a milder burst (~2× expected, e.g. 90 s answers). New for `reading_support`: `engine.readability.needs_simplification(text)` and `flesch_kincaid_grade(text)` (optional to wire) | 2026-11-07 15:52 |
 | 2026-11-07 15:30 | @yehor | @saliha | ⚠️ conflict | For S4 (`dc7d0d9`): build `SubjectState.method_stats` with `engine.methodfit.stat_view(method, stats)` (mean + 90% interval); after seeding Ada set `method_stats` from `engine.methodfit.stats_from_history(sessions)` so stats match the rows; pin the demo epoch **after 2026-11-06 18:00** (Ada's last seeded session). Optional: `[tool.ruff] src = ["."]` in `backend/pyproject.toml` so ruff groups imports the same from any folder | 2026-11-07 15:30 |
 | 2026-11-07 15:30 | @saliha | @maxym | 📨 waiting on | Contract notes for the frontend: MCQ `answer` = the option text; `finish` never fails (no transcript = 0 coverage); `/voice/signed-url` is minted on the Start click and returns `502 {detail:"voice_unavailable"}` → switch to typed Feynman (one explanation turn); `context.key_points` is a string list, join it for `dynamicVariables`. Also: push your Vite scaffold so the Insights page (my path) can go in, and say who installs `recharts` | 2026-11-07 15:30 |
 | 2026-11-07 15:10 | @yehor | @all | ⚠️ conflict | **Supersedes the 14:50 Supabase/handoff row:** DB stays **SQLite** for the demo (PRD §12; Supabase is P2, later just a `DATABASE_URL`). **Y-D stays with Yehor** (Codex finishing `db.py`; `ingest.py` done). @saliha: no backend handoff needed; you consume `app/db.py` + `app/ingest.py` | 2026-11-07 15:10 |
@@ -77,6 +78,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 15:52 — fix — Demo attention burst detected 2 answers sooner; readability helpers — @yehor
+- **Where:** `yehor-ml-data` @ `2b3e5f6` · merged to `main`: yes
+- **Did:** `debug` skill on Saliha's burst script replayed through the engine: MAD spread stayed 0 until 4 of 8 answers were erratic, so the burst only flipped at answer 11. Spread is now a trimmed CV (drop fastest + slowest): one slow answer still ignored, two noticed; burst → LAPSED/BREAK at answer 9. Two regression tests failed before, pass after. Added `engine/readability.py` (Flesch–Kincaid grade, `needs_simplification`); CEFR pre-teach not done (needs a licensed word list). `no-slop` on both. 192 tests pass.
+- **Touched:** `backend/engine/attention.py`, `backend/engine/readability.py`, `backend/tests/engine/**`
+- **Brief task:** Y5 → 🟡 part (CUSUM in progress with Codex)
+- **⚠️ Conflicts:** @saliha @maxym: see the 15:52 board row (burst now ends in BREAK at answer 9).
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 15:30 — fix — Engine quality pass, credible intervals, answers to Saliha's 15:30 asks — @yehor
 - **Where:** `yehor-ml-data` · merged to `main`: yes
