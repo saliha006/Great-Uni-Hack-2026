@@ -1,14 +1,41 @@
 """Attune API. Y0: every PRD §11 endpoint returns fixtures; real logic replaces them task by task."""
-from fastapi import APIRouter, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import logging
+from contextlib import asynccontextmanager
 
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app import db
 from app import fixtures as fx
 from app import schemas as s
 
-app = FastAPI(title="Attune API")
+log = logging.getLogger("attune")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    db.init_db()
+    yield
+
+
+app = FastAPI(title="Attune API", lifespan=lifespan)
+
+
+# Registered before CORS so it sits inside it: an unhandled error still gets CORS headers,
+# otherwise the browser reports a 500 as a CORS failure and hides the real cause.
+@app.middleware("http")
+async def json_errors(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception:
+        log.exception("unhandled error on %s %s", request.method, request.url.path)
+        return JSONResponse({"detail": "internal_error"}, status_code=500)
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_methods=["*"],
     allow_headers=["*"],
 )
