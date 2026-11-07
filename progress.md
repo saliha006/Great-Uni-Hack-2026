@@ -94,6 +94,20 @@ whenever you log an entry.
 
 ## Log (newest first)
 
+### 2026-11-07 17:15 — feat — Vercel config, engine guard + easing, PDF drop-in, active minutes — @saliha
+- **Where:** `yehor-ml-data`, `maxym-frontend`, `sali-backend` · merged to `main`: yes (also carried @maxym's `827821f` to `main`, tsc green)
+- **Did:** `vercel.json` (services: backend FastAPI `app/main.py` on `/api/*`, frontend Vite on `/*`; no bindings: nothing
+  calls another service server-side). `VITE_API_URL=/` now means "real API, same origin". LLM cache folder from
+  `LLM_CACHE_DIR` and safe on read-only disks. New pure `engine/guard.py` (answer-seeking vs real attempts, hint-ladder
+  sizes) and `engine/adapt.py` (ease one notch on 2+ agreeing signals, ramp back after two good windows + 5 min, TUNE).
+  Materials accept `pdf_base64`; insights rows carry `active_minutes`. 271 tests pass.
+- **Touched:** `vercel.json`, `backend/engine/{guard,adapt}.py` + tests, `backend/app/{llm,flow,schemas,main}.py`, `frontend/src/api/client.ts`, `.env.example`s
+- **Brief task:** none (Saliha's 17:00 request; hint ladder wiring + UI next)
+- **⚠️ Conflicts:** @yehor: two NEW engine files only; none of yours edited · @maxym: `api/client.ts` base-URL lines only; `active_minutes` is now on `attention_by_session` (your dashboard can drop the 25-min estimate); hint-ladder UI next touches `ItemView.tsx`/`Session.tsx` — pull first
+- **📨 Needs:** none
+- **Agreed by:** @saliha
+- **Status:** open
+
 ### 2026-11-07 16:55 — feat — Weekly bar chart is back on the dashboard; hours heatmap removed — @maxym
 - **Where:** `maxym-frontend` @ `ab2e88e` · merged to `main`: yes
 - **Did:** The Time and effort card shows the earlier 7-day bars again (estimated focus minutes and small wins per day, legend, reflection note) instead of the hours heatmap. `HoursHeatmap.tsx` deleted; it stays in history at `f2b2c4b` if we want it back. The log entry just below about the heatmap is superseded by this one.
