@@ -95,3 +95,26 @@ def test_one_trial_session_is_not_enough():
 
 def test_no_trial_sessions_yet():
     assert diagnose.evaluate_trial(history([0.6] * 3), TRIAL) == TrialOutcome(adopt=False, delta=0.0, n=0)
+
+
+def test_sudden_drop_detects_sustained_drop():
+    assert diagnose.sudden_drop([0.7, 0.7, 0.7, 0.7, 0.5, 0.5]) is True
+
+
+def test_sudden_drop_ignores_stable_scores():
+    assert diagnose.sudden_drop([0.6] * 6) is False
+
+
+def test_sudden_drop_ignores_one_small_dip():
+    assert diagnose.sudden_drop([0.7, 0.7, 0.7, 0.7, 0.62, 0.7]) is False
+
+
+@pytest.mark.parametrize("probes", [[], [0.7], [0.7, 0.5], [0.7, 0.5, 0.3]])
+def test_sudden_drop_needs_at_least_four_values(probes):
+    assert diagnose.sudden_drop(probes) is False
+
+
+def test_sudden_drop_reads_plateau_before_slope_declines():
+    got = diagnose.diagnose(history([0.5, 0.55, 0.6, 0.65, 0.45, 0.4]), PLAN)
+    assert got.name == "PLATEAU"
+    assert got.evidence["sudden_drop"] is True

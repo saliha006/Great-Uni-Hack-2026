@@ -88,3 +88,9 @@ def test_insufficient_data_skips_the_llm():
 def test_reflection_carries_trigger_and_engine_clock():
     got = agent.reflect(SUBJECT, PLATEAU, STATS, PLAN, "MANUAL", LLMReturning({}))
     assert got.trigger == "MANUAL" and got.ts == SUBJECT.now.isoformat()
+
+
+def test_sudden_drop_plateau_says_dropped_not_flat():
+    collapse = history([0.5, 0.55, 0.6, 0.65, 0.45, 0.4])
+    text = agent.reflect(SUBJECT, collapse, STATS, PLAN, "WEEKLY", LLMReturning({})).explanation
+    assert "dropped suddenly" in text and "flat" not in text
