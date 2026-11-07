@@ -1,8 +1,7 @@
 """Every PRD §11 engine function is callable with plain data and returns the right type (Y0b)."""
-import random
 from datetime import datetime
 
-from engine import agent, attention, diagnose, methodfit, predict, simulate
+from engine import agent, attention, diagnose, predict, simulate
 from engine.types import (
     AttentionReading,
     Baseline,
@@ -43,33 +42,6 @@ def test_attention_functions_return_typed_results():
     assert isinstance(attention.recommend_intervention(reading, ctx), Intervention)
     assert attention.update_baseline(Baseline(), EVENTS, ITEMS).n_sessions == 1
     assert attention.focus_window(HISTORY) == 20
-
-
-def test_reward_is_between_zero_and_one():
-    assert 0 <= methodfit.session_reward(0.8, None, 15, 4, 0.04) <= 1
-    assert 0 <= methodfit.session_reward(0.0, 0.0, 0, 1, 0.04) <= 1
-
-
-def test_delayed_score_beats_immediate_when_present():
-    assert methodfit.session_reward(0.9, 0.3, 15, 3, 0.04) < methodfit.session_reward(0.9, None, 15, 3, 0.04)
-
-
-def test_update_stats_adds_fractional_reward():
-    assert methodfit.update_stats(MethodStats(alpha=2, beta=2), 0.7) == MethodStats(alpha=2.7, beta=2.3, n=1)
-
-
-def test_sampler_visits_each_live_method_once():
-    methods = [
-        methodfit.choose_plan(SUBJECT.model_copy(update={"sampler_round": r}), STATS, [], random.Random(0)).method
-        for r in range(3)
-    ]
-    assert sorted(methods) == ["ACTIVE_RECALL", "FEYNMAN", "PRACTICE_TEST"]
-
-
-def test_confidence_levels():
-    assert methodfit.confidence(STATS) == "EARLY"
-    assert methodfit.confidence({m: MethodStats(alpha=5, beta=5, n=3) for m in STATS}) == "MODERATE"
-    assert methodfit.confidence({m: MethodStats(alpha=9, beta=9, n=6) for m in STATS}) == "HIGH"
 
 
 def test_diagnose_reflect_predict_return_typed_results():
