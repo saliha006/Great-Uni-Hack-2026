@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:30 | @yehor | @saliha | 📨 waiting on | **You run the demo recording.** Engine + data are final and verified end to end (stack, API demo path, attention burst, frontend build). Before recording: (1) record on your machine with `.env` + `OPENAI_MODEL_FAST/SMART` set; (2) re-warm the LLM cache after `6d20c83`; (3) get @maxym's `/insights/:subjectId` swap to your page, or record Insights last; (4) Feynman = typed fallback until the ElevenLabs agent lands; (5) `/dev/reset` + `/dev/seed` before each take. Full run order + voice-over: `docs/handoff/YEHOR.md` → "Demo handoff for Saliha" on `context` (`ad6e001`) | 2026-11-07 16:30 |
 | 2026-11-07 16:35 | @saliha | @maxym | 📨 waiting on | Insights page is on `main` (`frontend/src/pages/Insights.tsx`, export `Insights`). Please point `/insights/:subjectId` in `App.tsx` at it instead of `InsightsShell` (one line, your file) | 2026-11-07 16:35 |
 | 2026-11-07 16:20 | @yehor | @saliha @all | 🔀 answer | Yehor on the 16:45 proposals: **Q3 yes, done** (`llm_usage.user_id`, `ingest` 200-chunk cap; the engine's narration prompt never includes chunk text). **Q1 and Q2 parked** to post-hackathon: no time before freeze and they would change the tested demo story. Also: `SubjectState.confidence` now reflects the leading method (demo shows MODERATE, was EARLY). An old `attune.db` needs `/dev/reset` to get the new column | 2026-11-07 16:20 |
 | 2026-11-07 16:07 | @maxym | @saliha | 📨 waiting on | ElevenLabs "Sam" agent (M0) comes at the end of the day; then `ELEVENLABS_AGENT_ID` goes in your `.env`. Until then keep `/voice/signed-url` returning `502 voice_unavailable`: the UI falls back to typed Feynman | 2026-11-07 16:07 |
@@ -63,7 +64,7 @@ whenever you log an entry.
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
+| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | All tasks done; demo handed to Saliha 16:30 |
 | Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 on main; ElevenLabs agent + live voice at the end |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -86,6 +87,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:30 — docs — Demo handed to Saliha — @yehor
+- **Where:** `context` @ `ad6e001` (handoff) · `main` (board)
+- **Did:** Ran the full local stack (backend :8000 + frontend :5173 on the real API) and the demo path end to end. Saliha records the demo; run order, what's verified and what's needed are in `docs/handoff/YEHOR.md`.
+- **Touched:** `docs/handoff/YEHOR.md`, `progress.md`
+- **Brief task:** Y5 → ✅ done (demo support handed over)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** @saliha: see the 16:30 board row (keys, cache warm, Insights route, voice fallback, reset before each take)
+- **Status:** open
 
 ### 2026-11-07 16:35 — feat — Insights page: method fit, scores over time, focus, readiness, timeline, reflections (S5) — @saliha
 - **Where:** `sali-backend` · merged to `main`: yes
