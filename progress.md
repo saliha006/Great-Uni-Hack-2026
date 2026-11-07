@@ -63,7 +63,7 @@ whenever you log an entry.
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
 | Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
-| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M3 done (voice waits on the agent); M4 next |
+| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 done; voice waits on the ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
 (`CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `docs/builders/`): doc owner publishes (CLAUDE.md 📤); your own `docs/handoff/<NAME>.md`: you.
@@ -84,6 +84,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:08 — feat — Dev panel, progress grid and questions inbox (M4) — @maxym
+- **Where:** `maxym-frontend` @ `96a055b` · merged to `main`: yes
+- **Did:** `/dev`: seed demo persona, advance N days, force reflection per subject, reset, `/dev/usage` totals, "simulate drift" (mock only), "Demo data" badge in the header whenever seeded history exists. Reflection card (diagnosis chip + explanation + decision) on Home and Result. `/progress`: GitHub-style day grid from `insights.method_series` + local tasks (frogs eaten, questions answered), no streaks; territory bar per subject. `/questions`: inbox for questions parked with Q. Passed on `main`'s real API (reset → seed → advance 7 → plateau reflection).
+- **Touched:** `frontend/src/pages/{Dev,Progress,Questions}.tsx`, `frontend/src/components/ContributionGrid.tsx`, `frontend/src/lib/activity.ts`, `frontend/src/App.tsx`
+- **Brief task:** M4 → ✅ done
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:07 — feat — Feynman screen: voice + typed fallback (M3) — @maxym
 - **Where:** `maxym-frontend` @ `e70df73` · merged to `main`: yes
