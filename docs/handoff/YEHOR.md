@@ -46,3 +46,13 @@ push your branch, never merge; Claude merges and writes `progress.md`.
 - Feynman voice needs Maxym's ElevenLabs agent + `ELEVENLABS_AGENT_ID`; until then use the typed fallback.
 - Any existing `attune.db` needs one `/dev/reset` (new `llm_usage.user_id` column).
 - Voice-over + honest limits for the video/Devpost: section "For the video + Devpost" above.
+
+## Frontend design review for Maxym (16:40, polish only, your call)
+Reviewed `frontend/src` against the frontend-design skill, ranked by impact on the 2-minute video. All are small; none touch the API.
+1. **Make the reflection card the climax (1:30 beat).** `components/ReflectionCard.tsx` is a plain card. On the 1:30 beat, show the decision as the headline ("Try Feynman for 7 days, then compare") with the evidence underneath from `reflection.evidence` (`days`, `mean_probe`, `median_not_focused`, `method`). Judges skim, and this card is the idea.
+2. **Let the attention state change read on camera (0:55 beat).** The state is a small chip (`FocusBar.tsx:61`) and EASIER/SWITCH_FORMAT show as a 5 s toast (`Session.tsx:68,89`). Give the chip one clear transition when it moves Focused → Drifting/Lapsed (one moment, not scattered motion), and keep the toast up until the next answer.
+3. **Drop the global orange hover swap (`index.css:108-118`).** Every hovered control turns the accent orange, so moving the cursor during recording makes the UI flicker. Keep the hover change on buttons only.
+4. **Sentence case for labels.** `Home.tsx:96` ("Eat the frog first") and `PageShell.tsx:59` ("Demo data") are uppercase with tracking: the most common generated-UI tell. Plain sentence case reads calmer.
+5. **Quieter session header.** "Do Not Disturb: off (simulated)" (`FocusBar.tsx:62-65`) takes prime space next to the timer on every session shot. Move it into "Focus settings".
+6. **Friendlier attention words.** "Lapsed" (`FocusBar.tsx:50`) sounds clinical next to our non-medical pitch; "Needs a break" says what the user should do.
+7. **Palette note (after the hackathon):** cream background + slate + terracotta-orange hover is one of the defaults generated UIs cluster around. Not worth re-theming today.
