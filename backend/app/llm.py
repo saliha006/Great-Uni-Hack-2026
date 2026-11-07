@@ -63,8 +63,8 @@ class LLMService:
             fail_closed=os.getenv("LLM_FAIL_CLOSED") == "1",
         )
 
-    def complete_json(self, system: str, user: str, schema: dict, tier: Tier, max_tokens: int = 800,
-                      purpose: str = "engine") -> dict:
+    def complete_json(self, system: str, user: str, schema: dict, tier: Tier, max_tokens: int = 1000,
+                      purpose: str = "engine", effort: str | None = None) -> dict:
         model = self.models.get(tier) or ""
         key = hashlib.sha256(json.dumps([model, system, user, schema], sort_keys=True).encode()).hexdigest()
         with self._lock:
@@ -84,7 +84,8 @@ class LLMService:
                 raise LLMError("live call cap reached")
             self.usage.live_calls += 1
         try:
-            result, prompt_tokens, completion_tokens = self._call_with_retry(model, system, user, schema, max_tokens)
+            result, prompt_tokens, completion_tokens = self._call_with_retry(model, system, user, schema, max_tokens,
+                                                                         effort or self.reasoning_effort)
         except LLMError:
             with self._lock:
                 self.usage.failures += 1
@@ -105,23 +106,25 @@ class LLMService:
     def for_engine(self) -> "EngineLLM":
         return EngineLLM(self)
 
-    def _call_with_retry(self, model: str, system: str, user: str, schema: dict,
-                         max_tokens: int) -> tuple[dict, int, int]:
+    def _call_with_retry(self, model: str, system: str, user: str, schema: dict, max_tokens: int,
+                         effort: str | None) -> tuple[dict, int, int]:
         # The SDK's own retries are off (max_retries=0) so every attempt is counted here; one retry on transient errors.
         try:
-            return self._call(model, system, user, schema, max_tokens)
+            return self._call(model, system, user, schema, max_tokens, effort)
         except TRANSIENT as exc:
             log.warning("retrying after %s", type(exc).__name__)
         try:
-            return self._call(model, system, user, schema, max_tokens)
+            return self._call(model, system, user, schema, max_tokens, effort)
         except TRANSIENT as exc:
             raise LLMError(f"OpenAI unavailable: {type(exc).__name__}") from exc
 
-    def _call(self, model: str, system: str, user: str, schema: dict, max_tokens: int) -> tuple[dict, int, int]:
+    def _call(self, model: str, system: str, user: str, schema: dict, max_tokens: int,
+              effort: str | None) -> tuple[dict, int, int]:
         if self.client is None:
             self.client = openai.OpenAI(max_retries=0, timeout=TIMEOUT_S)
         client = self.client
-        extra = {"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}
+        # Reasoning tokens share max_completion_tokens with the answer, so the effort is always set explicitly.
+        extra = {"reasoning_effort": effort} if effort else {}
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         strict = {"type": "json_schema", "json_schema": {"name": "out", "schema": schema, "strict": True}}
         try:
@@ -143,6 +146,8 @@ class LLMService:
         with self._lock:
             self.usage.prompt_tokens += prompt_tokens
             self.usage.completion_tokens += completion_tokens
+        if getattr(choice.message, "refusal", None):
+            raise LLMError("model refused the request")
         # Reasoning tokens count against max_completion_tokens: a "length" finish can be empty yet billed.
         if choice.finish_reason != "stop" or not choice.message.content:
             raise LLMError(f"incomplete response (finish_reason={choice.finish_reason})")
@@ -175,7 +180,7 @@ class EngineLLM:
 
     def complete_json(self, system: str, user: str, schema: dict, tier: Tier) -> dict:
         try:
-            return self.service.complete_json(system, user, schema, tier, purpose="reflect")
+            return self.service.complete_json(system, user, schema, tier, purpose="reflect", effort="low")
         except LLMError as exc:
             log.warning("engine LLM call failed: %s", exc)
             return {}

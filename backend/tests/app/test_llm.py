@@ -118,3 +118,19 @@ def test_a_failing_sink_never_fails_the_call(tmp_path):
         raise RuntimeError("db down")
 
     assert svc(tmp_path, _resp('{"x": 1}'), sink=broken).complete_json("s", "u", SCHEMA, "fast") == {"x": 1}
+
+
+def test_refusal_is_an_error(tmp_path):
+    refused = SimpleNamespace(choices=[SimpleNamespace(finish_reason="stop",
+                                                       message=SimpleNamespace(content="{}", refusal="no"))],
+                              usage=None)
+    with pytest.raises(LLMError, match="refused"):
+        svc(tmp_path, refused).complete_json("s", "u", SCHEMA, "fast")
+
+
+def test_effort_is_sent_per_call(tmp_path):
+    s = svc(tmp_path, _resp('{"x": 1}'), _resp('{"x": 2}'))
+    s.complete_json("s", "a", SCHEMA, "fast", effort="low")
+    s.complete_json("s", "b", SCHEMA, "fast")
+    assert s.client.calls[0]["reasoning_effort"] == "low"
+    assert "reasoning_effort" not in s.client.calls[1]

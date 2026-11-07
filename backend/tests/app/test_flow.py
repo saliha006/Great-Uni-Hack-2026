@@ -131,3 +131,41 @@ def test_reset_clears_everything(client):
     client.post("/api/dev/seed")
     client.post("/api/dev/reset")
     assert client.get("/api/subjects").json() == []
+
+
+PASSAGE = ("A hash table stores key-value pairs so that looking up a key takes constant time on average. "
+           "Two different keys can land in the same bucket, which is called a collision. "
+           "Separate chaining stores a small list in each bucket. "
+           "Open addressing probes other slots in a fixed sequence until it finds a free one.")
+
+
+def _q(prompt, quote, **extra):
+    return {"prompt": prompt, "answer": "a", "quote": quote, **extra}
+
+
+def test_bank_keeps_only_items_quoted_from_the_passage():
+    raw = {
+        "key_points": [{"point": "Lookup is constant time on average.", "quote": "looking up a key takes constant time on average"},
+                       {"point": "Hash tables were invented in 1953.", "quote": "invented by Hans Luhn in 1953"}],
+        "recall": [_q("What is a collision?", "Two different keys can land in the same bucket"),
+                   _q("Who invented it?", "NOT_IN_PASSAGE")],
+        "mcq": [_q("Good", "Separate chaining stores a small list in each bucket",
+                   options=["a", "b", "c", "d"]),
+                _q("Key missing", "Separate chaining stores a small list in each bucket",
+                   options=["b", "c", "d", "e"]),
+                _q("Duplicate options", "Separate chaining stores a small list in each bucket",
+                   options=["a", "a", "c", "d"])],
+        "short": [], "probe_mcq": [], "probe_short": [],
+    }
+    bank = flow.ground_bank(raw, PASSAGE)
+    assert "Hash tables were invented in 1953." not in bank["key_points"]
+    assert bank["recall"][0]["prompt"] == "What is a collision?"
+    assert all(q["prompt"] != "Who invented it?" for q in bank["recall"])
+    assert [q["prompt"] for q in bank["mcq"]] == ["Good"]
+    assert bank["probe_short"] and all(flow.quoted_in(q["answer"], PASSAGE) for q in bank["probe_short"])
+    assert len(bank["key_points"]) >= 3
+
+
+def test_bank_falls_back_to_the_passage_when_the_llm_is_down(client):
+    bank = flow.chunk_bank(PASSAGE + " Deletion uses tombstones so lookups keep probing past removed entries.")
+    assert bank["key_points"] and bank["probe_short"]
