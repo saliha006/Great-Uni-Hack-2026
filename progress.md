@@ -38,10 +38,10 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:20 | @yehor | @saliha @all | 🔀 answer | Yehor on the 16:45 proposals: **Q3 yes, done** (`llm_usage.user_id`, `ingest` 200-chunk cap; the engine's narration prompt never includes chunk text). **Q1 and Q2 parked** to post-hackathon: no time before freeze and they would change the tested demo story. Also: `SubjectState.confidence` now reflects the leading method (demo shows MODERATE, was EARLY). An old `attune.db` needs `/dev/reset` to get the new column | 2026-11-07 16:20 |
 | 2026-11-07 16:07 | @maxym | @saliha | 📨 waiting on | ElevenLabs "Sam" agent (M0) comes at the end of the day; then `ELEVENLABS_AGENT_ID` goes in your `.env`. Until then keep `/voice/signed-url` returning `502 voice_unavailable`: the UI falls back to typed Feynman | 2026-11-07 16:07 |
 | 2026-11-07 16:05 | @maxym | @saliha | ⚠️ conflict | Frontend scaffold is on `main` (`cd frontend && npm i && npm run dev`). Insights page: add `frontend/src/pages/Insights.tsx`, route `/insights/:subjectId` in `App.tsx`; reuse `Card`/`Chip`/`Meter`/`ButtonLink` (`components/ui.tsx`) + `PageShell`. `recharts` installed | 2026-11-07 16:05 |
 | 2026-11-07 16:12 | @yehor | @saliha | ⚠️ conflict | **Demo fix on `main`:** with seed 1 the post-seed plan is an Active Recall exploration pick, so advance-days trialled *Practice Test* twice. Engine now diagnoses the method actually studied → advance 1: PLATEAU → Feynman trial; advance 2: trial adopted (+0.21) → MASTERED. Verified through the real API (reset → seed → advance 7 ×2). The narration prompt's `current_method` changed, so warm the LLM cache after this commit | 2026-11-07 16:12 |
-| 2026-11-07 17:05 | @saliha | @yehor | 📨 waiting on | Please add `user_id: str | None = None` to `LLMUsageRow` in `db.py` (your Q3 task): the backend now writes a usage row per LLM call and per-user quotas need the column. No rush before the demo | 2026-11-07 17:05 |
 | 2026-11-07 16:00 | @yehor | @saliha | ⚠️ conflict | I rewrote `README.md` (your path) at Yehor's request: badges, features table, "why it's different", quick start, demo steps (two `advance-days 7` calls: start then adopt the trial), architecture, team. Your scoring and honest-limits text is kept word for word (+1 line: thresholds are tuned guesses). Edit or revert anything you disagree with | 2026-11-07 16:00 |
 | 2026-11-07 15:55 | @yehor | @saliha | 📨 for you | Video voice-over ("how it learns", ~20 s) and the honest-limits list for Devpost/README are in `docs/handoff/YEHOR.md` → "For the video + Devpost" on `context` (`2af3c2b`). Edit freely | 2026-11-07 15:55 |
 | 2026-11-07 16:45 | @saliha | @all | 🔀 scope proposal | **Post-freeze proposals from research pass 2** are at the top of each brief, marked *Proposed*: backend security (dev routes gated, rate-limit scopes left unlimited, size limits), quote-grounded LLM output, answer-seeking detection with gradual easing and ramp-back, steadier method selection, ElevenLabs Sam settings. Reply yes/no per block. Items marked ⚖️ change the PRD §11 contract (hint event, 429s, dev token, field limits, leading-method field) and need all three of you. Nothing starts until you agree | 2026-11-07 16:45 |
@@ -85,6 +85,16 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:20 — feat — Q3 security (data side) done; confidence reads the leading method — @yehor
+- **Where:** `yehor-ml-data` → `main` @ `6f78e65` · merged to `main`: yes
+- **Did:** `LLMUsageRow.user_id` (indexed, optional) for Saliha's per-user quotas; `ingest.chunk_material` keeps at most 200 chunks (Codex; truncates because `add_material` doesn't catch ingest errors). `methodfit.confidence` now uses the leading method's sessions + interval separation, so a method tried once no longer pins it at EARLY. `no-slop` on both diffs; 243 tests, ruff clean; demo path re-checked through the API.
+- **Touched:** `backend/app/db.py`, `backend/app/ingest.py`, `backend/engine/methodfit.py`, tests
+- **Brief task:** Q3 → ✅ done · Q1, Q2 → parked
+- **⚠️ Conflicts:** @saliha: your 17:05 ask is done (row removed). Run `/dev/reset` on any existing `attune.db`.
+- **📨 Needs:** none
+- **Agreed by:** @yehor
+- **Status:** resolved by @yehor 2026-11-07 16:20
 
 ### 2026-11-07 16:20 — feat — Quote-grounded question generation and per-job model settings (P2) — @saliha
 - **Where:** `sali-backend` · merged to `main`: yes
