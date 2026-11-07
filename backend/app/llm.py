@@ -17,7 +17,8 @@ from engine.types import Tier
 
 log = logging.getLogger("attune.llm")
 
-DEFAULT_CACHE_DIR = Path(__file__).resolve().parent.parent / ".llm_cache"
+# Serverless hosts (Vercel) only allow writes under /tmp, so the cache folder is configurable.
+DEFAULT_CACHE_DIR = Path(os.getenv("LLM_CACHE_DIR") or Path(__file__).resolve().parent.parent / ".llm_cache")
 MAX_LIVE_CALLS = 60  # hard ceiling per process; spend on the shared key is tracked
 TIMEOUT_S = 20
 TRANSIENT = (openai.APITimeoutError, openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError)
@@ -167,10 +168,14 @@ class LLMService:
             return None
 
     def _write(self, key: str, data: dict) -> None:
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        tmp = self.cache_dir / f"{key}.tmp"
-        tmp.write_text(json.dumps(data), encoding="utf-8")
-        tmp.replace(self.cache_dir / f"{key}.json")
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            tmp = self.cache_dir / f"{key}.tmp"
+            tmp.write_text(json.dumps(data), encoding="utf-8")
+            tmp.replace(self.cache_dir / f"{key}.json")
+        except OSError as exc:
+            # A read-only or full disk only costs a future cache hit; the student's answer must still go through.
+            log.warning("could not write LLM cache: %s", exc)
 
 
 @dataclass
