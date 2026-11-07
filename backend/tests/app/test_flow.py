@@ -169,3 +169,33 @@ def test_bank_keeps_only_items_quoted_from_the_passage():
 def test_bank_falls_back_to_the_passage_when_the_llm_is_down(client):
     bank = flow.chunk_bank(PASSAGE + " Deletion uses tombstones so lookups keep probing past removed entries.")
     assert bank["key_points"] and bank["probe_short"]
+
+
+def test_pdf_material_is_read_with_ingest(client, monkeypatch):
+    import base64
+    monkeypatch.setattr(flow.ingest, "extract_text", lambda pdf: flow.DEMO_MATERIAL if pdf == b"%PDF-fake" else "")
+    sid = client.post("/api/subjects", json={"name": "Data Structures", "kind": "PERFORMANCE"}).json()["id"]
+    body = {"title": "notes.pdf", "pdf_base64": base64.b64encode(b"%PDF-fake").decode()}
+    r = client.post(f"/api/subjects/{sid}/material", json=body)
+    assert r.status_code == 200 and r.json()["chunk_count"] == 3
+
+
+def test_unreadable_pdf_asks_to_paste(client):
+    import base64
+    import io
+
+    from pypdf import PdfWriter
+    buf = io.BytesIO()
+    writer = PdfWriter()
+    writer.add_blank_page(width=200, height=200)
+    writer.write(buf)
+    sid = client.post("/api/subjects", json={"name": "Maths", "kind": "KNOWLEDGE"}).json()["id"]
+    for payload in (base64.b64encode(buf.getvalue()).decode(), "not base64!!"):
+        r = client.post(f"/api/subjects/{sid}/material", json={"pdf_base64": payload})
+        assert r.status_code == 422 and "paste" in r.json()["detail"]
+
+
+def test_insights_carry_active_minutes(client):
+    client.post("/api/dev/seed")
+    rows = client.get("/api/subjects/1/insights").json()["attention_by_session"]
+    assert rows and all(r["active_minutes"] > 0 for r in rows)

@@ -19,7 +19,7 @@ from app.llm import service as llm
 
 log = logging.getLogger("attune")
 DB = Depends(db.get_session)
-MAX_BODY_BYTES = 1_000_000  # largest legit body is pasted material (schemas cap it at 200k chars)
+MAX_BODY_BYTES = 15_000_000  # largest legit body is a ~10 MB PDF sent base64 (schemas cap each field)
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",

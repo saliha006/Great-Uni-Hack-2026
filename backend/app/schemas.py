@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 # Generous caps against oversized or abusive payloads; normal use never gets near them.
 TEXT_MAX = 5_000
 MATERIAL_MAX = 200_000
+PDF_B64_MAX = 14_000_000  # ~10 MB PDF once base64-encoded
 TS_MAX = 64
 LATENCY_MAX_MS = 3_600_000
 
@@ -212,6 +213,8 @@ class SubjectCreate(BaseModel):
 class MaterialBody(BaseModel):
     title: str | None = Field(default=None, max_length=200)
     text: str | None = Field(default=None, max_length=MATERIAL_MAX)
+    # Additive (contract change 2026-11-07): a dropped PDF, base64-encoded, so no multipart dependency is needed.
+    pdf_base64: str | None = Field(default=None, max_length=PDF_B64_MAX)
 
 
 class MaterialResult(BaseModel):
@@ -246,6 +249,7 @@ class AttentionBySession(BaseModel):
     method: Method
     drift_share: float
     lapse_share: float
+    active_minutes: float | None = None  # additive (contract change 2026-11-07)
 
 
 class TimelineEntry(BaseModel):
