@@ -26,7 +26,7 @@ export function StatusStrip({ where, items = [], next }: { where: string; items?
         )}
         <span className="ml-auto flex items-center gap-2 text-muted">
           <span aria-hidden className={`size-2 rounded-full ${lastSaveOk ? 'bg-ok' : 'bg-accent'}`} />
-          {lastSaveOk ? (usingMock ? 'Saved on this device (mock API)' : 'Synced with server') : 'Not saved: browser storage is blocked'}
+          {lastSaveOk ? (usingMock ? 'Saved on this device' : 'Preferences saved on this device') : 'Not saved: browser storage is blocked'}
         </span>
       </div>
     </div>

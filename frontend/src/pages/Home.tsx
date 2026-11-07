@@ -30,13 +30,11 @@ export function Home() {
   })
   const start = useStartSession()
   const today = todayKey()
-  const { frogSubjectId, frogDate, frogSkipped, resume, openQuestions, sessionsToday } = useLocal((s) => ({
+  const { frogSubjectId, frogDate, frogSkipped, resume } = useLocal((s) => ({
     frogSubjectId: s.frogSubjectId,
     frogDate: s.frogDate,
     frogSkipped: s.frogSkipped,
     resume: s.resume,
-    openQuestions: s.questions.filter((q) => !q.resolved).length,
-    sessionsToday: s.activity.filter((a) => a.date === todayKey() && a.kind === 'SESSION').length,
   }))
 
   const list = subjects.data ?? []
@@ -51,16 +49,8 @@ export function Home() {
   const startSubject = (s: SubjectSummary) => start.mutate({ subjectId: s.subject.id, subjectName: s.subject.name })
 
   return (
-    <PageShell
-      where="Home"
-      status={[
-        { label: 'Subjects', value: list.length },
-        { label: 'Sessions today', value: sessionsToday },
-        { label: 'Open questions', value: openQuestions },
-      ]}
-      next={frog ? `${frog.subject.name} · ${METHOD_LABEL[frog.plan.method]}` : list.length ? 'Pick any subject' : 'Add a subject'}
-    >
-      <h1 className="sr-only">Home</h1>
+    <PageShell where="Study">
+      <h1 className="mb-4 text-2xl font-extrabold tracking-tight">Study</h1>
       {subjects.isPending && <Spinner label="Loading your subjects" />}
       {subjects.isError && <ErrorBox error={subjects.error} onRetry={() => subjects.refetch()} />}
       {start.isError && <div className="mb-4"><ErrorBox error={start.error} /></div>}
@@ -68,7 +58,7 @@ export function Home() {
       {subjects.isSuccess && list.length === 0 && (
         <Card className="max-w-xl">
           <h2 className="text-2xl font-extrabold">What are you studying?</h2>
-          <p className="mt-2 text-muted">Add a subject and some notes. Attune runs three short calibration rounds to learn which study method works for you.</p>
+          <p className="mt-2 text-muted">Add a subject and your notes. Try three short sessions to find a study method that helps.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <ButtonLink to="/onboarding" variant="primary" size="lg">Add a subject</ButtonLink>
             <ButtonLink to="/dev">Load the demo student</ButtonLink>
@@ -92,20 +82,19 @@ export function Home() {
       )}
 
       {frog && (
-        <section aria-labelledby="frog-h" className="mb-8 rounded-(--radius-card) bg-accent p-6 text-accent-ink sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wide">Eat the frog first</p>
-          <h2 id="frog-h" className="mt-1 text-4xl font-extrabold tracking-tight sm:text-5xl">{frog.subject.name}</h2>
-          <p className="mt-3 max-w-2xl text-lg">
-            {frogEaten ? 'Done for today. Everything else is lighter now.' : 'Your hardest subject today. Do it before anything else and the rest of the day gets easier.'}
+        <section aria-labelledby="frog-h" className="mb-6 rounded-(--radius-card) border border-line bg-surface p-5">
+          <p className="text-sm text-muted">Suggested next step</p>
+          <h2 id="frog-h" className="mt-1 text-2xl font-extrabold tracking-tight">{frog.subject.name}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted">
+            {frogEaten ? 'You made progress here today. Continue or choose another subject.' : 'This subject could use some attention. Start here, or choose another.'}
           </p>
-          <p className="mt-4 text-lg font-semibold">
+          <p className="mt-3 font-semibold">
             Next: {METHOD_LABEL[frog.plan.method]} · {frog.plan.session_minutes} min
           </p>
-          <p className="text-base opacity-90">{frog.plan.reason}</p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <details className="mt-2 text-sm text-muted"><summary className="cursor-pointer">Why this session?</summary><p className="mt-2">{frog.plan.reason}</p></details>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <Button
-              size="lg"
-              className="bg-accent-ink text-accent hover:brightness-95"
+              variant="primary"
               onClick={() => {
                 setLocal({ frogSubjectId: frog.subject.id, frogDate: today })
                 startSubject(frog)
@@ -116,9 +105,9 @@ export function Home() {
             </Button>
             {list.length > 1 && (
               <label className="flex items-center gap-2 text-base">
-                Different frog:
+                Subject:
                 <select
-                  className="rounded-(--radius-ctl) border border-accent-ink/40 bg-transparent px-2 py-2 text-accent-ink"
+                  className="rounded-(--radius-ctl) border border-line bg-surface px-2 py-2 text-ink"
                   value={frog.subject.id}
                   onChange={(e) => setLocal({ frogSubjectId: Number(e.target.value), frogDate: today })}
                 >
@@ -137,7 +126,7 @@ export function Home() {
 
       {others.length > 0 && (
         <section aria-labelledby="subjects-h">
-          <h2 id="subjects-h" className="mb-3 text-xl font-bold">{frog ? 'After the frog' : 'Your subjects'}</h2>
+          <h2 id="subjects-h" className="mb-3 text-xl font-bold">{frog ? 'Other subjects' : 'Your subjects'}</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {others.map((s) => (
               <SubjectCard key={s.subject.id} s={s} onStart={() => startSubject(s)} starting={start.isPending} />
@@ -149,7 +138,7 @@ export function Home() {
       {list.length > 0 && (
         <div className="mt-8 flex flex-wrap gap-3">
           <ButtonLink to="/onboarding">Add a subject</ButtonLink>
-          {frogSkipped === today && <Button variant="ghost" onClick={() => setLocal({ frogSkipped: null })}>Show today's frog</Button>}
+          {frogSkipped === today && <Button variant="ghost" onClick={() => setLocal({ frogSkipped: null })}>Show suggestion</Button>}
         </div>
       )}
     </PageShell>
@@ -163,7 +152,7 @@ function SubjectCard({ s, onStart, starting }: { s: SubjectSummary; onStart: () 
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-xl font-bold">{s.subject.name}</h3>
         <Chip tone={s.subject.phase === 'SAMPLING' ? 'warn' : 'neutral'}>
-          {s.subject.phase === 'SAMPLING' ? 'Calibrating' : s.plan.mode === 'TRIAL' ? 'Trial' : 'Adaptive'}
+          {s.subject.phase === 'SAMPLING' ? 'Trying methods' : s.plan.mode === 'TRIAL' ? 'Trying a new method' : 'Personal plan'}
         </Chip>
         {days !== null && <span className="ml-auto text-sm text-muted">Exam in {days} days</span>}
       </div>

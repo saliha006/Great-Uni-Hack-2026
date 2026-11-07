@@ -23,14 +23,16 @@ export function Result({ result, focusedMin, subjectName, onAgain }: { result: S
         <p className="mt-2 text-xl">You were focused for about {focused} of {total} {unit}.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <details className="rounded-(--radius-card) border border-line bg-surface p-4">
+        <summary className="cursor-pointer font-semibold">Session details</summary>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Card>
           <p className="text-sm text-muted">Learning per minute</p>
           <p className="text-2xl font-bold">{result.efficiency.toFixed(2)}</p>
           <p className="text-sm text-muted">quick-check score (0–1) per active minute</p>
         </Card>
         <Card>
-          <p className="text-sm text-muted">Calibration</p>
+          <p className="text-sm text-muted">Trying study methods</p>
           <p className="text-2xl font-bold">
             {Object.values(st.sampler).filter((s) => s.done).length} of 3 rounds
           </p>
@@ -42,6 +44,7 @@ export function Result({ result, focusedMin, subjectName, onAgain }: { result: S
           <Chip>{st.confidence === 'EARLY' ? 'Early read' : st.confidence === 'MODERATE' ? 'Getting clearer' : 'Confident'}</Chip>
         </Card>
       </div>
+      </details>
 
       {result.reflection && <ReflectionCard reflection={result.reflection} subjectName={subjectName} />}
 
@@ -51,7 +54,7 @@ export function Result({ result, focusedMin, subjectName, onAgain }: { result: S
       </Card>
 
       <div className="flex flex-wrap gap-3">
-        <ButtonLink to="/" variant="primary">Back to Home</ButtonLink>
+        <ButtonLink to="/" variant="primary">Back to dashboard</ButtonLink>
         <Button onClick={onAgain}>Another session</Button>
         <ButtonLink to={`/insights/${st.subject.id}`} variant="ghost">See insights</ButtonLink>
       </div>

@@ -24,8 +24,7 @@ export function Insights() {
     || !!reflections.data?.some((r) => r.explanation.startsWith(DEMO_LABEL))
 
   return (
-    <PageShell where={`Insights${st ? ` · ${st.subject.name}` : ''}`}
-               status={st ? [{ label: 'Confidence', value: CONFIDENCE_TEXT[st.confidence].toLowerCase() }] : []}>
+    <PageShell where="Insights">
       {(state.isPending || insights.isPending) && <Spinner label="Loading insights" />}
       {failed && <ErrorBox error={failed} onRetry={() => { state.refetch(); insights.refetch(); reflections.refetch() }} />}
       {st && ins && (
@@ -35,20 +34,20 @@ export function Insights() {
               Demo data: the history on this page is seeded to show how Attune behaves over several weeks.
             </p>
           )}
-          <h1 className="text-3xl font-extrabold">{st.subject.name}</h1>
+          <h1 className="text-2xl font-extrabold">{st.subject.name}</h1>
           <p className="mt-1 text-muted">{st.plan.reason}</p>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <Card>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold">Which method works for you here</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-bold">Your study methods</h2>
                 <Chip tone={st.confidence === 'EARLY' ? 'warn' : 'neutral'}>{CONFIDENCE_TEXT[st.confidence]}</Chip>
               </div>
-              <p className="mt-1 text-sm text-muted">Bars show fit; whiskers show how sure we are so far.</p>
+              <p className="mt-1 text-sm text-muted">Longer bars mean a better fit. Thin lines show uncertainty.</p>
               <MethodFitChart stats={st.method_stats} />
             </Card>
             <Card>
-              <h2 className="text-lg font-bold">Probe score over time</h2>
+              <h2 className="text-lg font-bold">Check-in scores</h2>
               <p className="mt-1 text-sm text-muted">Same 5-question check after every session.</p>
               <ScoreOverTime series={ins.method_series} />
             </Card>
@@ -75,7 +74,9 @@ export function Insights() {
             </Card>
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+          <details className="mt-6 rounded-(--radius-card) border border-line bg-surface p-5">
+            <summary className="cursor-pointer font-semibold">Study history and plan changes</summary>
+          <div className="mt-4 grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-1">
               <h2 className="text-lg font-bold">Timeline</h2>
               <div className="mt-3"><Timeline entries={ins.timeline} /></div>
@@ -87,6 +88,7 @@ export function Insights() {
                 : <p className="text-muted">The agent reflects weekly, or when progress stalls.</p>}
             </div>
           </div>
+          </details>
         </>
       )}
     </PageShell>

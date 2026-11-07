@@ -11,10 +11,10 @@
   --color-ink: #262a2d;
   --color-muted: #646960;
   --color-accent: #6d8196;
-  --color-accent-ink: #ffffff;
+  --color-accent-ink: #0c1218;
   --color-accent-soft: #e2e7ec;
   --color-interaction: #c7774a;
-  --color-interaction-ink: #ffffff;
+  --color-interaction-ink: #0c1218;
   --color-ok: oklch(0.5 0.12 150);
   --color-ok-soft: oklch(0.94 0.04 150);
   --color-warn: oklch(0.52 0.12 70);
@@ -122,7 +122,7 @@ a {
     --color-accent-ink: var(--color-interaction-ink);
     --color-accent-soft: color-mix(in srgb, var(--color-interaction) 16%, var(--color-bg));
     border-color: var(--color-interaction) !important;
-    box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--color-interaction) 42%, transparent), 0 0 0 5px color-mix(in srgb, var(--color-interaction) 28%, transparent);
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--color-interaction) 24%, transparent), 0 0 0 2px color-mix(in srgb, var(--color-interaction) 28%, transparent);
     transition: border-color 500ms ease, box-shadow 500ms ease;
   }
 

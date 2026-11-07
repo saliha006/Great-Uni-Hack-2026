@@ -59,10 +59,6 @@ export function FocusBar({ timer, attention }: { timer: TimerInfo; attention: At
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-2xl font-extrabold tabular-nums" aria-live="off">{timer.label}</p>
         {showAttention && attention && <Chip tone={ATT[attention.state].tone}>{ATT[attention.state].label}</Chip>}
-        <Chip>
-          Do Not Disturb: {dnd.phone || dnd.laptop ? [dnd.phone && 'phone', dnd.laptop && 'laptop'].filter(Boolean).join(' + ') : 'off'}
-          <span className="font-bold">(simulated)</span>
-        </Chip>
         <button className="ml-auto text-sm font-semibold underline" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           Focus settings
         </button>
@@ -89,7 +85,7 @@ export function FocusBar({ timer, attention }: { timer: TimerInfo; attention: At
           </fieldset>
           <fieldset>
             <legend className="font-semibold">Do Not Disturb <span className="font-normal text-muted">(simulated)</span></legend>
-            <p className="text-sm text-muted">A website can't change device settings. These toggles show how a companion app would sync it. Set Focus mode on your devices by hand for now.</p>
+            <p className="text-sm text-muted">These demo switches don't silence notifications. Turn on Focus mode in your device settings.</p>
             <label className="mt-2 flex items-center gap-2"><input type="checkbox" checked={dnd.phone} onChange={(e) => setLocal((s) => ({ dnd: { ...s.dnd, phone: e.target.checked } }))} /> Phone</label>
             <label className="mt-1 flex items-center gap-2"><input type="checkbox" checked={dnd.laptop} onChange={(e) => setLocal((s) => ({ dnd: { ...s.dnd, laptop: e.target.checked } }))} /> Laptop</label>
             <label className="mt-3 flex items-center gap-2"><input type="checkbox" checked={showAttention} onChange={(e) => setLocal({ showAttention: e.target.checked })} /> Show attention chip</label>

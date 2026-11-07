@@ -26,7 +26,7 @@ export function ReflectionCard({ reflection, subjectName }: { reflection: Reflec
   return (
     <Card as="article" className="border-ink">
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-lg font-bold">Why your plan {reflection.decision.action === 'KEEP' ? 'stays' : 'changed'}</h3>
+        <h3 className="text-lg font-bold">Your study plan</h3>
         <Chip tone={d.tone}>{d.label}</Chip>
         {subjectName && <span className="text-sm text-muted">{subjectName}</span>}
         <span className="ml-auto text-sm text-muted">
@@ -34,8 +34,8 @@ export function ReflectionCard({ reflection, subjectName }: { reflection: Reflec
           {new Date(reflection.ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
         </span>
       </div>
-      <p className="mt-3 text-base leading-relaxed">{reflection.explanation}</p>
-      <p className="mt-2 font-semibold">{decisionText(reflection)}</p>
+      <p className="mt-3 font-semibold">{decisionText(reflection)}</p>
+      <details className="mt-2 text-sm text-muted"><summary className="cursor-pointer">Why this plan?</summary><p className="mt-2 leading-relaxed">{reflection.explanation}</p></details>
     </Card>
   )
 }

@@ -6,7 +6,7 @@ import { PageShell } from '../components/PageShell'
 import { Button, ButtonLink, Card, ErrorBox } from '../components/ui'
 import { useStartSession } from '../lib/useStartSession'
 
-const STEPS = ['Subject', 'Material', 'Calibration'] as const
+const STEPS = ['Subject', 'Notes', 'First session'] as const
 const MIN_WORDS = 900
 
 export function Onboarding() {
@@ -55,12 +55,8 @@ export function Onboarding() {
   }
 
   return (
-    <PageShell
-      where="Add a subject"
-      status={[{ label: 'Step', value: `${step + 1} of 3 · ${STEPS[step]}` }]}
-      next={step === 0 ? 'Add your notes' : step === 1 ? 'Calibration' : 'Round 1'}
-    >
-      <ol className="mb-6 flex gap-2" aria-label="Progress">
+    <PageShell where="Add a subject">
+      <ol className="mb-6 flex max-w-2xl gap-2" aria-label="Progress">
         {STEPS.map((s, i) => (
           <li key={s} className="flex-1" aria-current={i === step ? 'step' : undefined}>
             <div className={`h-1.5 rounded-full ${i <= step ? 'bg-ink' : 'bg-line'}`} />
@@ -113,20 +109,20 @@ export function Onboarding() {
       {step === 1 && subject && (
         <Card className="max-w-2xl">
           <h1 className="text-2xl font-extrabold">Add notes for {subject.name}</h1>
-          <p className="mt-1 text-muted">Paste lecture notes or a reading. Sessions use one ~300-word chunk at a time.</p>
+          <p className="mt-1 text-muted">Paste your notes or a reading. You'll study one short section at a time.</p>
           <label className="mt-4 block">
-            <span className="font-semibold">Your material</span>
+            <span className="font-semibold">Your notes</span>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              rows={12}
+              rows={7}
               className="mt-1 w-full rounded-(--radius-ctl) border border-line bg-bg p-3 text-base leading-relaxed"
               placeholder="Paste text here…"
             />
           </label>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
             <span className={words > 0 && words < MIN_WORDS ? 'font-semibold text-warn' : 'text-muted'}>
-              {words} words{words > 0 && words < MIN_WORDS ? ` · about ${MIN_WORDS} gives three good calibration rounds` : ''}
+              {words} words{words > 0 && words < MIN_WORDS ? ` · aim for ${MIN_WORDS} for three practice sessions` : ''}
             </span>
             <label className="ml-auto cursor-pointer font-semibold underline">
               Upload a .txt file
@@ -136,7 +132,7 @@ export function Onboarding() {
           {material.isError && <div className="mt-3"><ErrorBox error={material.error} /></div>}
           <div className="mt-5 flex gap-3">
             <Button variant="primary" onClick={() => material.mutate()} disabled={!words || material.isPending}>
-              {material.isPending ? 'Splitting into chunks…' : 'Save material'}
+              {material.isPending ? 'Preparing your notes…' : 'Save notes'}
             </Button>
             <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>
           </div>
@@ -145,16 +141,16 @@ export function Onboarding() {
 
       {step === 2 && subject && (
         <Card className="max-w-xl">
-          <h1 className="text-2xl font-extrabold">Quick calibration</h1>
-          <p className="mt-2 text-lg leading-relaxed">
-            Three short rounds of about 15 minutes, one per study method: Active Recall, Practice Test and Feynman. Each ends with the same 5-question check, so the methods are compared fairly.
+          <h1 className="text-2xl font-extrabold">Find what works for you</h1>
+          <p className="mt-2 leading-relaxed">
+            Try three study methods, about 15 minutes each. A short check after each session helps compare them. You can do them on different days.
           </p>
-          <p className="mt-2 text-muted">Saved {chunks} chunk{chunks === 1 ? '' : 's'}. You can split the rounds across days.</p>
+          <p className="mt-2 text-sm text-muted">Your notes are ready: {chunks} short section{chunks === 1 ? '' : 's'}.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Button variant="primary" size="lg" onClick={() => start.mutate({ subjectId: subject.id, subjectName: subject.name })} disabled={start.isPending}>
-              Start round 1
+              Start first session
             </Button>
-            <ButtonLink to="/">Go to Home</ButtonLink>
+            <ButtonLink to="/study">I'll do this later</ButtonLink>
             <Button
               variant="ghost"
               onClick={() => {
