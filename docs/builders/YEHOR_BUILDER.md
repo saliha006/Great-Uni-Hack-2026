@@ -103,3 +103,10 @@ LLM narration → exploration floor (keep Thompson) → `evaluate_trial` UI → 
 
 ## ✅ Done log
 *(finished task → one line: ✅ id · what · `progress.md` stamp)*
+- ✅ Y0 · `engine/types.py` · 14:40
+- ✅ Y0b · stubs for every engine function · 14:40
+- ✅ Y1 · `methodfit` Thompson sampling + `priors.py` · 14:47
+- ✅ Y2 · `attention` readings + interventions · 15:06 (trimmed-CV fix 15:52)
+- ✅ Y-D · `app/db.py` + `app/ingest.py` (Codex), SQLite default · 15:15
+- ✅ Y3 · `diagnose` + Ada/Ben personas · 15:15
+- ✅ Y4 · `agent.reflect` + `predict_readiness` · 15:15
