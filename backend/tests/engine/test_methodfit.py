@@ -94,7 +94,30 @@ def test_missing_stats_fall_back_to_priors():
 def test_confidence_levels():
     assert methodfit.confidence(priors()) == "EARLY"
     assert methodfit.confidence({m: MethodStats(alpha=5, beta=5, n=3) for m in LIVE_METHODS}) == "MODERATE"
-    assert methodfit.confidence({m: MethodStats(alpha=9, beta=9, n=6) for m in LIVE_METHODS}) == "HIGH"
+    tied = {m: MethodStats(alpha=9, beta=9, n=6) for m in LIVE_METHODS}
+    assert methodfit.confidence(tied) == "MODERATE"  # enough sessions, but the intervals overlap
+    clear = tied | {"FEYNMAN": MethodStats(alpha=40, beta=5, n=30)}
+    assert methodfit.confidence(clear) == "HIGH"
+
+
+def test_stat_view_interval_brackets_the_mean_and_narrows_with_data():
+    few, many = methodfit.stat_view("FEYNMAN", MethodStats(alpha=3, beta=2, n=1)), \
+        methodfit.stat_view("FEYNMAN", MethodStats(alpha=30, beta=20, n=46))
+    assert few.ci_low < few.mean_reward < few.ci_high and 0 <= few.ci_low and few.ci_high <= 1
+    assert (many.ci_high - many.ci_low) < (few.ci_high - few.ci_low)
+    assert many.mean_reward == pytest.approx(0.6)
+
+
+def test_stats_from_history_replays_every_session():
+    from engine.simulate import make_persona
+    ada = make_persona("Ada", 0)
+    stats = methodfit.stats_from_history(ada)
+    assert sum(s.n for s in stats.values()) == len(ada)
+    assert max(stats, key=lambda m: stats[m].alpha / (stats[m].alpha + stats[m].beta)) == "PRACTICE_TEST"
+
+
+def test_roadmap_method_gets_a_neutral_prior():
+    assert methodfit.prior_stats("BLURTING").alpha == pytest.approx(0.55 * 4)
 
 
 def test_short_blocks_profile_fixes_session_length_in_every_phase():

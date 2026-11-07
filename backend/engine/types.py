@@ -12,6 +12,7 @@ SessionMode = Literal["SAMPLER", "ADAPTIVE", "TRIAL"]
 AttentionStateName = Literal["FOCUSED", "DRIFTING", "LAPSED"]
 InterventionType = Literal["NONE", "EASIER", "SWITCH_FORMAT", "BREAK", "WRAP_UP"]
 DiagnosisName = Literal["ON_TRACK", "MASTERED", "LOW_ENGAGEMENT", "FATIGUE", "PLATEAU"]
+ReflectionTrigger = Literal["WEEKLY", "PLATEAU", "MANUAL"]
 Confidence = Literal["EARLY", "MODERATE", "HIGH"]
 EventType = Literal[
     "ITEM_SHOWN", "ITEM_ANSWERED", "TAB_BLUR", "TAB_FOCUS", "IDLE", "BREAK_START", "BREAK_END", "VOICE_TURN"
@@ -83,7 +84,7 @@ class Decision(BaseModel):
 class Reflection(BaseModel):
     id: int
     ts: str
-    trigger: Literal["WEEKLY", "PLATEAU", "MANUAL"]
+    trigger: ReflectionTrigger
     diagnosis: DiagnosisName
     evidence: dict
     decision: Decision

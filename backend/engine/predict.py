@@ -1,4 +1,6 @@
 """Readiness estimate (PRD §8.6). Shown with its confidence, never as a predicted grade; not validated against exams."""
+from datetime import datetime, timedelta
+
 from engine.types import Method, Readiness, SessionSummary, SubjectKind
 
 HALF_LIFE_DAYS = 7.0  # TUNE: a week-old session counts half
@@ -8,10 +10,10 @@ UNDERSTANDING_METHODS: tuple[Method, ...] = ("FEYNMAN", "ACTIVE_RECALL")
 STALE_DAYS = 14
 
 
-def _estimate(sessions: list[SessionSummary], latest) -> float | None:
+def _estimate(sessions: list[SessionSummary], latest: datetime) -> float | None:
     if not sessions:
         return None
-    weights = [0.5 ** ((latest - s.ts).total_seconds() / 86400 / HALF_LIFE_DAYS) for s in sessions]
+    weights = [0.5 ** ((latest - s.ts) / timedelta(days=1) / HALF_LIFE_DAYS) for s in sessions]
     mean = sum(w * s.probe_score for w, s in zip(weights, sessions)) / sum(weights)
     n = len(sessions)
     return round(0.5 + (mean - 0.5) * n / (n + SHRINK_K), 3)

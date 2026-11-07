@@ -41,6 +41,7 @@ TECHNIQUES: tuple[Technique, ...] = (
 
 METHOD_TECHNIQUE: dict[Method, Technique] = {m: t for t in TECHNIQUES for m in t.methods}
 
+
 class ShortBlocks(BaseModel):
     session_minutes: int = 10  # TUNE
     fixed_blocks: bool = True

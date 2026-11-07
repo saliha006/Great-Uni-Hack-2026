@@ -5,7 +5,7 @@ Any LLM failure or out-of-policy output falls back to a templated explanation; r
 import json
 
 from engine.diagnose import diagnose
-from engine.methodfit import prior_stats
+from engine.methodfit import posterior_mean, with_priors
 from engine.types import (
     LIVE_METHODS,
     LLM,
@@ -16,6 +16,7 @@ from engine.types import (
     MethodStats,
     Plan,
     Reflection,
+    ReflectionTrigger,
     SessionSummary,
     SubjectCtx,
 )
@@ -38,16 +39,9 @@ SCHEMA = {
 }
 
 
-def _label(method: Method) -> str:
-    return METHOD_LABELS[method]
-
-
 def _second_best(stats: dict[Method, MethodStats], current: Method) -> Method:
-    def mean(m: Method) -> float:
-        s = stats.get(m) or prior_stats(m)
-        return s.alpha / (s.alpha + s.beta)
-
-    return max((m for m in LIVE_METHODS if m != current), key=mean)
+    posterior = with_priors(stats)
+    return max((m for m in LIVE_METHODS if m != current), key=lambda m: posterior_mean(posterior[m]))
 
 
 def decide(found: Diagnosis, plan: Plan, stats: dict[Method, MethodStats]) -> Decision:
@@ -68,17 +62,17 @@ def template(found: Diagnosis, decision: Decision, plan: Plan) -> str:
     ev = found.evidence
     if ev.get("insufficient_data"):
         return "Not enough sessions yet to spot a pattern, so the plan stays as it is for now."
-    days, method = ev.get("days", 0), _label(plan.method)
-    focus = round(100 * (1 - ev.get("median_not_focused", 0)))
+    days, method = ev["days"], METHOD_LABELS[plan.method]
+    focus = round(100 * (1 - ev["median_not_focused"]))
     texts = {
-        "MASTERED": f"Your {method} scores have held at {ev.get('mean_probe', 0):.0%} over {days} days. "
+        "MASTERED": f"Your {method} scores have held at {ev['mean_probe']:.0%} over {days} days. "
                     "That's mastery, so the next sessions get harder.",
-        "LOW_ENGAGEMENT": f"You've had {ev.get('sessions_last_7d', 0)} sessions in the last week. "
+        "LOW_ENGAGEMENT": f"You've had {ev['sessions_last_7d']} sessions in the last week. "
                           f"Let's restart gently with {decision.session_minutes}-minute sessions on {method}.",
         "FATIGUE": f"Over {days} days your focus slipped to about {focus}% while scores held, which looks like "
                    f"tiredness, not the method. Sessions drop to {decision.session_minutes} minutes; {method} stays.",
         "PLATEAU": f"Your focus was steady (about {focus}%) but {method} scores stayed flat for {days} days. "
-                   f"Let's try {_label(decision.method or plan.method)} for {decision.trial_days} days and compare.",
+                   f"Let's try {METHOD_LABELS[decision.method or plan.method]} for {decision.trial_days} days and compare.",
         "ON_TRACK": f"Your {method} scores are moving the right way over {days} days, so the plan stays.",
     }
     return texts[found.name]
@@ -103,7 +97,7 @@ def reflect(
     history: list[SessionSummary],
     stats: dict[Method, MethodStats],
     plan: Plan,
-    trigger: str,
+    trigger: ReflectionTrigger,
     llm: LLM,
 ) -> Reflection:
     found = diagnose(history, plan)
