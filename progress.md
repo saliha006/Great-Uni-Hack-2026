@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:45 | @saliha | @all | 🔀 scope proposal | **Post-freeze proposals from research pass 2** are at the top of each brief, marked *Proposed*: backend security (dev routes gated, rate-limit scopes left unlimited, size limits), quote-grounded LLM output, answer-seeking detection with gradual easing and ramp-back, steadier method selection, ElevenLabs Sam settings. Reply yes/no per block. Items marked ⚖️ change the PRD §11 contract (hint event, 429s, dev token, field limits, leading-method field) and need all three of you. Nothing starts until you agree | 2026-11-07 16:45 |
 | 2026-11-07 15:52 | @yehor | @saliha @maxym | ⚠️ conflict | Attention fix (`add9ff4`): `scripts/attention_burst.py` on the 45 s demo recall items now goes FOCUSED ×8 → **LAPSED at answer 9 → `BREAK`** (was answer 11). It skips DRIFTING/EASIER because the burst is ~3.5× expected; for an EASIER beat first, use a milder burst (~2× expected, e.g. 90 s answers). New for `reading_support`: `engine.readability.needs_simplification(text)` and `flesch_kincaid_grade(text)` (optional to wire) | 2026-11-07 15:52 |
 | 2026-11-07 15:30 | @yehor | @saliha | ⚠️ conflict | For S4 (`dc7d0d9`): build `SubjectState.method_stats` with `engine.methodfit.stat_view(method, stats)` (mean + 90% interval); after seeding Ada set `method_stats` from `engine.methodfit.stats_from_history(sessions)` so stats match the rows; pin the demo epoch **after 2026-11-06 18:00** (Ada's last seeded session). Optional: `[tool.ruff] src = ["."]` in `backend/pyproject.toml` so ruff groups imports the same from any folder | 2026-11-07 15:30 |
 | 2026-11-07 15:30 | @saliha | @maxym | 📨 waiting on | Contract notes for the frontend: MCQ `answer` = the option text; `finish` never fails (no transcript = 0 coverage); `/voice/signed-url` is minted on the Start click and returns `502 {detail:"voice_unavailable"}` → switch to typed Feynman (one explanation turn); `context.key_points` is a string list, join it for `dynamicVariables`. Also: push your Vite scaffold so the Insights page (my path) can go in, and say who installs `recharts` | 2026-11-07 15:30 |
@@ -78,6 +79,18 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:45 — scope — Post-freeze proposals from a second research pass — @saliha
+- **Where:** `context` (all three briefs, *Proposed* blocks) · merged to `main`: yes (`progress.md`)
+- **Did:** Four research passes (LLM models + voice, method selection, adaptive attention, backend security), ledgers in
+  Saliha's local research doc. Proposals per owner, pre-demo vs post-hackathon. New rule from Saliha: the LLM only
+  summarises/explains/generates/grades from given text and quotes its source for every claim.
+- **Touched:** `docs/builders/{SALIHA,YEHOR,MAXYM}_BUILDER.md`
+- **Brief task:** none (proposals)
+- **⚠️ Conflicts:** @yehor @maxym: new *Proposed* block at the top of your brief; your current tasks are untouched
+- **📨 Needs:** @yehor @maxym: yes/no on the 16:45 row
+- **Agreed by:** @saliha (team pending)
+- **Status:** open
 
 ### 2026-11-07 15:53 — feat — Sudden-drop (CUSUM) check in diagnosis — @yehor
 - **Where:** `yehor-ml-data-yd` (Codex) → `yehor-ml-data` @ `13e5fe3` · merged to `main`: yes
