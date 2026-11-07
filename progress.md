@@ -85,6 +85,18 @@ whenever you log an entry.
 
 ## Log (newest first)
 
+### 2026-11-07 16:20 — feat — Quote-grounded question generation and per-job model settings (P2) — @saliha
+- **Where:** `sali-backend` · merged to `main`: yes
+- **Did:** Generated key points and questions must quote the passage word for word; ungrounded items and MCQs with a
+  bad key are dropped, gaps filled from the passage. Generation on `gpt-6.1-terra` (effort medium, 4000 tokens),
+  grading + Feynman on `gpt-6-luna` (low, 1000), engine reflections low effort; refusals are errors. Live check: luna
+  graded correctly, terra's bank kept all 14 items (each with a real quote); ~2.3k tokens. 221 tests pass.
+- **Touched:** `backend/app/{llm.py,flow.py}`, `backend/tests/app/{test_flow.py,test_llm.py}`
+- **Brief task:** P2 → ✅
+- **⚠️ Conflicts:** @yehor: `EngineLLM` now asks for low effort on reflections; your `reflect` contract is unchanged
+- **📨 Needs:** none
+- **Status:** open
+
 ### 2026-11-07 16:08 — feat — Dev panel, progress grid and questions inbox (M4) — @maxym
 - **Where:** `maxym-frontend` @ `96a055b` · merged to `main`: yes
 - **Did:** `/dev`: seed demo persona, advance N days, force reflection per subject, reset, `/dev/usage` totals, "simulate drift" (mock only), "Demo data" badge in the header whenever seeded history exists. Reflection card (diagnosis chip + explanation + decision) on Home and Result. `/progress`: GitHub-style day grid from `insights.method_series` + local tasks (frogs eaten, questions answered), no streaks; territory bar per subject. `/questions`: inbox for questions parked with Q. Passed on `main`'s real API (reset → seed → advance 7 → plateau reflection).
