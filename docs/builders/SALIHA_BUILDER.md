@@ -36,6 +36,19 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 
 ## ▶ Current tasks (in order)
 
+**▶ Updated 2026-11-07 15:30: final design after the design review (all recommendations accepted by Saliha)**
+Build in demo-beat order; fixtures/templates stay the safe default; live LLM only for short-answer grading, Feynman grading and reflection narration. Detail: `Research-Context/design-review/04-final.md` (local).
+1. **S0 harden:** catch-all JSON 500 inside CORS, localhost origin regex, run with `--env-file ../.env`; `/voice/signed-url` real (8 s timeout, `502 voice_unavailable`, minted on Start, key never in the browser).
+2. **S2a `app/llm.py`:** live/cache/fixtures, file cache outside the DB, usage counters, hard cap of 60 live calls, `max_retries=0` + one counted retry, strict JSON schema, empty or `incomplete` output = error, no "temp 0" claim. `for_engine()` returns `{}` on failure (engine falls back to its template). New dep: `openai` (pinned).
+3. **S1 + S3 thin slice:** paste-only material (PDF/Firecrawl/Lovable cut), reject under 50 words. Demo subject reads the committed `app/demo_bank.json` (no spend). Probe = 3 MCQ + 2 short; MCQ exact; short answers 0/0.5/1 in one batched call with a heuristic fallback; probe idempotent (`UPDATE ... WHERE probe_score IS NULL`); reflection inside probe is template-only. Naive UTC everywhere.
+4. **S2c/S2d Feynman:** score = covered key points / total, computed in code, quoting the student's sentence; client transcript trusted and disclosed; finish never 409s; typed fallback = one explanation turn.
+5. **S3 events:** all session events to `score_attention`; engine exception → FOCUSED/NONE. Attention-burst script for the 0:55 beat.
+6. **S4:** insights computed on read; clock = fixed demo epoch + offset (pinned on reset); seed Ada; advance-days runs one WEEKLY reflect + trial check; seeded labels prefixed `[Demo data]`.
+7. **S5 Insights page:** waits on Maxym's frontend scaffold; Demo-data banner + early-read badge first.
+8. **S6 README:** ≤5 run commands + honest limits (seeded data, LLM grading, privacy, non-medical).
+
+**── Original plan (kept for reference; the block above wins where they differ) ──**
+
 **S0 · 14:15–14:40 · Repo + stub API** *(Codex does most of this)*
 - ~~Create the repo~~ *(done 14:25: `saliha006/Great-Uni-Hack-2026`; `main`, `context` (docs) and role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` exist; `.gitignore` covers `.env`, `*.db` and every `.md` except `progress.md`/`README.md`)*. Make sure **Maxym and every teammate are collaborators now** (don't leave it for 17:45). Code layout per PRD §9 on `sali-backend`; `.env.example` per PRD §12 (names only, no values). Docs are not committed to code branches: they live on `context` (CLAUDE.md 📤).
 - `backend/app`: FastAPI + SQLModel + SQLite, CORS for `http://localhost:5173`, Pydantic schemas **identical to PRD §11**, **all 16 endpoint groups returning hard-coded fixtures** (`app/fixtures.py`). `/openapi.json` live.

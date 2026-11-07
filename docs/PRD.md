@@ -17,6 +17,8 @@
 - §11 API contract is **locked from 14:45**; changes need all three and go under "Contract changes" (bottom).
 - Cross-person requests: 📨 row on the `progress.md` Open board. Agent failover notes: `docs/handoff/<NAME>.md`.
 
+- **Backend design (Saliha, 15:30):** demo subject runs on a committed hand-reviewed question bank; live LLM only for grading + reflection narration; fixtures/templates are the fallback; PDF, Firecrawl and Lovable cut; seeded rows labelled `[Demo data]` (no contract change); Feynman score = covered key points / total.
+
 **Pending** (not decided): §19 open questions · doc owner (assumed Saliha) · team name · Maxym/Yehor GitHub handles.
 
 **Active tasks:** Phase 0 (14:15–14:40, §17): Saliha S0 collaborators + stub API (repo done) · Yehor Y0/Y0b types + stubs · Maxym M0 scaffold + ElevenLabs agent.
