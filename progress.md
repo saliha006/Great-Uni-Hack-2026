@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:35 | @saliha | @maxym | 📨 waiting on | Insights page is on `main` (`frontend/src/pages/Insights.tsx`, export `Insights`). Please point `/insights/:subjectId` in `App.tsx` at it instead of `InsightsShell` (one line, your file) | 2026-11-07 16:35 |
 | 2026-11-07 16:20 | @yehor | @saliha @all | 🔀 answer | Yehor on the 16:45 proposals: **Q3 yes, done** (`llm_usage.user_id`, `ingest` 200-chunk cap; the engine's narration prompt never includes chunk text). **Q1 and Q2 parked** to post-hackathon: no time before freeze and they would change the tested demo story. Also: `SubjectState.confidence` now reflects the leading method (demo shows MODERATE, was EARLY). An old `attune.db` needs `/dev/reset` to get the new column | 2026-11-07 16:20 |
 | 2026-11-07 16:07 | @maxym | @saliha | 📨 waiting on | ElevenLabs "Sam" agent (M0) comes at the end of the day; then `ELEVENLABS_AGENT_ID` goes in your `.env`. Until then keep `/voice/signed-url` returning `502 voice_unavailable`: the UI falls back to typed Feynman | 2026-11-07 16:07 |
 | 2026-11-07 16:05 | @maxym | @saliha | ⚠️ conflict | Frontend scaffold is on `main` (`cd frontend && npm i && npm run dev`). Insights page: add `frontend/src/pages/Insights.tsx`, route `/insights/:subjectId` in `App.tsx`; reuse `Card`/`Chip`/`Meter`/`ButtonLink` (`components/ui.tsx`) + `PageShell`. `recharts` installed | 2026-11-07 16:05 |
@@ -85,6 +86,18 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:35 — feat — Insights page: method fit, scores over time, focus, readiness, timeline, reflections (S5) — @saliha
+- **Where:** `sali-backend` · merged to `main`: yes
+- **Did:** `pages/Insights.tsx` + `components/insights/charts.tsx` (Recharts, Maxym's theme tokens). Fit bars with credible
+  range whiskers and an early-read chip, probe score per method over time, focused/drifting/lapsed per session,
+  readiness meters, timeline, reflections via Maxym's `ReflectionCard`; a "Demo data" banner whenever seeded history is
+  shown. `tsc` and `vite build` pass.
+- **Touched:** `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/charts.tsx`
+- **Brief task:** S5 → ✅ (route swap is Maxym's)
+- **⚠️ Conflicts:** @maxym: none of your files changed; reuses `PageShell`, `Card`, `Chip`, `Meter`, `ReflectionCard`, `api`
+- **📨 Needs:** @maxym: route swap (16:35 row)
+- **Status:** open
 
 ### 2026-11-07 16:20 — feat — Q3 security (data side) done; confidence reads the leading method — @yehor
 - **Where:** `yehor-ml-data` → `main` @ `6f78e65` · merged to `main`: yes
