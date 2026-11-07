@@ -113,18 +113,53 @@ def test_voice_without_keys_is_502_voice_unavailable(client):
     assert r.status_code == 502 and r.json()["detail"] == "voice_unavailable"
 
 
-def test_seed_then_advance_runs_the_plateau_story(client):
-    sid = client.post("/api/dev/seed").json()["subject_ids"][0]
-    first = client.post("/api/dev/advance-days", json={"days": 7}).json()
-    assert [r["diagnosis"] for r in first["reflections"]] == ["PLATEAU"]
-    assert first["reflections"][0]["explanation"].startswith(flow.DEMO_LABEL)
-    assert client.get(f"/api/subjects/{sid}/state").json()["plan"]["mode"] == "TRIAL"
-    client.post("/api/dev/advance-days", json={"days": 7})
+def _story(client, persona):
+    sid = client.post("/api/dev/seed", json={"persona": persona}).json()["subject_ids"][0]
+    refs = sorted(client.get(f"/api/subjects/{sid}/reflections").json(), key=lambda r: r["ts"])
+    return sid, refs
+
+
+def test_recalibrations_come_every_7_to_9_days(client):
+    from datetime import datetime
+    from itertools import pairwise
+    _, refs = _story(client, "steady")
+    days = [datetime.fromisoformat(r["ts"]) for r in refs]
+    assert len(refs) == 5 and all(7 <= (b - a).days <= 9 for a, b in pairwise(days))
+    assert all(r["explanation"].startswith(flow.DEMO_LABEL) for r in refs)
+
+
+def test_breakthrough_student_improves_after_each_recalibration(client):
+    sid, refs = _story(client, "breakthrough")
+    means = [r["evidence"]["mean_probe"] for r in refs]
+    assert means == sorted(means) and means[-1] - means[0] > 0.3
+    assert [r["diagnosis"] for r in refs][:-1] == ["PLATEAU"] * 4 and refs[-1]["diagnosis"] == "MASTERED"
     insights = client.get(f"/api/subjects/{sid}/insights").json()
     kinds = {e["kind"] for e in insights["timeline"]}
     assert {"SAMPLER_DONE", "RECALIBRATION", "TRIAL_START"} <= kinds
-    assert insights["method_series"] and insights["attention_by_session"]
-    assert len(client.get(f"/api/subjects/{sid}/reflections").json()) == 2
+
+
+def test_steady_student_performs_about_the_same_each_time(client):
+    _, refs = _story(client, "steady")
+    means = [r["evidence"]["mean_probe"] for r in refs]
+    assert max(means) - min(means) < 0.03
+
+
+def test_bursts_student_alternates_fatigue_and_recovery(client):
+    _, refs = _story(client, "bursts")
+    assert [r["diagnosis"] for r in refs][:4] == ["FATIGUE", "ON_TRACK", "FATIGUE", "ON_TRACK"]
+    assert refs[0]["decision"]["action"] == "SHORTEN_SESSIONS"
+
+
+def test_advance_continues_the_same_student(client):
+    sid, refs = _story(client, "breakthrough")
+    out = client.post("/api/dev/advance-days", json={"days": 8}).json()
+    assert len(out["reflections"]) == 1
+    assert len(client.get(f"/api/subjects/{sid}/reflections").json()) == len(refs) + 1
+
+
+def test_unknown_persona_is_rejected(client):
+    assert client.post("/api/dev/seed", json={"persona": "nobody"}).status_code == 422
+    assert [p["key"] for p in client.get("/api/dev/personas").json()] == ["steady", "breakthrough", "bursts"]
 
 
 def test_reset_clears_everything(client):

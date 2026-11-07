@@ -128,6 +128,10 @@ def _real_routes() -> APIRouter:
     def ask(subject_id: int, body: s.AskBody, ses: Session = DB):
         return tutor.ask(ses, subject_id, body)
 
+    @api.post("/subjects/{subject_id}/study-set", response_model=s.StudySet, dependencies=[Depends(limit("ask"))])
+    def study_set(subject_id: int, body: s.StudySetBody, ses: Session = DB):
+        return tutor.study_set(ses, subject_id, body)
+
     @api.post("/subjects/{subject_id}/quiz-answer", response_model=s.AnswerResult,
               dependencies=[Depends(limit("answer"))])
     def quiz_answer(subject_id: int, body: s.QuizAnswerBody, ses: Session = DB):
@@ -144,8 +148,12 @@ def _dev_routes() -> APIRouter:
     dev = APIRouter(prefix="/api/dev", dependencies=[Depends(require_dev_token), Depends(limit("dev"))])
 
     @dev.post("/seed")
-    def dev_seed(ses: Session = DB) -> dict:
-        return flow.seed(ses)
+    def dev_seed(body: s.SeedBody | None = None, ses: Session = DB) -> dict:
+        return flow.seed(ses, body.persona if body else flow.DEFAULT_PERSONA)
+
+    @dev.get("/personas")
+    def dev_personas() -> list[dict]:
+        return flow.persona_list()
 
     @dev.post("/advance-days", response_model=s.AdvanceDaysResult)
     def dev_advance_days(body: s.AdvanceDaysBody, ses: Session = DB):

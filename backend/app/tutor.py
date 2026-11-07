@@ -164,3 +164,44 @@ def quiz_answer(ses: Session, subject_id: int, body: s.QuizAnswerBody) -> s.Answ
                                   guard._source(chunk), [(a, "ATTEMPT") for a in body.previous], body.answer,
                                   body.latency_ms)
     return result
+
+
+PAPER_SECTIONS = (("mcq", "A · Multiple choice", 1, "MCQ"), ("short", "B · Short answer", 2, "SHORT_ANSWER"),
+                  ("recall", "C · Explain", 3, "RECALL_PROMPT"))
+
+
+def study_set(ses: Session, subject_id: int, body: s.StudySetBody) -> s.StudySet:
+    """Quizzes, flashcards and practice papers built from the practice banks only (never the probe), each item
+    showing the sentence in the notes it rests on."""
+    subject = flow._get(ses, db.SubjectRow, subject_id, "subject")
+    chunks = flow._chunks(ses, subject_id)
+    if not chunks:
+        raise HTTPException(409, "add material to this subject first")
+    banks = [(c, flow.chunk_bank(c.text)) for c in chunks]
+
+    def item(chunk: db.ChunkRow, part: str, n: int, q: dict, kind: str, **extra) -> s.StudyItem:
+        quote = q.get("quote") or guard.pick_sentence(chunk.text, q["prompt"], q["answer"])[0] or None
+        return s.StudyItem(qid=f"{chunk.id}:{part}:{n}", kind=kind, prompt=q["prompt"], options=q.get("options"),
+                           quote=quote, source=guard._source(chunk), **extra)
+
+    if body.kind == "flashcards":
+        cards = [item(c, part, n, q, "FLASHCARD", back=q["answer"])
+                 for c, bank in banks for part in ("recall", "short") for n, q in enumerate(bank.get(part, []))]
+        cards = cards[:body.count or len(cards)]
+        return s.StudySet(kind="flashcards", title=f"{subject.name} flashcards", minutes=max(5, len(cards)),
+                          items=cards)
+    if body.kind == "quiz":
+        pools = [[item(c, part, n, q, KIND[part]) for part in ("mcq", "short") for n, q in enumerate(bank.get(part, []))]
+                 for c, bank in banks]
+        quiz = []
+        # Round-robin across chunks so a short quiz still covers all of the material.
+        while any(pools) and len(quiz) < (body.count or 8):
+            for pool in pools:
+                if pool and len(quiz) < (body.count or 8):
+                    quiz.append(pool.pop(0))
+        return s.StudySet(kind="quiz", title=f"{subject.name} quiz", minutes=2 * len(quiz), items=quiz)
+    paper = [item(c, part, n, q, kind, marks=marks, section=section)
+             for part, section, marks, kind in PAPER_SECTIONS
+             for c, bank in banks for n, q in enumerate(bank.get(part, [])[:2 if part != "recall" else 1])]
+    return s.StudySet(kind="paper", title=f"{subject.name} practice paper",
+                      minutes=sum(2 * (i.marks or 1) for i in paper), items=paper)
