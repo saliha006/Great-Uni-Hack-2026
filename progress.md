@@ -82,13 +82,22 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
-- **frontend (2026-11-07 16:56):** `main` @ `40f8f22`: dashboard at `/`, Study at `/study`, Insights page wired; semester grid on the dashboard as a GitHub-style grid, hours heatmap and glass cards
+- **frontend (2026-11-07 16:55):** `main` @ `ab2e88e`: dashboard at `/`, Study at `/study`, Insights page wired; semester grid on the dashboard as a GitHub-style grid, weekly bar chart and glass cards
 - **frontend (2026-11-07 16:09):** on `main` @ `7093149`: M1–M4 + Feynman typed fallback; run `cd frontend && npm i && npm run dev` (mock API) or `VITE_API_URL=http://127.0.0.1:8000 npm run dev` (real API, CORS allows :5173). `npm run build` = typecheck + contract check vs `schema.d.ts`. Live voice waits on the ElevenLabs agent
 - **`main` (2026-11-07 16:25):** real backend (all §11 routes on SQLite + engine), 174 tests pass, `LLM_MODE=cache` default; OPENAI_MODEL_FAST/SMART still unset (live grading falls back to word overlap); Insights page waits on the frontend scaffold
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:55 — feat — Weekly bar chart is back on the dashboard; hours heatmap removed — @maxym
+- **Where:** `maxym-frontend` @ `ab2e88e` · merged to `main`: yes
+- **Did:** The Time and effort card shows the earlier 7-day bars again (estimated focus minutes and small wins per day, legend, reflection note) instead of the hours heatmap. `HoursHeatmap.tsx` deleted; it stays in history at `f2b2c4b` if we want it back. The log entry just below about the heatmap is superseded by this one.
+- **Touched:** `frontend/src/pages/Dashboard.tsx`, `frontend/src/components/HoursHeatmap.tsx` (deleted)
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:56 — feat — Frosted-glass cards and soft backdrop on the dashboard — @maxym
 - **Where:** `maxym-frontend` @ `40f8f22` · merged to `main`: yes
