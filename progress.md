@@ -79,6 +79,14 @@ whenever you log an entry.
 
 ## Log (newest first)
 
+### 2026-11-07 15:53 — feat — Sudden-drop (CUSUM) check in diagnosis — @yehor
+- **Where:** `yehor-ml-data-yd` (Codex) → `yehor-ml-data` @ `13e5fe3` · merged to `main`: yes
+- **Did:** PRD §8.4 CUSUM: a collapse over the last 3 sessions vs the earlier mean reads PLATEAU before the slope turns (slack 0.025, threshold 0.15, TUNE). Evidence gains `sudden_drop`; the templated reflection says "dropped suddenly" instead of "stayed flat". Codex wrote it (ran `no-slop`, `debug`); Claude's `no-slop` review fixed the reflection wording. Ada/Ben stories unchanged. 201 tests pass.
+- **Touched:** `backend/engine/diagnose.py`, `backend/engine/agent.py`, `backend/tests/engine/**`
+- **Brief task:** Y5 → 🟡 part
+- **⚠️ Conflicts:** @saliha: reflection `evidence` has one new key, `sudden_drop` (bool); nothing to change unless you render evidence keys.
+- **📨 Needs:** none
+
 ### 2026-11-07 15:52 — fix — Demo attention burst detected 2 answers sooner; readability helpers — @yehor
 - **Where:** `yehor-ml-data` @ `2b3e5f6` · merged to `main`: yes
 - **Did:** `debug` skill on Saliha's burst script replayed through the engine: MAD spread stayed 0 until 4 of 8 answers were erratic, so the burst only flipped at answer 11. Spread is now a trimmed CV (drop fastest + slowest): one slow answer still ignored, two noticed; burst → LAPSED/BREAK at answer 9. Two regression tests failed before, pass after. Added `engine/readability.py` (Flesch–Kincaid grade, `needs_simplification`); CEFR pre-teach not done (needs a licensed word list). `no-slop` on both. 192 tests pass.
