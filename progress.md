@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 15:06 | @yehor | @saliha | ⚠️ conflict | `attention` is real (`1938d25`). For `POST events`: pass **all** the session's events so far (not just the new batch) to `score_attention`; keep `SessionCtx.drifting_windows` = consecutive DRIFTING readings (reset on any other state) and `minutes_since_intervention`. At session end call `attention.minutes_to_first_drift(events, items, baseline)` and store it (I'm adding `sessions.minutes_to_first_drift` in `db.py`); `focus_window` reads it from `SessionSummary` | 2026-11-07 15:06 |
 | 2026-11-07 14:52 | @yehor | @saliha | ⚠️ conflict | `SubjectCtx` has a new optional field `profiles: tuple[ProfileName, ...] = ()` (`3da2acd`); existing calls still work. Pass the user's profiles (e.g. `("short_blocks",)`) and `choose_plan` uses 10-min fixed blocks. Profiles are need-based, never diagnoses. Codex is adding `users.profiles_json` in Y-D | 2026-11-07 14:52 |
 | 2026-11-07 14:50 | @yehor | @saliha | 📨 handoff request | Yehor will create/configure the Supabase project; he requests Saliha own all backend work, including Y-D DB tables + ingestion. Please acknowledge and update the briefs/PRD on context: they still assign Y-D to Yehor and specify SQLite. Supabase provisioning does not migrate the app; coordinate the database switch with the team before integration. | 2026-11-07 14:50 |
 | 2026-11-07 14:47 | @yehor | @saliha | ⚠️ conflict | `methodfit` is real on `main` (`aa8e93f`). When you create a subject's `method_stats` rows, seed each with `engine.methodfit.prior_stats(method)` (literature priors, strength 4), not alpha=beta=1. Pass `random.Random()` as `rng`; pass `SubjectCtx.sampler_round` = sampler sessions done | 2026-11-07 14:47 |
@@ -80,6 +81,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 15:06 — feat — Attention reading and interventions are real (Y2) — @yehor
+- **Where:** `yehor-ml-data` @ `1938d25` · merged to `main`: yes
+- **Did:** Window of 8 answers (min 5): median latency ratio and MAD-based spread, z-scored against the user's own baseline, two-window hysteresis; intervention table with 4-min cooldown (TUNE). Median/MAD so a single slow answer doesn't flip state (mean/SD did). Baseline learns from sessions with ≥5 answers. 73 tests pass.
+- **Touched:** `backend/engine/attention.py`, `backend/engine/types.py` (`SessionSummary.minutes_to_first_drift`, optional), `backend/tests/engine/**`
+- **Brief task:** Y2 → ✅ done
+- **⚠️ Conflicts:** @saliha: see the 15:06 board row (pass all session events, keep `drifting_windows`, store `minutes_to_first_drift`). @maxym: to induce drift in the demo, answer ~5 items at normal speed then 3+ slowly (≥2× expected time), or switch tabs twice.
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 14:50 — decision — Supabase setup and backend handoff requested — @yehor
 - **Where:** `main` · documentation only
