@@ -56,3 +56,15 @@ Reviewed `frontend/src` against the frontend-design skill, ranked by impact on t
 5. **Quieter session header.** "Do Not Disturb: off (simulated)" (`FocusBar.tsx:62-65`) takes prime space next to the timer on every session shot. Move it into "Focus settings".
 6. **Friendlier attention words.** "Lapsed" (`FocusBar.tsx:50`) sounds clinical next to our non-medical pitch; "Needs a break" says what the user should do.
 7. **Palette note (after the hackathon):** cream background + slate + terracotta-orange hover is one of the defaults generated UIs cluster around. Not worth re-theming today.
+
+## Pitch scripts (2:00 + 1:00 Q&A), draft 16:57, edit freely
+**0:00–0:30 · Saliha, intro.** "Every student is told to 'just study smarter', but nobody tells you *which* method works for *you*. Flashcards for one person, explaining out loud for another. And if your focus comes in bursts, a fixed 25-minute timer just doesn't fit. Attune tries three proven study methods on your own notes, measures which one teaches you the most per minute, adapts each session to your attention, and when you stall, works out why."
+
+**0:30–1:30 · Maxym, live demo** (reset + seed before going on stage; recorded video as backup)
+- 0:30 session (20 s): start a session from the dashboard, answer a couple of questions, switch tabs twice → attention chip changes and Attune offers an easier question. "It's watching my pace against my own baseline, not a fixed timer."
+- 0:50 Insights (15 s): `/insights/1`. "After three calibration rounds it knows Practice Test teaches this student the most per minute."
+- 1:05 the loop (25 s): `/dev` → advance 7 days, **say "this is seeded demo data"** → reflection card. "Scores went flat but focus was fine, so this is a plateau, not tiredness. Attune starts a one-week Feynman trial and only keeps it if scores actually rise."
+
+**1:30–2:00 · Yehor, outro.** "We built Attune so it can't fool you. The AI never makes decisions. Language models hallucinate, so every plan change comes from transparent rules over your own data, and the model only explains it. If its explanation goes off-script, we throw it away and show a template instead. Every method is judged on the same quiz. Demo data is labelled. And Attune isn't a medical tool. It doesn't diagnose anything; it checks itself. Attune: learn how you learn, and keep checking."
+
+**Q&A prep (1:00):** Why not let the LLM decide? (hallucination; rules + validator; LLM only grades short answers and narrates) · Is attention tracking a diagnosis? (no: answer timing vs your own baseline, attention-aware, not medical) · How do you know the method works? (same 5-question probe after every session; trial adopted only if scores rise ≥0.05) · What's seeded? (Ada's 3-week history; labelled "Demo data") · What's next? (delayed retention probe, real-exam validation, live voice tutor).
