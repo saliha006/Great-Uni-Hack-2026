@@ -3,33 +3,34 @@ import { ConversationProvider, useConversation } from '@elevenlabs/react'
 import { useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../../api/client'
 import type { EventType, FeynmanResult, FeynmanTurn, Item, SessionEvent, VoiceContext } from '../../api/types'
-import { Button, Card, ErrorBox, Spinner } from '../ui'
+import { Button, Card, ErrorBox } from '../ui'
+import { VoiceOrb, type OrbState } from '../VoiceOrb'
 
 type Emit = (type: EventType, extra?: Partial<SessionEvent>) => void
 
 export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; item: Item; emit: Emit; onDone: (r: FeynmanResult) => void }) {
   const [ctx, setCtx] = useState<{ signed: string; context: VoiceContext } | null>(null)
-  const [mode, setMode] = useState<'intro' | 'connecting' | 'voice' | 'typed'>('intro')
+  const [mode, setMode] = useState<'voice' | 'typed'>('voice')
   const [voiceNote, setVoiceNote] = useState<string | null>(null)
   const [turns, setTurns] = useState<FeynmanTurn[]>([])
   const [grading, setGrading] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [result, setResult] = useState<FeynmanResult | null>(null)
 
-  // Backend contract (Saliha, 15:30): the signed URL is minted on the Start click; 502
-  // voice_unavailable (or no URL, as in the mock) means typed Feynman with one explanation turn.
-  const startVoice = async () => {
-    setMode('connecting')
-    try {
-      const r = await api.signedUrl(sessionId)
+  // The signed URL is fetched as the screen opens (it stays valid for minutes), so one tap on the orb can start
+  // the microphone and the conversation inside the same click. 502 voice_unavailable means typed Feynman.
+  useEffect(() => {
+    let live = true
+    api.signedUrl(sessionId).then((r) => {
       if (!r.signed_url) throw new ApiError('voice_unavailable', 502)
-      setCtx({ signed: r.signed_url, context: r.context })
-      setMode('voice')
-    } catch (e) {
+      if (live) setCtx({ signed: r.signed_url, context: r.context })
+    }).catch((e) => {
+      if (!live) return
       setVoiceNote(e instanceof ApiError && e.status === 502 ? "Voice isn't available right now, so type your explanation instead." : "Couldn't connect to voice, so type your explanation instead.")
       setMode('typed')
-    }
-  }
+    })
+    return () => { live = false }
+  }, [sessionId])
 
   const addTurn = (t: FeynmanTurn) => {
     setTurns((ts) => [...ts, t])
@@ -76,24 +77,17 @@ export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; 
       <p className="text-sm text-muted">Feynman · teach it back</p>
       <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{item.prompt}</h2>
 
-      {mode === 'intro' && (
-        <Card className="mt-5 max-w-2xl">
-          <h3 className="text-lg font-bold">Talk or type?</h3>
-          <p className="mt-2">
-            Voice mode uses your microphone. Your browser will ask for permission, and audio goes to ElevenLabs only while you talk to Sam. Typing works the same way and is scored the same way.
+      {mode === 'voice' && (
+        <>
+          <p className="mt-3 max-w-2xl text-muted">
+            Explain it out loud to Sam, a curious student who knows nothing about it. Sam asks questions but never explains,
+            so you find your own gaps. Audio goes to ElevenLabs only while you talk.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button variant="primary" onClick={startVoice}>Talk to Sam</Button>
-            <Button onClick={() => setMode('typed')}>Type instead</Button>
-          </div>
-        </Card>
-      )}
-
-      {mode === 'connecting' && <Spinner label="Connecting to Sam" />}
-      {mode === 'voice' && ctx && (
-        <ConversationProvider>
-          <VoiceChat signedUrl={ctx.signed} context={ctx.context} onTurn={addTurn} onFail={() => { setVoiceNote('Voice dropped, so type your explanation instead.'); setMode('typed') }} />
-        </ConversationProvider>
+          <ConversationProvider>
+            <VoiceChat ctx={ctx} onTurn={addTurn} onFail={() => { setVoiceNote('Voice dropped, so type your explanation instead.'); setMode('typed') }} />
+          </ConversationProvider>
+          <div className="mt-2 text-center"><Button variant="ghost" size="sm" onClick={() => setMode('typed')}>Type instead</Button></div>
+        </>
       )}
       {mode === 'typed' && <TypedExplanation note={voiceNote} sent={turns.some((t) => t.role === 'user')} onTurn={addTurn} />}
 
@@ -114,44 +108,43 @@ export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; 
   )
 }
 
-function VoiceChat({ signedUrl, context, onTurn, onFail }: { signedUrl: string; context: VoiceContext; onTurn: (t: FeynmanTurn) => void; onFail: () => void }) {
+function VoiceChat({ ctx, onTurn, onFail }: { ctx: { signed: string; context: VoiceContext } | null; onTurn: (t: FeynmanTurn) => void; onFail: () => void }) {
   const [failed, setFailed] = useState<string | null>(null)
   const conv = useConversation({
     onMessage: (m) => onTurn({ role: m.role === 'user' ? 'user' : 'agent', text: m.message, ts: new Date().toISOString() }),
     onError: (msg) => setFailed(typeof msg === 'string' ? msg : 'Voice connection failed'),
   })
 
-  const start = async () => {
+  const live = conv.status === 'connected'
+  const toggle = async () => {
+    if (live) {
+      await conv.endSession()
+      return
+    }
+    if (!ctx) return
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
-      conv.startSession({ signedUrl, dynamicVariables: { topic: context.topic, key_points: context.key_points.join('; ') } })
+      await conv.startSession({ signedUrl: ctx.signed, dynamicVariables: { topic: ctx.context.topic, key_points: ctx.context.key_points.join('; ') } })
     } catch {
       setFailed('Microphone access was blocked. You can type instead.')
     }
   }
-  useEffect(() => () => conv.endSession(), []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { void conv.endSession() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const live = conv.status === 'connected'
+  const state: OrbState = conv.status === 'connecting' || (!ctx && !failed) ? 'connecting'
+    : live ? (conv.isSpeaking ? 'speaking' : 'listening') : 'idle'
+  const level = () => (conv.isSpeaking ? conv.getOutputVolume() : conv.getInputVolume())
+
   return (
-    <Card className="mt-5 flex flex-wrap items-center gap-4">
-      {!live ? (
-        <Button variant="primary" onClick={start} disabled={conv.status === 'connecting'}>
-          {conv.status === 'connecting' ? 'Connecting…' : 'Start talking'}
-        </Button>
-      ) : (
-        <>
-          <span className={`size-4 rounded-full ${conv.isSpeaking ? 'animate-pulse bg-accent' : 'bg-ok'}`} aria-hidden />
-          <span className="font-semibold" role="status">{conv.isSpeaking ? 'Sam is talking' : 'Listening to you'}</span>
-          <Button variant="ghost" onClick={() => conv.endSession()}>Hang up</Button>
-        </>
-      )}
+    <div className="mt-6">
+      <VoiceOrb state={state} level={live ? level : undefined} onClick={() => void toggle()} disabled={!ctx} />
       {failed && (
-        <div className="w-full">
+        <Card className="mx-auto mt-4 max-w-lg">
           <ErrorBox error={new Error(failed)} />
           <Button className="mt-2" onClick={onFail}>Type instead</Button>
-        </div>
+        </Card>
       )}
-    </Card>
+    </div>
   )
 }
 

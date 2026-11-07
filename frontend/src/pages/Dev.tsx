@@ -18,11 +18,13 @@ export function Dev() {
   const note = (m: string) => setLog((l) => [`${new Date().toLocaleTimeString()} · ${m}`, ...l].slice(0, 8))
   const refresh = () => qc.invalidateQueries()
 
+  const personas = useQuery({ queryKey: ['personas'], queryFn: api.devPersonas })
+  const [persona, setPersona] = useState('ada')
   const seed = useMutation({
-    mutationFn: api.devSeed,
+    mutationFn: () => api.devSeed(persona),
     onSuccess: (r) => {
       setLocal({ seededFlag: true, resume: null })
-      note(`Seeded demo student (subjects ${r.subject_ids.join(', ')})`)
+      note(`Loaded ${r.name ?? 'demo student'}${r.label ? ` (${r.label})` : ''}: subject ${r.subject_ids.join(', ')}`)
       refresh()
     },
   })
@@ -63,8 +65,16 @@ export function Dev() {
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <Card>
           <h2 className="text-lg font-bold">Demo state</h2>
+          <div className="mt-3 grid gap-2">
+            {(personas.data ?? []).map((p) => (
+              <label key={p.key} className={`flex cursor-pointer items-start gap-2 rounded-(--radius-ctl) border p-2 ${persona === p.key ? 'border-ink bg-sunken' : 'border-line'}`}>
+                <input type="radio" name="persona" checked={persona === p.key} onChange={() => setPersona(p.key)} className="mt-1" />
+                <span><strong>{p.name}</strong> · {p.label}<span className="block text-sm text-muted">{p.blurb}</span></span>
+              </label>
+            ))}
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="primary" onClick={() => seed.mutate()} disabled={seed.isPending}>Seed demo persona</Button>
+            <Button variant="primary" onClick={() => seed.mutate()} disabled={seed.isPending}>Load demo student</Button>
             <Button onClick={() => reset.mutate()} disabled={reset.isPending}>Reset</Button>
           </div>
           <div className="mt-4 flex flex-wrap items-end gap-2">

@@ -13,6 +13,7 @@ import { ItemView } from '../components/session/ItemView'
 import { Probe } from '../components/session/Probe'
 import { QuestionCapture } from '../components/session/QuestionCapture'
 import { Result } from '../components/session/Result'
+import { TutorChat } from '../components/TutorChat'
 import { Button, ButtonLink, Card, ErrorBox, Spinner } from '../components/ui'
 import { useTelemetry } from '../hooks/useTelemetry'
 import { getLocal, logActivity, setLocal, todayKey, useLocal } from '../lib/local'
@@ -235,6 +236,7 @@ function Runner() {
         )}
       </div>
 
+      {phase === 'item' && item?.kind !== 'FEYNMAN_BRIEF' && <TutorChat subjectId={session.subject_id} sessionId={session.id} />}
       {brk && <BreakModal seconds={brk.seconds} message={brk.message} onEnd={() => setBrk(null)} />}
     </PageShell>
   )

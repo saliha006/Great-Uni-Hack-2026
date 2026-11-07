@@ -16,6 +16,8 @@ export function Onboarding() {
   const [kind, setKind] = useState<SubjectKind>('KNOWLEDGE')
   const [exam, setExam] = useState('')
   const [text, setText] = useState('')
+  const [pdf, setPdf] = useState<{ name: string; b64: string } | null>(null)
+  const [pdfNote, setPdfNote] = useState<string | null>(null)
   const [subject, setSubject] = useState<Subject | null>(null)
   const [chunks, setChunks] = useState(0)
   const start = useStartSession()
@@ -31,7 +33,7 @@ export function Onboarding() {
     },
   })
   const material = useMutation({
-    mutationFn: () => api.addMaterial(subject!.id, { title: `${subject!.name} notes`, text }),
+    mutationFn: () => api.addMaterial(subject!.id, { title: pdf?.name ?? `${subject!.name} notes`, text, pdf_base64: pdf?.b64 }),
     onSuccess: (r) => {
       setChunks(r.chunk_count)
       setStep(2)
@@ -41,11 +43,18 @@ export function Onboarding() {
 
   const onFile = async (f: File | undefined) => {
     if (!f) return
-    // Plain text is read here; PDF extraction (pypdf) needs the backend's multipart upload.
+    // Text files are read here; a PDF goes to the backend base64-encoded and is read there with pypdf.
     if (f.type === 'application/pdf') {
-      alert(usingMock ? 'PDF upload needs the backend. Paste the text for now.' : 'PDF upload is coming; paste the text for now.')
+      if (usingMock) { setPdfNote('PDF reading needs the backend. Paste the text instead.'); return }
+      const bytes = new Uint8Array(await f.arrayBuffer())
+      let bin = ''
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+      setPdf({ name: f.name, b64: btoa(bin) })
+      setPdfNote(`${f.name} attached; its text is read when you continue.`)
       return
     }
+    setPdf(null)
+    setPdfNote(null)
     setText(await f.text())
   }
 
@@ -128,10 +137,11 @@ export function Onboarding() {
               Upload a .txt file
               <input type="file" accept=".txt,.md,text/plain,application/pdf" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />
             </label>
+            {pdfNote && <p role="status" className="mt-2 text-sm font-semibold">{pdfNote}</p>}
           </div>
           {material.isError && <div className="mt-3"><ErrorBox error={material.error} /></div>}
           <div className="mt-5 flex gap-3">
-            <Button variant="primary" onClick={() => material.mutate()} disabled={!words || material.isPending}>
+            <Button variant="primary" onClick={() => material.mutate()} disabled={(!words && !pdf) || material.isPending}>
               {material.isPending ? 'Preparing your notes…' : 'Save notes'}
             </Button>
             <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>

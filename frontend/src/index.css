@@ -145,3 +145,25 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Voice orb: a slowly turning gradient whose size follows the live voice level (--orb-level, 0..1). */
+.orb-core {
+  background: conic-gradient(from 0deg, var(--color-accent), var(--color-interaction), #f0b37e, var(--color-accent));
+  transform: scale(calc(1 + var(--orb-level, 0) * 0.28));
+  transition: transform 80ms linear;
+  animation: orb-spin 9s linear infinite;
+  box-shadow: inset 0 0 40px rgb(255 255 255 / 0.35);
+}
+.orb-glow {
+  background: radial-gradient(circle, color-mix(in oklab, var(--color-interaction) 55%, transparent) 0%, transparent 65%);
+  filter: blur(18px);
+  animation: orb-glow 3.2s ease-in-out infinite;
+}
+.orb-fast { animation-duration: 1.1s; }
+.orb-breathe { animation: orb-spin 9s linear infinite, orb-breathe 3.2s ease-in-out infinite; }
+@keyframes orb-spin { to { rotate: 360deg; } }
+@keyframes orb-glow { 0%, 100% { opacity: 0.55; scale: 0.92; } 50% { opacity: 0.95; scale: 1.06; } }
+@keyframes orb-breathe { 0%, 100% { scale: 0.96; } 50% { scale: 1.03; } }
+@media (prefers-reduced-motion: reduce) {
+  .orb-core, .orb-glow, .orb-breathe { animation: none; }
+}
