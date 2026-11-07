@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 14:47 | @yehor | @saliha | ⚠️ conflict | `methodfit` is real on `main` (`aa8e93f`). When you create a subject's `method_stats` rows, seed each with `engine.methodfit.prior_stats(method)` (literature priors, strength 4), not alpha=beta=1. Pass `random.Random()` as `rng`; pass `SubjectCtx.sampler_round` = sampler sessions done | 2026-11-07 14:47 |
 | 2026-11-07 14:50 | @saliha | @yehor | 📨 waiting on | **New task Y-D (top of your brief):** DB tables (`backend/app/db.py`, PRD §10) + ingestion (`backend/app/ingest.py`) on your Codex stream, by ~15:20. Saliha's routes call them and keep serving fixtures until then. Say no if it slows Y1–Y2 and it goes back to her | 2026-11-07 14:50 |
 | 2026-11-07 14:40 | @yehor | @saliha | ⚠️ conflict | Engine Y0 + Y0b on `main` (`5f85968`): `from engine.types import ...` and every §11 engine function is callable. Real so far: `session_reward`, `update_stats`, `confidence`. Placeholders: attention → FOCUSED/NONE, diagnose → ON_TRACK, reflect → templated, `choose_plan` → round-robin. Added `Event.score` (fill from the graded response; §8.3 error streak needs it) and `SubjectCtx.now` (engine never reads the clock; pass the dev-shifted now) | 2026-11-07 14:40 |
 | 2026-11-07 14:38 | @yehor | @saliha | ⚠️ conflict | I pushed a fixture stub API to `main` at 14:35 (`backend/app/**`: all 16 §11 groups + `/api/health`, 25 tests) before I saw the role swap. It's your path now: keep it as your S0 or replace it. Run: `cd backend && uv venv --python 3.11 .venv && uv pip install -r requirements.txt && .venv/bin/uvicorn app.main:app --port 8000`. I also re-created branch `yehor-backend` by pushing; safe to delete | 2026-11-07 14:38 |
@@ -55,7 +56,7 @@ whenever you log an entry.
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y1: `methodfit.py` (Y0 + Y0b done 14:39) |
+| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y-D (DB + ingestion) next; Y1 done 14:46 |
 | Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -77,6 +78,16 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 14:47 — feat — Method choice is real: Thompson sampling over literature priors (Y1) — @yehor
+- **Where:** `yehor-ml-data` @ `aa8e93f` · merged to `main`: yes
+- **Did:** `engine/priors.py` holds Dunlosky's ten techniques (utility tiers; effect sizes/sources null until verified) and the need-based support profiles as constants (engine stays I/O-free). `choose_plan`: Latin-square sampler rotated per subject, Thompson sampling with a 15% exploration floor (TUNE), running trial keeps its method. 53 tests pass.
+- **Touched:** `backend/engine/priors.py`, `backend/engine/methodfit.py`, `backend/tests/engine/**`
+- **Brief task:** Y1 → ✅ done
+- **⚠️ Conflicts:** @saliha: seed `method_stats` rows from `methodfit.prior_stats(method)`.
+- **📨 Needs:** none
+- **Agreed by:** @yehor (priors as Python constants, not JSON; role = data + AI/ML incl. Y-D DB + ingestion, matching @saliha's 14:50 brief change)
+- **Status:** open
 
 ### 2026-11-07 14:50 — decision — DB tables + ingestion move to Yehor; Maxym creates the ElevenLabs agent — @saliha
 - **Where:** `context` (briefs, PRD) · merged to `main`: yes (`progress.md`)
