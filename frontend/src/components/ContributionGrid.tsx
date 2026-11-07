@@ -1,4 +1,4 @@
-// GitHub-style activity map: one square per day, darker red = more done. Keyboard: Tab into the
+// GitHub-style activity map: one square per day, darker = more done. Keyboard: Tab into the
 // grid, arrow keys move day by day, the focused day's details show below.
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { shadeFor, type DaySummary } from '../lib/activity'

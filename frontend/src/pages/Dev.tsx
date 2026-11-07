@@ -95,7 +95,7 @@ export function Dev() {
             </span>
           </label>
           <label className="mt-2 flex items-center gap-2">
-            <input type="checkbox" checked={cursorDot} onChange={(e) => setLocal({ cursorDot: e.target.checked })} /> Red cursor dot outside sessions
+            <input type="checkbox" checked={cursorDot} onChange={(e) => setLocal({ cursorDot: e.target.checked })} /> Cursor dot outside sessions
           </label>
         </Card>
 
