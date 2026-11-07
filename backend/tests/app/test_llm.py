@@ -134,3 +134,10 @@ def test_effort_is_sent_per_call(tmp_path):
     s.complete_json("s", "b", SCHEMA, "fast")
     assert s.client.calls[0]["reasoning_effort"] == "low"
     assert "reasoning_effort" not in s.client.calls[1]
+
+
+def test_unwritable_cache_does_not_fail_the_call(tmp_path):
+    blocker = tmp_path / "cache"
+    blocker.write_text("a file where the cache folder should be")
+    s = LLMService(cache_dir=blocker, client=FakeClient(_resp('{"x": 1}')), models={"fast": "m"})
+    assert s.complete_json("s", "u", SCHEMA, "fast") == {"x": 1}
