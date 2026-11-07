@@ -1,23 +1,68 @@
 """Attune API. Real routes by default; API_MODE=fixtures serves the PRD §11 fixtures (frontend work with no backend state)."""
+import hmac
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
 from app import db, flow
 from app import fixtures as fx
 from app import schemas as s
+from app.limits import limit
+from app.llm import service as llm
 
 log = logging.getLogger("attune")
 DB = Depends(db.get_session)
+MAX_BODY_BYTES = 1_000_000  # largest legit body is pasted material (schemas cap it at 200k chars)
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Cache-Control": "no-store",
+}
+SECRET = re.compile(r"sk-[A-Za-z0-9_-]{8,}|sk_[A-Za-z0-9]{8,}")
+
+
+def _redacting_factory(base):
+    # Keys must never reach a log line, whichever library emits it.
+    def make(*args, **kwargs):
+        record = base(*args, **kwargs)
+        message = record.getMessage()
+        if SECRET.search(message):
+            record.msg, record.args = SECRET.sub("[redacted]", message), ()
+        return record
+    return make
+
+
+logging.setLogRecordFactory(_redacting_factory(logging.getLogRecordFactory()))
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+def _record_usage(purpose: str, model: str, prompt_tokens: int, completion_tokens: int, cache_hit: bool) -> None:
+    with Session(db.engine) as ses:
+        ses.add(db.LLMUsageRow(ts=flow.clock.now(), purpose=purpose, model=model or "none",
+                               prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, cache_hit=cache_hit))
+        ses.commit()
+
+
+llm.sink = _record_usage
+
+
+def require_dev_token(x_dev_token: str | None = Header(default=None)) -> None:
+    """Dev routes can reset the database: when DEV_TOKEN is set, callers must send it as X-Dev-Token."""
+    expected = os.getenv("DEV_TOKEN")
+    if expected and not hmac.compare_digest(x_dev_token or "", expected):
+        raise HTTPException(403, "forbidden")
 
 
 def _real_routes() -> APIRouter:
-    api = APIRouter(prefix="/api")
+    api = APIRouter(prefix="/api", dependencies=[Depends(limit("global"))])
 
     @api.get("/health")
     def health() -> dict:
@@ -31,7 +76,7 @@ def _real_routes() -> APIRouter:
     def list_subjects(ses: Session = DB):
         return flow.list_subjects(ses)
 
-    @api.post("/subjects/{subject_id}/material", response_model=s.MaterialResult)
+    @api.post("/subjects/{subject_id}/material", response_model=s.MaterialResult, dependencies=[Depends(limit("material"))])
     def add_material(subject_id: int, body: s.MaterialBody, ses: Session = DB):
         return flow.add_material(ses, subject_id, body)
 
@@ -39,7 +84,7 @@ def _real_routes() -> APIRouter:
     def subject_state(subject_id: int, ses: Session = DB):
         return flow.subject_state(ses, subject_id)
 
-    @api.post("/sessions", response_model=s.Session)
+    @api.post("/sessions", response_model=s.Session, dependencies=[Depends(limit("session"))])
     def create_session(body: s.SessionCreate, ses: Session = DB):
         return flow.create_session(ses, body)
 
@@ -47,19 +92,19 @@ def _real_routes() -> APIRouter:
     def next_item(session_id: int, ses: Session = DB):
         return flow.next_item(ses, session_id)
 
-    @api.post("/sessions/{session_id}/answer", response_model=s.AnswerResult)
+    @api.post("/sessions/{session_id}/answer", response_model=s.AnswerResult, dependencies=[Depends(limit("answer"))])
     def answer(session_id: int, body: s.AnswerBody, ses: Session = DB):
         return flow.answer(ses, session_id, body)
 
-    @api.post("/sessions/{session_id}/events", response_model=s.EventsResult)
+    @api.post("/sessions/{session_id}/events", response_model=s.EventsResult, dependencies=[Depends(limit("events"))])
     def events(session_id: int, body: s.EventsBody, ses: Session = DB):
         return flow.events(ses, session_id, body)
 
-    @api.get("/voice/signed-url", response_model=s.SignedUrl)
+    @api.get("/voice/signed-url", response_model=s.SignedUrl, dependencies=[Depends(limit("voice"))])
     def voice_signed_url(session_id: int, ses: Session = DB):
         return flow.voice_signed_url(ses, session_id)
 
-    @api.post("/sessions/{session_id}/feynman-transcript", response_model=s.FeynmanResult)
+    @api.post("/sessions/{session_id}/feynman-transcript", response_model=s.FeynmanResult, dependencies=[Depends(limit("feynman"))])
     def feynman_transcript(session_id: int, body: s.FeynmanBody, ses: Session = DB):
         return flow.feynman_transcript(ses, session_id, body)
 
@@ -67,7 +112,7 @@ def _real_routes() -> APIRouter:
     def finish(session_id: int, ses: Session = DB):
         return flow.finish(ses, session_id)
 
-    @api.post("/sessions/{session_id}/probe", response_model=s.SessionResult)
+    @api.post("/sessions/{session_id}/probe", response_model=s.SessionResult, dependencies=[Depends(limit("probe"))])
     def probe(session_id: int, body: s.ProbeBody, ses: Session = DB):
         return flow.probe(ses, session_id, body)
 
@@ -79,27 +124,33 @@ def _real_routes() -> APIRouter:
     def reflections(subject_id: int, ses: Session = DB):
         return flow.reflections(ses, subject_id)
 
-    @api.post("/agent/reflect", response_model=s.Reflection)
+    @api.post("/agent/reflect", response_model=s.Reflection, dependencies=[Depends(limit("reflect"))])
     def reflect(body: s.ReflectBody, ses: Session = DB):
         return flow.reflect(ses, body)
 
-    @api.post("/dev/seed")
+    return api
+
+
+def _dev_routes() -> APIRouter:
+    dev = APIRouter(prefix="/api/dev", dependencies=[Depends(require_dev_token), Depends(limit("dev"))])
+
+    @dev.post("/seed")
     def dev_seed(ses: Session = DB) -> dict:
         return flow.seed(ses)
 
-    @api.post("/dev/advance-days", response_model=s.AdvanceDaysResult)
+    @dev.post("/advance-days", response_model=s.AdvanceDaysResult)
     def dev_advance_days(body: s.AdvanceDaysBody, ses: Session = DB):
         return flow.advance_days(ses, body.days)
 
-    @api.post("/dev/reset")
+    @dev.post("/reset")
     def dev_reset() -> dict:
         return flow.reset()
 
-    @api.get("/dev/usage")
+    @dev.get("/usage")
     def dev_usage() -> dict:
         return flow.usage()
 
-    return api
+    return dev
 
 
 def _fixture_routes() -> APIRouter:
@@ -194,18 +245,25 @@ async def lifespan(_: FastAPI):
     yield
 
 
-def create_app(mode: str = "real") -> FastAPI:
-    app = FastAPI(title="Attune API", lifespan=lifespan)
+def create_app(mode: str = "real", env: str = "dev") -> FastAPI:
+    """`env="prod"` drops the dev routes and the public schema/docs; ALLOWED_HOSTS turns on host checking."""
+    prod = env == "prod"
+    app = FastAPI(title="Attune API", lifespan=lifespan, openapi_url=None if prod else "/openapi.json")
 
     # Registered before CORS so it sits inside it: an unhandled error still gets CORS headers,
     # otherwise the browser reports a 500 as a CORS failure and hides the real cause.
     @app.middleware("http")
-    async def json_errors(request: Request, call_next):
+    async def guard(request: Request, call_next):
+        size = request.headers.get("content-length")
+        if size and size.isdigit() and int(size) > MAX_BODY_BYTES:
+            return JSONResponse({"detail": "body_too_large"}, status_code=413, headers=SECURITY_HEADERS)
         try:
-            return await call_next(request)
+            response = await call_next(request)
         except Exception:
             log.exception("unhandled error on %s %s", request.method, request.url.path)
-            return JSONResponse({"detail": "internal_error"}, status_code=500)
+            response = JSONResponse({"detail": "internal_error"}, status_code=500)
+        response.headers.update(SECURITY_HEADERS)
+        return response
 
     app.add_middleware(
         CORSMiddleware,
@@ -213,8 +271,15 @@ def create_app(mode: str = "real") -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.include_router(_fixture_routes() if mode == "fixtures" else _real_routes())
+    if hosts := os.getenv("ALLOWED_HOSTS"):
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=[h.strip() for h in hosts.split(",")])
+    if mode == "fixtures":
+        app.include_router(_fixture_routes())
+    else:
+        app.include_router(_real_routes())
+        if not prod:
+            app.include_router(_dev_routes())
     return app
 
 
-app = create_app(os.getenv("API_MODE", "real"))
+app = create_app(os.getenv("API_MODE", "real"), os.getenv("ATTUNE_ENV", "dev"))

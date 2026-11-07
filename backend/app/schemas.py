@@ -1,7 +1,13 @@
 """Pydantic models mirroring PRD §11 field-for-field. The TS there is the source of truth."""
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# Generous caps against oversized or abusive payloads; normal use never gets near them.
+TEXT_MAX = 5_000
+MATERIAL_MAX = 200_000
+TS_MAX = 64
+LATENCY_MAX_MS = 3_600_000
 
 Method = Literal["ACTIVE_RECALL", "FEYNMAN", "PRACTICE_TEST", "SPACED_FLASHCARDS", "BLURTING"]
 SubjectKind = Literal["PERFORMANCE", "KNOWLEDGE"]
@@ -94,8 +100,8 @@ class Done(BaseModel):
 
 class AnswerBody(BaseModel):
     item_id: int
-    answer: str
-    latency_ms: int
+    answer: str = Field(max_length=TEXT_MAX)
+    latency_ms: int = Field(ge=0, le=LATENCY_MAX_MS)
     self_grade: Literal[0, 0.5, 1] | None = None
 
 
@@ -108,14 +114,14 @@ class AnswerResult(BaseModel):
 
 class SessionEvent(BaseModel):
     type: EventType
-    ts: str
+    ts: str = Field(max_length=TS_MAX)
     item_id: int | None = None
-    latency_ms: int | None = None
+    latency_ms: int | None = Field(default=None, ge=0, le=LATENCY_MAX_MS)
     payload: dict | None = None
 
 
 class EventsBody(BaseModel):
-    events: list[SessionEvent]
+    events: list[SessionEvent] = Field(max_length=500)
 
 
 class AttentionReading(BaseModel):
@@ -141,12 +147,12 @@ class EventsResult(BaseModel):
 
 class FeynmanTurn(BaseModel):
     role: Literal["user", "agent"]
-    text: str
-    ts: str
+    text: str = Field(max_length=TEXT_MAX)
+    ts: str = Field(max_length=TS_MAX)
 
 
 class FeynmanBody(BaseModel):
-    turns: list[FeynmanTurn]
+    turns: list[FeynmanTurn] = Field(max_length=200)
 
 
 class FeynmanResult(BaseModel):
@@ -184,12 +190,12 @@ class SessionResult(BaseModel):
 
 class ProbeAnswer(BaseModel):
     item_id: int
-    answer: str
-    latency_ms: int
+    answer: str = Field(max_length=TEXT_MAX)
+    latency_ms: int = Field(ge=0, le=LATENCY_MAX_MS)
 
 
 class ProbeBody(BaseModel):
-    answers: list[ProbeAnswer]
+    answers: list[ProbeAnswer] = Field(max_length=50)
     felt_rating: Literal[1, 2, 3, 4, 5]
 
 
@@ -198,14 +204,14 @@ class FinishResult(BaseModel):
 
 
 class SubjectCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=120)
     kind: SubjectKind
-    exam_date: str | None = None
+    exam_date: str | None = Field(default=None, max_length=TS_MAX)
 
 
 class MaterialBody(BaseModel):
-    title: str | None = None
-    text: str | None = None
+    title: str | None = Field(default=None, max_length=200)
+    text: str | None = Field(default=None, max_length=MATERIAL_MAX)
 
 
 class MaterialResult(BaseModel):
@@ -267,7 +273,7 @@ class ReflectBody(BaseModel):
 
 
 class AdvanceDaysBody(BaseModel):
-    days: int
+    days: int = Field(ge=0, le=60)
 
 
 class AdvanceDaysResult(BaseModel):

@@ -17,6 +17,15 @@ miss; `fixtures` never calls it.
 `POST /api/dev/advance-days {"days": 7}` to trigger the weekly reflection. `python scripts/attention_burst.py` plays a
 steady-then-erratic answer pattern to show the attention intervention.
 
+## Security settings
+All optional; with none set the API behaves exactly as above. See `.env.example`.
+- `ATTUNE_ENV=prod` removes `/api/dev/*` and the public schema; `DEV_TOKEN` makes dev routes require `X-Dev-Token`.
+- `ALLOWED_HOSTS` turns on Host-header checking. uvicorn binds to 127.0.0.1 by default; keep it that way locally.
+- `RL_<SCOPE>=count/seconds` sets a rate limit or quota per IP and per user (e.g. `RL_VOICE=20/86400`); unset = unlimited.
+- Bodies over 1 MB are rejected, text fields have generous size caps, every response carries `nosniff`/`no-store`
+  headers, and API keys are scrubbed from log lines. Keys live only in `.env`, which nothing serves over HTTP.
+- An LLM only gets credit for a Feynman key point when its quote really appears in the student's words.
+
 ## How it scores you
 - Every session ends with the same 5-question probe (3 multiple choice, 2 short answer) on that session's material, so
   methods are compared on one yardstick.
