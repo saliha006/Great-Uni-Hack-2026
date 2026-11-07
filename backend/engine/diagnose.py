@@ -9,6 +9,7 @@ WINDOW = 6
 MIN_SESSIONS, MIN_DAYS = 3, 3
 ENGAGED_SESSIONS_7D, ENGAGED_COMPLETION, ENGAGED_MAX_GAP_DAYS = 3, 0.7, 3
 NOT_FOCUSED_MAX = 0.35
+RISING_MIN = 0.05  # a rise smaller than this over 3 sessions is noise, not degrading attention
 FLAT_SLOPE, DECLINING_SLOPE = 0.02, -0.04
 MASTERED_MEAN = 0.85
 TRIAL_MIN_DELTA, TRIAL_MIN_N = 0.05, 2
@@ -35,7 +36,7 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
 
     not_focused = [s.drift_share + s.lapse_share for s in window]
     last3 = not_focused[-3:]
-    attention_rising = len(last3) == 3 and last3[0] < last3[1] < last3[2]
+    attention_rising = len(last3) == 3 and last3[0] < last3[1] < last3[2] and last3[2] - last3[0] >= RISING_MIN
     attention_ok = statistics.median(not_focused) < NOT_FOCUSED_MAX and not attention_rising
 
     on_method = [s.probe_score for s in window if s.method == plan.method]
