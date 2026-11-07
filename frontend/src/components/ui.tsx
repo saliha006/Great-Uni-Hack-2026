@@ -27,9 +27,17 @@ export function ButtonLink({ variant = 'secondary', size = 'md', className, ...r
   return <Link {...rest} className={buttonClass(variant, size, className)} />
 }
 
-export function Card({ children, className, as: As = 'section', ...rest }: { children: ReactNode; className?: string; as?: 'section' | 'div' | 'article'; 'aria-labelledby'?: string }) {
+export function Card({ children, className, glass = false, as: As = 'section', ...rest }: { children: ReactNode; className?: string; glass?: boolean; as?: 'section' | 'div' | 'article'; 'aria-labelledby'?: string }) {
   return (
-    <As {...rest} className={cx('rounded-(--radius-card) border border-line bg-surface p-5', className)}>
+    <As
+      {...rest}
+      className={cx(
+        'border p-5',
+        // Frosted glass: translucent surface that blurs whatever is behind it. Kept fairly opaque so text stays readable.
+        glass ? 'rounded-[22px] border-ink/15 bg-surface/80 shadow-lg shadow-black/5 backdrop-blur-xl' : 'rounded-(--radius-card) border-line bg-surface',
+        className,
+      )}
+    >
       {children}
     </As>
   )

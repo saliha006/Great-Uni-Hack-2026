@@ -59,13 +59,14 @@ export function Dashboard() {
   const loading = subjects.isPending || insights.some((q) => q.isPending)
 
   return <PageShell where="Dashboard" status={[{ label: 'Study sessions', value: sessions }, { label: 'Est. focus time', value: `${Math.round(focusMinutes)} min` }, { label: 'Small wins', value: tasks }]} next={list.length ? 'One session is a good start' : 'Add a subject'}>
+    <Backdrop />
     <div className="mb-3 flex flex-wrap items-end justify-between gap-4">
       <div><h1 className="text-2xl font-extrabold tracking-tight">Your learning, at your pace</h1><p className="text-sm text-muted">Small steps count. Rest days count too.</p></div>
       {list.length === 0 && <ButtonLink to="/onboarding" variant="primary">Add a subject</ButtonLink>}
     </div>
     {subjects.isError && <ErrorBox error={subjects.error} onRetry={() => subjects.refetch()} />}
     {loading ? <Spinner label="Gathering your progress" /> : <>
-      {resume && <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 bg-sunken"><div><p className="text-sm text-muted">Pick up where you paused</p><p className="font-bold">{resume.subjectName} · {resume.itemsDone} done</p></div><ButtonLink to={`/session/${resume.session.id}`} variant="primary">Continue session</ButtonLink></Card>}
+      {resume && <Card glass className="mb-5 flex flex-wrap items-center justify-between gap-3 bg-sunken"><div><p className="text-sm text-muted">Pick up where you paused</p><p className="font-bold">{resume.subjectName} · {resume.itemsDone} done</p></div><ButtonLink to={`/session/${resume.session.id}`} variant="primary">Continue session</ButtonLink></Card>}
       <section className="mb-3 flex flex-wrap gap-x-8 gap-y-2 border-y border-line py-2" aria-label="Progress at a glance">
         <Metric label="Est. focus time" value={`${Math.floor(focusMinutes / 60)}h ${Math.round(focusMinutes % 60)}m`} />
         <Metric label="Sessions" value={sessions} />
@@ -73,13 +74,26 @@ export function Dashboard() {
         <Metric label="Small wins today" value={day(today).sessions + day(today).tasks} />
       </section>
       <section className="grid grid-cols-2 gap-3" aria-label="Dashboard overview">
-        <Card className="!p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">Time and effort</h2><span className="text-xs text-muted">Last 7 days</span></div><HoursHeatmap hours={hourly} endDate={now} /></Card>
-        <Card className="flex flex-col !p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">{semester.name}</h2><span className="text-xs text-muted">{semester.start.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} – {semester.end.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span></div><ContributionGrid days={map} start={semester.start} end={semester.end} today={now} /></Card>
-        <Card className="!p-4"><h2 className="mb-2 font-bold">Subjects in progress</h2><div className="max-h-36 space-y-2 overflow-y-auto">{list.map((s) => <div key={s.subject.id}><div className="flex justify-between text-sm"><span className="font-semibold">{s.subject.name}</span><span className="text-muted">{readiness(s) === null ? 'Not enough data' : `${Math.round(readiness(s)! * 100)}% readiness`}</span></div><div className="mt-1 h-1.5 rounded-full bg-sunken"><div className="h-full rounded-full bg-accent" style={{ width: `${(readiness(s) ?? 0) * 100}%` }} /></div></div>)}{!list.length && <p className="text-sm text-muted">Add a subject to begin.</p>}</div></Card>
-        <Card className="!p-4"><h2 className="mb-2 font-bold">Coming up next</h2><Upcoming list={list} resume={resume} /></Card>
+        <Card glass className="!p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">Time and effort</h2><span className="text-xs text-muted">Last 7 days</span></div><HoursHeatmap hours={hourly} endDate={now} /></Card>
+        <Card glass className="flex flex-col !p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">{semester.name}</h2><span className="text-xs text-muted">{semester.start.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} – {semester.end.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span></div><ContributionGrid days={map} start={semester.start} end={semester.end} today={now} /></Card>
+        <Card glass className="!p-4"><h2 className="mb-2 font-bold">Subjects in progress</h2><div className="max-h-36 space-y-2 overflow-y-auto">{list.map((s) => <div key={s.subject.id}><div className="flex justify-between text-sm"><span className="font-semibold">{s.subject.name}</span><span className="text-muted">{readiness(s) === null ? 'Not enough data' : `${Math.round(readiness(s)! * 100)}% readiness`}</span></div><div className="mt-1 h-1.5 rounded-full bg-sunken"><div className="h-full rounded-full bg-accent" style={{ width: `${(readiness(s) ?? 0) * 100}%` }} /></div></div>)}{!list.length && <p className="text-sm text-muted">Add a subject to begin.</p>}</div></Card>
+        <Card glass className="!p-4"><h2 className="mb-2 font-bold">Coming up next</h2><Upcoming list={list} resume={resume} /></Card>
       </section>
     </>}
   </PageShell>
+}
+
+// Soft misty backdrop for the glass cards, built from the theme colours so it follows light and dark.
+function Backdrop() {
+  const mix = (colour: string, pct: number, into = 'var(--color-bg)') => `color-mix(in srgb, ${colour} ${pct}%, ${into})`
+  return (
+    <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, var(--color-bg) 0%, ${mix('var(--color-accent)', 14)} 45%, ${mix('var(--color-accent)', 34)} 100%)` }} />
+      <div className="absolute -left-[10%] top-[34%] h-24 w-[80%] rounded-full opacity-60 blur-3xl" style={{ background: 'var(--color-accent)' }} />
+      <div className="absolute -right-[15%] top-[12%] h-20 w-[70%] rounded-full opacity-40 blur-3xl" style={{ background: 'var(--color-interaction)' }} />
+      <div className="absolute -left-[20%] bottom-[8%] h-28 w-[110%] rounded-full opacity-50 blur-3xl" style={{ background: 'var(--color-accent)' }} />
+    </div>
+  )
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {

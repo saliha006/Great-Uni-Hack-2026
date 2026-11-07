@@ -31,7 +31,7 @@ export function PageShell({
         Skip to content
       </a>
       {!focus && (
-        <header className="bg-bg">
+        <header className="relative z-10">
           <nav aria-label="Main" className="mx-auto flex max-w-6xl flex-wrap items-center gap-1 px-4 py-3">
             <NavLink to="/" className="mr-4 flex items-center gap-2 text-xl font-extrabold tracking-tight no-underline">
               <span aria-hidden className="size-3 rounded-full bg-accent" />
@@ -77,7 +77,7 @@ export function PageShell({
         </header>
       )}
       {pathname !== '/' && <StatusStrip where={where} items={status} next={next} />}
-      <main id="main" className={`mx-auto w-full max-w-6xl flex-1 px-4 ${pathname === '/' ? 'py-3' : 'py-6 sm:py-8'}`}>
+      <main id="main" className={`relative z-0 mx-auto w-full max-w-6xl flex-1 px-4 ${pathname === '/' ? 'py-3' : 'py-6 sm:py-8'}`}>
         {children}
       </main>
       <CursorDot enabled={cursorDot && !focus && !pathname.startsWith('/session')} />
