@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 14:38 | @yehor | @saliha | ⚠️ conflict | I pushed a fixture stub API to `main` at 14:35 (`backend/app/**`: all 16 §11 groups + `/api/health`, 25 tests) before I saw the role swap. It's your path now: keep it as your S0 or replace it. Run: `cd backend && uv venv --python 3.11 .venv && uv pip install -r requirements.txt && .venv/bin/uvicorn app.main:app --port 8000`. I also re-created branch `yehor-backend` by pushing; safe to delete | 2026-11-07 14:38 |
 | 2026-11-07 14:40 | @saliha | @yehor @maxym | ⚠️ conflict | **Roles swapped:** Saliha = backend (`sali-backend`), Yehor = AI/ML + data (`yehor-ml-data`), Maxym = frontend (`maxym-frontend`). Briefs and PRD updated on `context`; re-sync. @yehor: start Y0 `engine/types.py` (Saliha's stub API waits on it). Both: send @saliha your GitHub handle | 2026-11-07 14:40 |
 | 2026-11-07 14:25 | @saliha | @all | ⚠️ conflict | **How docs work now:** every `.md` except `progress.md` and `README.md` lives on the `context` branch, never `main`. Clone, then `git fetch origin context && git archive origin/context \| tar -x && git rev-parse origin/context > .git/context-synced`. Your agent re-syncs per CLAUDE.md 🔄. Work on your role branch: `sali-backend` / `maxym-frontend` / `yehor-ml-data`. Keys: get the `.env` from @saliha directly, never via git or chat | 2026-11-07 14:25 |
 | 2026-11-07 14:10 | @saliha | @all | ❓ question | PRD §19 open questions: hackathon tracks/sponsor rules, ElevenLabs quota, demo material, and who is doc owner (assumed @saliha) | 2026-11-07 14:10 |
@@ -52,7 +53,7 @@ whenever you log an entry.
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend + DB + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `{{github}}` | AI/ML engine + data (personas) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**` | Y0: `engine/types.py` (unblocks Saliha) |
+| Yehor | `yehorm14` | AI/ML engine + data (personas) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**` | Y0: `engine/types.py` (in progress 14:38) |
 | Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -69,11 +70,20 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
-- **`main` (2026-11-07 14:40):** `.gitignore`, `progress.md`, `README.md` only; `context` holds the docs; role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` cut from `main` · tests: n/a · stub API: not up · ElevenLabs key verified by the CLI, agent not created · deploy: local only (PRD §12)
+- **`main` (2026-11-07 14:40):** `.gitignore`, `progress.md`, `README.md` only; `context` holds the docs; role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` cut from `main` · **14:35: fixture stub API on `main`** (`backend/app`, 25 tests pass) · stub API: up (fixtures) · ElevenLabs key verified by the CLI, agent not created · deploy: local only (PRD §12)
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 14:38 — feat — Fixture stub API on `main` (built before the role swap) — @yehor
+- **Where:** `yehor-backend` @ `7794f3b` · merged to `main`: yes (`928b8c4`)
+- **Did:** All PRD §11 endpoint groups return schema-valid fixtures; Pydantic models match §11 field-for-field; CORS for :5173; `/openapi.json` live; `/api/health` → ok. `.env.example` (names only) and README run steps. Built as old-brief Y0 at 14:29–14:35, before the 14:40 swap reached me.
+- **Touched:** `backend/app/**`, `backend/tests/app/**`, `backend/requirements.txt`, `backend/pyproject.toml`, `.env.example`, `README.md`
+- **Brief task:** Saliha's S0 → 🟡 part (stub done; collaborators still open)
+- **⚠️ Conflicts:** @saliha: this is your path now; adopt or replace it. @maxym: types can be generated from `/openapi.json` now.
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 14:40 — decision — Roles swapped: Saliha backend, Yehor AI/ML + data; front-end skills shared — @saliha
 - **Where:** `context` + `main` · merged to `main`: yes (`progress.md`)
