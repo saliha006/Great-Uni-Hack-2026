@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 14:50 | @yehor | @saliha | 📨 handoff request | Yehor will create/configure the Supabase project; he requests Saliha own all backend work, including Y-D DB tables + ingestion. Please acknowledge and update the briefs/PRD on context: they still assign Y-D to Yehor and specify SQLite. Supabase provisioning does not migrate the app; coordinate the database switch with the team before integration. | 2026-11-07 14:50 |
 | 2026-11-07 14:47 | @yehor | @saliha | ⚠️ conflict | `methodfit` is real on `main` (`aa8e93f`). When you create a subject's `method_stats` rows, seed each with `engine.methodfit.prior_stats(method)` (literature priors, strength 4), not alpha=beta=1. Pass `random.Random()` as `rng`; pass `SubjectCtx.sampler_round` = sampler sessions done | 2026-11-07 14:47 |
 | 2026-11-07 14:50 | @saliha | @yehor | 📨 waiting on | **New task Y-D (top of your brief):** DB tables (`backend/app/db.py`, PRD §10) + ingestion (`backend/app/ingest.py`) on your Codex stream, by ~15:20. Saliha's routes call them and keep serving fixtures until then. Say no if it slows Y1–Y2 and it goes back to her | 2026-11-07 14:50 |
 | 2026-11-07 14:40 | @yehor | @saliha | ⚠️ conflict | Engine Y0 + Y0b on `main` (`5f85968`): `from engine.types import ...` and every §11 engine function is callable. Real so far: `session_reward`, `update_stats`, `confidence`. Placeholders: attention → FOCUSED/NONE, diagnose → ON_TRACK, reflect → templated, `choose_plan` → round-robin. Added `Event.score` (fill from the graded response; §8.3 error streak needs it) and `SubjectCtx.now` (engine never reads the clock; pass the dev-shifted now) | 2026-11-07 14:40 |
@@ -56,7 +57,7 @@ whenever you log an entry.
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y-D (DB + ingestion) next; Y1 done 14:46 |
+| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Supabase project setup; Y-D backend handoff requested to Saliha; Y1 done 14:46 |
 | Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -78,6 +79,16 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 14:50 — decision — Supabase setup and backend handoff requested — @yehor
+- **Where:** `main` · documentation only
+- **Did:** Yehor requested to handle Supabase project setup himself and have Saliha handle all backend work. Located the app checkout and verified that the connected Supabase account currently has no Attune project. Setup checklist: create the hosted project, invite Saliha, and share its URL/ref and backend database connection details privately.
+- **Touched:** `progress.md`; requested ownership and database-plan changes
+- **Brief task:** Y-D → handoff requested; not implemented here
+- **⚠️ Conflicts:** @saliha: PRD/briefs still specify SQLite and assign `app/db.py` + `app/ingest.py` to Yehor. This request needs your acknowledgement and the team's database-plan coordination; no backend code, dependencies, schema or API contracts changed.
+- **📨 Needs:** @saliha: acknowledge backend ownership and publish the matching context docs. @yehor: create the Supabase project and provide its URL/ref; passwords and connection strings stay out of git/chat.
+- **Agreed by:** @yehor (requested setup split); Saliha/team acknowledgement pending
+- **Status:** open
 
 ### 2026-11-07 14:47 — feat — Method choice is real: Thompson sampling over literature priors (Y1) — @yehor
 - **Where:** `yehor-ml-data` @ `aa8e93f` · merged to `main`: yes
