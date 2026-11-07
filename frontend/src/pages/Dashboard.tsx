@@ -4,7 +4,7 @@ import { METHOD_LABEL, type SubjectSummary } from '../api/types'
 import { ContributionGrid } from '../components/ContributionGrid'
 import { PageShell } from '../components/PageShell'
 import { ButtonLink, Card, ErrorBox, Spinner } from '../components/ui'
-import type { DaySummary } from '../lib/activity'
+import { semesterOf, type DaySummary } from '../lib/activity'
 import { todayKey, useLocal, type Resume } from '../lib/local'
 
 const dayKey = (iso: string) => {
@@ -22,7 +22,9 @@ export function Dashboard() {
   const insights = useQueries({ queries: list.map((s) => ({ queryKey: ['insights', s.subject.id], queryFn: () => api.insights(s.subject.id) })) })
   const { activity, questions, resume } = useLocal((s) => ({ activity: s.activity, questions: s.questions, resume: s.resume }))
   const today = todayKey()
-  const map = new Map<string, DaySummary>()
+  const now = new Date(clockNow())
+  const semester = semesterOf(now)
+  const map =new Map<string, DaySummary>()
   const day = (key: string) => map.get(key) ?? (map.set(key, { date: key, sessions: 0, tasks: 0, labels: [] }), map.get(key)!)
   let sessions = 0
   let focusMinutes = 0
@@ -72,7 +74,7 @@ export function Dashboard() {
       </section>
       <section className="grid grid-cols-2 gap-3" aria-label="Dashboard overview">
         <Card className="!p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">Time and effort</h2><span className="text-xs text-muted">Last 7 days</span></div><DailyEffort days={dailyStudy} endDate={new Date(clockNow())} /></Card>
-        <Card className="!p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">Semester effort</h2><span className="text-xs text-muted">13 weeks</span></div><ContributionGrid days={map} endDate={new Date(clockNow())} weeks={13} /></Card>
+        <Card className="flex flex-col !p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">{semester.name}</h2><span className="text-xs text-muted">{semester.start.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} – {semester.end.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span></div><ContributionGrid days={map} start={semester.start} end={semester.end} today={now} /></Card>
         <Card className="!p-4"><h2 className="mb-2 font-bold">Subjects in progress</h2><div className="max-h-36 space-y-2 overflow-y-auto">{list.map((s) => <div key={s.subject.id}><div className="flex justify-between text-sm"><span className="font-semibold">{s.subject.name}</span><span className="text-muted">{readiness(s) === null ? 'Not enough data' : `${Math.round(readiness(s)! * 100)}% readiness`}</span></div><div className="mt-1 h-1.5 rounded-full bg-sunken"><div className="h-full rounded-full bg-accent" style={{ width: `${(readiness(s) ?? 0) * 100}%` }} /></div></div>)}{!list.length && <p className="text-sm text-muted">Add a subject to begin.</p>}</div></Card>
         <Card className="!p-4"><h2 className="mb-2 font-bold">Coming up next</h2><Upcoming list={list} resume={resume} /></Card>
       </section>

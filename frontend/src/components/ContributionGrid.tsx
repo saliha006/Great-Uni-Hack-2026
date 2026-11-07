@@ -1,83 +1,76 @@
-// GitHub-style activity map: one square per day, darker = more done. Keyboard: Tab into the
-// grid, arrow keys move day by day, the focused day's details show below.
+// GitHub-style activity map for one semester: one square per day, start to end, filling the card's
+// width. Empty days keep a visible outline; filled days get darker the more was done. Keyboard: Tab
+// into the grid, then arrow keys move day by day (up/down) or week by week (left/right).
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { shadeFor, type DaySummary } from '../lib/activity'
 
-const SHADE = ['bg-g0', 'bg-g1', 'bg-g2', 'bg-g3', 'bg-g4']
+const SHADE = ['border-line', 'border-transparent bg-g1', 'border-transparent bg-g2', 'border-transparent bg-g3', 'border-transparent bg-g4']
 const keyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const label = (d: DaySummary) =>
+  `${new Date(`${d.date}T12:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}: ${d.sessions} sessions, ${d.tasks} tasks`
 
-export function ContributionGrid({ days, endDate, weeks = 20 }: { days: Map<string, DaySummary>; endDate: Date; weeks?: number }) {
-  const cells = useMemo(() => {
-    const end = new Date(endDate)
-    end.setHours(12, 0, 0, 0)
-    const start = new Date(end)
-    start.setDate(end.getDate() - end.getDay() - (weeks - 1) * 7) // Sunday, `weeks` columns back
-    const out: DaySummary[] = []
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+export function ContributionGrid({ days, start, end, today }: { days: Map<string, DaySummary>; start: Date; end: Date; today: Date }) {
+  const { cells, weeks, months } = useMemo(() => {
+    const first = new Date(start)
+    first.setDate(first.getDate() - first.getDay()) // columns are Sunday-first weeks
+    const weekCount = Math.ceil((Math.round((end.getTime() - first.getTime()) / 86_400_000) + 1) / 7)
+    const out: (DaySummary | null)[] = []
+    const monthLabels: { week: number; name: string }[] = []
+    for (let i = 0; i < weekCount * 7; i++) {
+      const d = new Date(first)
+      d.setDate(first.getDate() + i)
+      const inRange = d >= start && d <= end
       const k = keyOf(d)
-      out.push(days.get(k) ?? { date: k, sessions: 0, tasks: 0, labels: [] })
+      out.push(inRange ? (days.get(k) ?? { date: k, sessions: 0, tasks: 0, labels: [] }) : null)
+      if (inRange && d.getDate() === 1) monthLabels.push({ week: Math.floor(i / 7), name: d.toLocaleDateString(undefined, { month: 'short' }) })
     }
-    return out
-  }, [days, endDate, weeks])
+    return { cells: out, weeks: weekCount, months: monthLabels }
+  }, [days, start, end])
 
-  const [active, setActive] = useState(cells.length - 1)
+  const todayKey = keyOf(today)
+  const [active, setActive] = useState(() => Math.max(0, cells.findIndex((c) => c?.date === todayKey)))
   const refs = useRef<(HTMLButtonElement | null)[]>([])
+
   const move = (to: number) => {
-    const i = Math.max(0, Math.min(cells.length - 1, to))
+    const step = Math.sign(to - active)
+    let i = Math.max(0, Math.min(cells.length - 1, to))
+    while (cells[i] === null && i + step >= 0 && i + step < cells.length) i += step // skip the padding before the start / after the end
+    if (cells[i] === null) return
     setActive(i)
     refs.current[i]?.focus()
   }
   const onKey = (e: KeyboardEvent) => {
     const step = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 }[e.key]
-    if (step !== undefined) { e.preventDefault(); move(active + step) }
+    if (step !== undefined) {
+      e.preventDefault()
+      move(active + step)
+    }
   }
-  const sel = cells[active]
-  const fmt = (k: string) => new Date(`${k}T12:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
-  const months = cells.filter((_, i) => i % 7 === 0).map((c, i, arr) => {
-    const m = new Date(`${c.date}T12:00`).toLocaleDateString(undefined, { month: 'short' })
-    const prev = i ? new Date(`${arr[i - 1].date}T12:00`).toLocaleDateString(undefined, { month: 'short' }) : ''
-    return m !== prev ? m : ''
-  })
+  const columns = { gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }
 
   return (
-    <div>
-      <div className="overflow-x-auto pb-2">
-        <div className="inline-block">
-          <div className="mb-1 grid grid-flow-col gap-1 text-xs text-muted" style={{ gridTemplateColumns: `repeat(${weeks}, 0.875rem)` }} aria-hidden>
-            {months.map((m, i) => <span key={i} className="w-3.5 overflow-visible whitespace-nowrap">{m}</span>)}
-          </div>
-          <div role="grid" aria-label="Study activity by day" onKeyDown={onKey} className="grid grid-flow-col grid-rows-7 gap-1">
-            {cells.map((c, i) => {
-              const s = shadeFor(c)
-              return (
-                <button
-                  key={c.date}
-                  ref={(el) => { refs.current[i] = el }}
-                  role="gridcell"
-                  tabIndex={i === active ? 0 : -1}
-                  onClick={() => setActive(i)}
-                  onFocus={() => setActive(i)}
-                  onMouseEnter={() => setActive(i)}
-                  aria-label={`${fmt(c.date)}: ${c.sessions} sessions, ${c.tasks} tasks`}
-                  aria-selected={i === active}
-                  className={`size-3.5 rounded-[3px] ${SHADE[s]} ${i === active ? 'ring-2 ring-ink ring-offset-1 ring-offset-surface' : ''}`}
-                />
-              )
-            })}
-          </div>
-        </div>
+    <div className="flex flex-1 flex-col justify-center gap-1">
+      <div className="grid gap-1 text-xs text-muted" style={columns} aria-hidden>
+        {months.map((m) => (
+          <span key={m.week} className="overflow-visible whitespace-nowrap" style={{ gridColumnStart: m.week + 1 }}>{m.name}</span>
+        ))}
       </div>
-      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-muted">Less</span>
-        {SHADE.map((c) => <span key={c} className={`size-3.5 rounded-[3px] ${c}`} aria-hidden />)}
-        <span className="text-muted">More</span>
-      </div>
-      <div className="mt-2 rounded-(--radius-ctl) bg-sunken p-2 text-xs" aria-live="polite">
-        <p className="font-semibold">{fmt(sel.date)}</p>
-        {sel.labels.length ? (
-          <ul className="mt-1 text-sm">{sel.labels.map((l, i) => <li key={i}>{l}</li>)}</ul>
-        ) : (
-          <p className="text-sm text-muted">Nothing logged. Rest days count too.</p>
+      <div role="grid" aria-label="Study activity by day" onKeyDown={onKey} className="grid grid-flow-col grid-rows-7 gap-1" style={columns}>
+        {cells.map((c, i) =>
+          c === null ? (
+            <span key={i} aria-hidden />
+          ) : (
+            <button
+              key={c.date}
+              ref={(el) => { refs.current[i] = el }}
+              role="gridcell"
+              tabIndex={i === active ? 0 : -1}
+              onFocus={() => setActive(i)}
+              aria-label={label(c)}
+              title={label(c)}
+              className={`aspect-square w-full rounded-[3px] border ${SHADE[shadeFor(c)]}`}
+            />
+          ),
         )}
       </div>
     </div>
