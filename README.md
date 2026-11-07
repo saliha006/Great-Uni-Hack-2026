@@ -110,6 +110,19 @@ flowchart LR
 </details>
 
 <details>
+<summary><b>🔒 Security settings</b></summary>
+
+All optional; with none set the API behaves exactly as above. See `.env.example`.
+- `ATTUNE_ENV=prod` removes `/api/dev/*` and the public schema; `DEV_TOKEN` makes dev routes require `X-Dev-Token`.
+- `ALLOWED_HOSTS` turns on Host-header checking. uvicorn binds to 127.0.0.1 by default; keep it that way locally.
+- `RL_<SCOPE>=count/seconds` sets a rate limit or quota per IP and per user (e.g. `RL_VOICE=20/86400`); unset = unlimited.
+- Bodies over 1 MB are rejected, text fields have generous size caps, every response carries `nosniff`/`no-store`
+  headers, and API keys are scrubbed from log lines. Keys live only in `.env`, which nothing serves over HTTP.
+- An LLM only gets credit for a Feynman key point when its quote really appears in the student's words.
+
+</details>
+
+<details>
 <summary><b>👀 How attention is read</b></summary>
 
 - Each answer's time is divided by the time the question should take, then compared over the last 8 answers with your
