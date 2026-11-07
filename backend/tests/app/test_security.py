@@ -77,7 +77,7 @@ def test_limiter_window_expires():
 
 
 def test_oversized_body_is_rejected_before_parsing():
-    r = client().post("/api/subjects", content=b"x" * 1_000_001, headers={"content-type": "application/json"})
+    r = client().post("/api/subjects", content=b"x" * 15_000_001, headers={"content-type": "application/json"})
     assert r.status_code == 413
 
 

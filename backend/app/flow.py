@@ -3,6 +3,8 @@
 Times are naive UTC everywhere (the engine compares them directly). "Now" comes from `clock`, which /dev/advance-days
 shifts, so seeded history and live sessions share one timeline.
 """
+import base64
+import binascii
 import json
 import logging
 import os
@@ -379,6 +381,16 @@ def list_subjects(ses: Session) -> list[s.SubjectSummary]:
 def add_material(ses: Session, subject_id: int, body: s.MaterialBody) -> s.MaterialResult:
     _get(ses, db.SubjectRow, subject_id, "subject")
     text = (body.text or "").strip()
+    if body.pdf_base64:
+        try:
+            pdf = base64.b64decode(body.pdf_base64, validate=True)
+            text = (text + "\n\n" + ingest.extract_text(pdf)).strip()
+        except (binascii.Error, ValueError) as exc:
+            raise HTTPException(422, "couldn't read text from that PDF; paste the text instead") from exc
+        except Exception as exc:
+            # pypdf raises its own errors on corrupt files; the student just needs to know to paste instead.
+            log.warning("pdf parse failed: %s", type(exc).__name__)
+            raise HTTPException(422, "couldn't read that PDF; paste the text instead") from exc
     if len(text.split()) < MIN_WORDS:
         raise HTTPException(422, f"paste at least {MIN_WORDS} words of material")
     material = db.MaterialRow(subject_id=subject_id, title=body.title, source="paste")
@@ -782,6 +794,7 @@ def insights(ses: Session, subject_id: int) -> s.Insights:
     for h in history:
         series.setdefault(h.method, []).append(s.ScorePoint(ts=h.ts.isoformat(), probe_score=h.probe_score))
     attention_rows = [s.AttentionBySession(session_id=h.session_id, ts=h.ts.isoformat(), method=h.method,
+                                           active_minutes=h.active_minutes,
                                            drift_share=h.drift_share, lapse_share=h.lapse_share) for h in history]
     timeline = []
     samplers = [r for r in rows if r.mode == "SAMPLER"]
