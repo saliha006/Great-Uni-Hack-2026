@@ -1,0 +1,43 @@
+{
+  "_note": "Utility tiers follow Dunlosky et al. 2013. effect_size and source stay null until Yehor supplies verified citations. Values marked TUNE are our guesses, not research-derived.",
+  "prior_strength": 4,
+  "prior_mean_by_utility": { "high": 0.6, "moderate": 0.55, "low": 0.5 },
+  "_tune": ["prior_strength", "prior_mean_by_utility", "profiles.short_blocks.session_minutes", "profiles.short_blocks.retrieval_criterion", "profiles.short_blocks.chunk_words", "profiles.reading_support.simplify_above_fk_grade", "profiles.reading_support.pre_teach_above_cefr"],
+  "techniques": [
+    { "id": "practice_testing", "name": "Practice testing", "utility": "high", "effect_size": null, "methods": ["PRACTICE_TEST", "ACTIVE_RECALL"], "source": null },
+    { "id": "distributed_practice", "name": "Distributed practice", "utility": "high", "effect_size": null, "methods": ["SPACED_FLASHCARDS"], "source": null },
+    { "id": "elaborative_interrogation", "name": "Elaborative interrogation", "utility": "moderate", "effect_size": null, "methods": [], "source": null },
+    { "id": "self_explanation", "name": "Self-explanation", "utility": "moderate", "effect_size": null, "methods": ["FEYNMAN"], "source": null },
+    { "id": "interleaved_practice", "name": "Interleaved practice", "utility": "moderate", "effect_size": null, "methods": [], "source": null },
+    { "id": "summarization", "name": "Summarization", "utility": "low", "effect_size": null, "methods": [], "source": null },
+    { "id": "highlighting", "name": "Highlighting / underlining", "utility": "low", "effect_size": null, "methods": [], "source": null },
+    { "id": "keyword_mnemonic", "name": "Keyword mnemonic", "utility": "low", "effect_size": null, "methods": [], "source": null },
+    { "id": "imagery_for_text", "name": "Imagery for text", "utility": "low", "effect_size": null, "methods": [], "source": null },
+    { "id": "rereading", "name": "Rereading", "utility": "low", "effect_size": null, "methods": [], "source": null }
+  ],
+  "profiles": {
+    "short_blocks": {
+      "label": "Shorter, fixed study blocks",
+      "session_minutes": 10,
+      "fixed_blocks": true,
+      "retrieval_criterion": 3,
+      "chunk_words": 150,
+      "extra_time_multiplier": 1.0,
+      "source": null
+    },
+    "reading_support": {
+      "label": "Extra reading support",
+      "reading_wpm": 238,
+      "second_language_speed_factor": 0.65,
+      "reading_seconds": "words / (reading_wpm * second_language_speed_factor) * 60",
+      "pre_teach_above_cefr": "B2",
+      "simplify_above_fk_grade": 10,
+      "source": null
+    },
+    "dyslexia_ui": {
+      "label": "Reading-friendly display",
+      "ui_flags": { "read_aloud": true, "increased_spacing": true, "line_focus": true },
+      "source": null
+    }
+  }
+}
