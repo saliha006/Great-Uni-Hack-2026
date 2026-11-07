@@ -5,7 +5,7 @@
 ## Mission
 You own the backbone: the FastAPI app, the database, material ingestion, the **LLM service** (OpenAI, with spend guards), the **voice backend** (ElevenLabs signed URL + transcript grading), the session orchestration that calls Yehor's engine, and the seed/dev endpoints. You also own repo hygiene and the submission paperwork.
 
-Your two deliverables that decide everything: **(1)** a **stub API with fixtures by 14:40** so Maxime and Yehor can integrate, **(2)** a session flow that runs end-to-end and survives the demo.
+Your two deliverables that decide everything: **(1)** a **stub API with fixtures by 14:40** so Maxym and Yehor can integrate, **(2)** a session flow that runs end-to-end and survives the demo.
 
 ## Your agent setup
 
@@ -15,8 +15,8 @@ You have the most capacity, so you carry the backbone plus one parallel stream.
 |---|---|---|
 | **Claude Enterprise** (main driver) | Stream A, main worktree | LLM service (cache/fixtures modes, batching, JSON schemas), session orchestration, engine integration, ElevenLabs endpoints |
 | **Codex Plus** | Stream B, second worktree | Stub API + fixtures, CRUD endpoints, SQLModel tables, ingestion/chunking, seed/dev endpoints, tests, README, Insights page wiring |
-| **Claude Pro #2** | Reserve / failover | Take over when Enterprise or Codex hits a limit (write a handoff note first). Also use it late (after 16:30) for demo tuning or helping Maxime/Yehor |
-| **Lovable Pro (100 credits)** | One-off async screen generator | Fire the prompts in S-L at ~14:20, go back to backend work while it builds; Maxime copies the files. Stop using it after ~14:50 |
+| **Claude Pro #2** | Reserve / failover | Take over when Enterprise or Codex hits a limit (write a handoff note first). Also use it late (after 16:30) for demo tuning or helping Maxym/Yehor |
+| **Lovable Pro (100 credits)** | One-off async screen generator | Fire the prompts in S-L at ~14:20, go back to backend work while it builds; Maxym copies the files. Stop using it after ~14:50 |
 | OpenAI / ElevenLabs / Firecrawl keys | Runtime only | The *app* reads them from `.env`. Your coding agents don't need them except to test |
 
 **Run two streams, no more.** Worktrees:
@@ -25,11 +25,11 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 # main checkout on sali-backend = Stream A (Claude Enterprise): llm.py, sessions flow, voice, engine glue
 ```
 **Bootstrap prompt (first message to any agent working for you):**
-> Read `AGENTS.md`, `docs/PRD.md` (§9–§13, §18) and `docs/builders/SALIHA_BUILDER.md` fully. I'm Saliha. You work only in `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, and `frontend/src/pages/Insights.tsx` + `frontend/src/components/insights/**`. Never edit `backend/engine/**` (Yehor) or other `frontend/**` (Maxime). Match PRD §11 field-for-field. Default `LLM_MODE=cache`. Reply in ≤5 lines: scope, interfaces, first task. Then start; commit after each task.
+> Read `AGENTS.md`, `docs/PRD.md` (§9–§13, §18) and `docs/builders/SALIHA_BUILDER.md` fully. I'm Saliha. You work only in `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, and `frontend/src/pages/Insights.tsx` + `frontend/src/components/insights/**`. Never edit `backend/engine/**` (Yehor) or other `frontend/**` (Maxym). Match PRD §11 field-for-field. Default `LLM_MODE=cache`. Reply in ≤5 lines: scope, interfaces, first task. Then start; commit after each task.
 
 **Failover:** when an agent says it's near a limit → say "handoff" → it appends to `docs/handoff/SALIHA.md` → open the next tool with the bootstrap prompt. Don't wait for the limit to fully hit.
 
-**Before 14:15:** check quota on Enterprise, Pro, and Codex. Keys are already in your local `.env`; send Yehor and Maxime the `.env` directly (never via git or chat).
+**Before 14:15:** check quota on Enterprise, Pro, and Codex. Keys are already in your local `.env`; send Yehor and Maxym the `.env` directly (never via git or chat).
 
 ## Ownership
 `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, plus the Insights page files in the frontend. **Don't touch** `backend/engine/**` or the rest of `frontend/**`.
@@ -37,16 +37,16 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 ## ▶ Current tasks (in order)
 
 **S0 · 14:15–14:40 · Repo + stub API** *(Codex does most of this)*
-- ~~Create the repo~~ *(done 14:25: `saliha006/Great-Uni-Hack-2026`; `main`, `context` (docs) and role branches `sali-backend`, `maxime-frontend`, `yehor-ml-data` exist; `.gitignore` covers `.env`, `*.db` and every `.md` except `progress.md`/`README.md`)*. Make sure **Maxime and every teammate are collaborators now** (don't leave it for 17:45). Code layout per PRD §9 on `sali-backend`; `.env.example` per PRD §12 (names only, no values). Docs are not committed to code branches: they live on `context` (CLAUDE.md 📤).
+- ~~Create the repo~~ *(done 14:25: `saliha006/Great-Uni-Hack-2026`; `main`, `context` (docs) and role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` exist; `.gitignore` covers `.env`, `*.db` and every `.md` except `progress.md`/`README.md`)*. Make sure **Maxym and every teammate are collaborators now** (don't leave it for 17:45). Code layout per PRD §9 on `sali-backend`; `.env.example` per PRD §12 (names only, no values). Docs are not committed to code branches: they live on `context` (CLAUDE.md 📤).
 - `backend/app`: FastAPI + SQLModel + SQLite, CORS for `http://localhost:5173`, Pydantic schemas **identical to PRD §11**, **all 16 endpoint groups returning hard-coded fixtures** (`app/fixtures.py`). `/openapi.json` live.
 - `make dev` (or README one-liner) starts the API on :8000; `GET /api/dev/usage` placeholder.
-- ✅ Accept: `curl` each endpoint returns schema-valid JSON; **Maxime can generate TS types from `/openapi.json` at 14:40.**
-- Also now: `GET /api/voice/signed-url` (real: `GET https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=…` with `xi-api-key`; returns `{signed_url, context}`; the `context` can be fixture until Y2). Maxime needs it for M3.
+- ✅ Accept: `curl` each endpoint returns schema-valid JSON; **Maxym can generate TS types from `/openapi.json` at 14:40.**
+- Also now: `GET /api/voice/signed-url` (real: `GET https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=…` with `xi-api-key`; returns `{signed_url, context}`; the `context` can be fixture until Y2). Maxym needs it for M3.
 - **🔔 14:45 Sync 1:** contract frozen.
 
 **S-L · 14:20 (5 min, async) · Lovable screens**
-- Paste Prompt 1 and Prompt 2 below into Lovable. Let it generate while you work. At ~14:50 send Maxime the preview/repo link. He copies the components, so no two-way sync.
-- Spend: aim ≤ ~40 credits; keep the rest for fixes. If output is poor at 14:50, drop it. Maxime builds by hand.
+- Paste Prompt 1 and Prompt 2 below into Lovable. Let it generate while you work. At ~14:50 send Maxym the preview/repo link. He copies the components, so no two-way sync.
+- Spend: aim ≤ ~40 credits; keep the rest for fixes. If output is poor at 14:50, drop it. Maxym builds by hand.
 
 **S1 · 14:40–15:05 · DB + subjects + ingestion**
 - Tables per PRD §10. `POST /subjects`, `GET /subjects`, `POST /subjects/{id}/material` (paste text or PDF via `pypdf`; **P1: `{url}` via Firecrawl** → markdown).
@@ -74,7 +74,7 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 - ✅ Accept: seed → advance 14 days → a `PLATEAU`/`FATIGUE` reflection exists; reset restores a clean state in seconds.
 
 **S5 · 16:25–16:50 · Insights page + hardening**
-- Build `frontend/src/pages/Insights.tsx` + `components/insights/*` against `GET /insights` + `/reflections` (Recharts: method comparison with CI bars, probe-over-time, attention stacked bars, timeline, readiness gauges, reflection cards). Start from your Lovable output if Maxime has copied it in; otherwise build directly. Use Maxime's layout components.
+- Build `frontend/src/pages/Insights.tsx` + `components/insights/*` against `GET /insights` + `/reflections` (Recharts: method comparison with CI bars, probe-over-time, attention stacked bars, timeline, readiness gauges, reflection cards). Start from your Lovable output if Maxym has copied it in; otherwise build directly. Use Maxym's layout components.
 - Hardening: friendly error JSON, request logging, idempotent probe submit, DB init on start.
 - ✅ Accept: Insights renders from seeded + live data without errors.
 
@@ -93,7 +93,7 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 
 ## Interfaces
 - **You provide:** PRD §11 API. **You consume:** `backend/engine/*` (Yehor), ElevenLabs, OpenAI, optional Firecrawl.
-- Match field names exactly. If you must deviate, append to "Contract changes" in the PRD and tell Maxime + Yehor.
+- Match field names exactly. If you must deviate, append to "Contract changes" in the PRD and tell Maxym + Yehor.
 
 ## Cut list (if behind)
 Firecrawl URL ingestion → `/dev/usage` UI → Insights polish → delayed probe → PDF upload (paste only). **Never cut:** stub API at 14:40, LLM cache mode, session flow, `/dev/seed` + `advance-days`.

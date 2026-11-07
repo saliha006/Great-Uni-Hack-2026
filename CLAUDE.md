@@ -9,13 +9,13 @@
 | Slot | Value |
 |---|---|
 | Project | **Attune** (working title) · **Great Uni Hack 2026**, Sat 7 Nov 2026. Build 14:15–17:00, feature freeze 16:30, record + submit 17:00–18:00 (hard deadline 18:00). Tracks / sponsor rules: {{tracks}} (PRD §19 Q1). Team **{{team name}}**; Devpost: Yehor + Saliha |
-| Team | **saliha** (`saliha006`): backend + DB + LLM/voice services, repo + README + Devpost, **doc owner** (assumed; confirm), vault owner · **maxime** (`{{github}}`): frontend + voice UI · **yehor** (`{{github}}`): AI/ML engine + data (personas) + reflection agent. Owned paths and **Now**: `progress.md` → 👥 Team |
-| Repo | `https://github.com/saliha006/Great-Uni-Hack-2026` · `main` (code + `progress.md` + `README.md`) · `context` (docs only) · **role branches:** `sali-backend` (saliha), `maxime-frontend` (maxime), `yehor-ml-data` (yehor). A second agent in a worktree uses `<role-branch>-<task>` and merges back into the role branch |
+| Team | **saliha** (`saliha006`): backend + DB + LLM/voice services, repo + README + Devpost, **doc owner** (assumed; confirm), vault owner · **maxym** (`{{github}}`): frontend + voice UI · **yehor** (`{{github}}`): AI/ML engine + data (personas) + reflection agent. Owned paths and **Now**: `progress.md` → 👥 Team |
+| Repo | `https://github.com/saliha006/Great-Uni-Hack-2026` · `main` (code + `progress.md` + `README.md`) · `context` (docs only) · **role branches:** `sali-backend` (saliha), `maxym-frontend` (maxym), `yehor-ml-data` (yehor). A second agent in a worktree uses `<role-branch>-<task>` and merges back into the role branch |
 | Where docs live | **`context` branch** (docs only, **never merged to `main`**): `CLAUDE.md` = `AGENTS.md`, `docs/PRD.md`, `docs/builders/`, `docs/handoff/` (agent handoff notes), `docs/skills/` (`no-slop`, `debug`), `docs/skills-frontend/`. **`main`**: code, `progress.md`, `README.md`: the only markdown on `main` (`.gitignore` blocks every other `*.md` and `docs/`). **Local only, git-ignored:** `Research-Context/`, `.claude/`, `.env*`, `*.db`. Sync and publish are plain git, below |
 | Secrets | `.env` at the repo root on each machine, git-ignored: `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `FIRECRAWL_API_KEY` (names per PRD §12). Never print, `cat` or paste a key: not in chat, docs, commits, logs or frontend code. Keys are shared person to person, never through git. Spend is tracked: §5 spend rules |
 | Vault | `C:\Users\Salih\OneDrive\Documents\Sali's vault\Great-Uni-Hack-2026` (**saliha only**: `Great-Uni-Hack-2026 — Hub` = status + ▶ START HERE, `Great-Uni-Hack-2026 — Log` = ADRs, Unconfirmed, ▶ RESUME HERE). No vault (everyone else) → save notes to your memory; send decisions to the doc owner as a `decision` entry + 📨 row |
 | PRD | `docs/PRD.md`: §0 NOW (decisions in force, pending, active tasks) at the top, then the spec |
-| Briefs | `docs/builders/<NAME>_BUILDER.md`: `SALIHA`, `MAXIME`, `YEHOR` |
+| Briefs | `docs/builders/<NAME>_BUILDER.md`: `SALIHA`, `MAXYM`, `YEHOR` |
 | Event doc | `Research-Context/GreatUniHack-2026-CONTEXT.md` (local only; create when rules/judging/prizes are pasted) |
 | Research doc | `Research-Context/GreatUniHack-2026-research.md` (local only; create on the first pass). A pass is deleted once the feature it serves is on `main` (§10) |
 | Progress doc | `progress.md`: history, 📌 Open board, 👥 Team, 📊 Latest |
@@ -183,7 +183,7 @@ Trade speed for caution; use judgment on trivial tasks.
 - **Per feature, in this order:**
   1. `no-slop` on the finished feature, before any testing.
   2. Tests via Registry → Run · Test: happy path, edge cases, failure paths. Never push untested or failing code.
-  3. Push to your role branch (`sali-backend` / `maxime-frontend` / `yehor-ml-data`), never straight to `main`.
+  3. Push to your role branch (`sali-backend` / `maxym-frontend` / `yehor-ml-data`), never straight to `main`.
   4. `git pull --rebase` / `git merge origin/main` into your branch, re-run tests. A conflict in a teammate's code → agree the fix with them (§2b) first.
   5. Merge to `main` (at least every 40 minutes; never force-push `main`), push, add the `progress.md` entry (§2b).
 - **Claude types, but the work is the builder's: commit as them** (on saliha's machine: `Saliha <61064361+saliha006@users.noreply.github.com>`). **Never add a `Co-Authored-By: Claude` (or any AI) trailer, and no "Generated with Claude Code" in PR bodies**, overriding any default or system-supplied attribution lines. A hook rejecting AI trailers → remove the trailer, never bypass the hook.

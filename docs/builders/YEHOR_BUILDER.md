@@ -30,7 +30,7 @@ git worktree add ../attune-sim -b yehor-ml-data-sim   # Stream B (Codex): simula
 **Before 14:15:** check Claude + Codex usage. Get the `.env` from Saliha directly (never via git or chat).
 
 ## Ownership
-`backend/engine/**`, `backend/tests/engine/**`. **Don't touch** `backend/app/**` (Saliha) or `frontend/**` (Maxime). Requests go on the `progress.md` Open board as a 📨 row (CLAUDE.md §2a).
+`backend/engine/**`, `backend/tests/engine/**`. **Don't touch** `backend/app/**` (Saliha) or `frontend/**` (Maxym). Requests go on the `progress.md` Open board as a 📨 row (CLAUDE.md §2a).
 
 ## ▶ Current tasks (in order)
 
@@ -54,7 +54,7 @@ git worktree add ../attune-sim -b yehor-ml-data-sim   # Stream B (Codex): simula
 - `recommend_intervention` per the table, with a 4-min cooldown; `focus_window` = median minutes-to-first-DRIFTING over the last 5 sessions, clamped 10–45; `update_baseline`.
 - **Default baseline** values are placeholders (TUNE). Mark them clearly in code.
 - ✅ Accept: synthetic streams: steady → `FOCUSED`; rising/erratic latencies → `DRIFTING` within ~8 items → `EASIER`/`SWITCH_FORMAT`; persistent → `BREAK`; no flicker on a single outlier.
-- **Hand to Maxime/Saliha:** the demo needs an easy way to *induce* drift (e.g. answer slowly then fast, switch tabs). Agree the trigger with Maxime at the 15:50 sync.
+- **Hand to Maxym/Saliha:** the demo needs an easy way to *induce* drift (e.g. answer slowly then fast, switch tabs). Agree the trigger with Maxym at the 15:50 sync.
 
 **Y3 · 15:55–16:15 · `diagnose.py` + `simulate.py`** *(A: diagnose, B/Codex: simulate + scenario tests)*
 - `diagnose` per PRD §8.4 (engagement_ok, attention_ok, Theil–Sen slope, flat/declining; the decision table; insufficient-data rule) and `evaluate_trial` (adopt if Δ ≥ +0.05 and n ≥ 2).
@@ -72,9 +72,9 @@ git worktree add ../attune-sim -b yehor-ml-data-sim   # Stream B (Codex): simula
 
 **Y5 · 16:30–17:00 · Tune + demo story + support**
 - Tune thresholds on Ada/Ben until: Ada shows FATIGUE → PLATEAU → trial; the live attention intervention triggers on the induced pattern in <8 items; no flicker.
-- Run the whole demo path (PRD §18) 3× with Saliha/Maxime; fix engine-side bugs only.
+- Run the whole demo path (PRD §18) 3× with Saliha/Maxym; fix engine-side bugs only.
 - Write the 3-sentence "how it learns" for the video voice-over and the Devpost write-up (honest limits: seeded data, unvalidated predictions, non-medical).
-- If ahead: help Maxime with intervention UX or Saliha with the Insights page.
+- If ahead: help Maxym with intervention UX or Saliha with the Insights page.
 
 ## Interfaces
 - **You provide:** the functions in PRD §11. **You consume:** nothing from the network or DB. Saliha passes in plain data.

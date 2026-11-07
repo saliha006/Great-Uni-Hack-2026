@@ -1,4 +1,4 @@
-# MAXIME — Builder file: Frontend + Voice UI
+# MAXYM — Builder file: Frontend + Voice UI
 
 **Read `docs/PRD.md` and `AGENTS.md` first.** This file is your task list and agent setup.
 
@@ -18,15 +18,15 @@ Claude Pro has tighter limits than Enterprise, so split by *task type* and keep 
 | Lovable output (from Saliha) | Optional | Copy component files for Onboarding/Home/Insights/Dev from Saliha's Lovable project at ~14:50 (if good). Don't two-way sync |
 
 ```bash
-git worktree add ../attune-ui -b maxime-frontend-ui   # Stream B (Codex): screens + polish; merge into maxime-frontend
-# main checkout on maxime-frontend = Stream A (Claude Pro): runner, telemetry, voice
+git worktree add ../attune-ui -b maxym-frontend-ui   # Stream B (Codex): screens + polish; merge into maxym-frontend
+# main checkout on maxym-frontend = Stream A (Claude Pro): runner, telemetry, voice
 ```
 **Front-end skills** *(added 14:40 by Saliha)*: after syncing `context`, run `mkdir -p .claude/skills && cp -r docs/skills-frontend/* .claude/skills/` so your agents can use `design-direction`, `ui-audit`, `motion`, `motion-review`, `frontend-performance` and `reverse-engineer-ui`.
 
 **Bootstrap prompt (first message to any agent working for you):**
-> Read `AGENTS.md`, `docs/PRD.md` (§5, §7, §8.3, §11, §12, §18) and `docs/builders/MAXIME_BUILDER.md` fully. I'm Maxime. You work only in `frontend/**` (never `frontend/src/pages/Insights.tsx` or `components/insights/**`, which Saliha owns). Use generated types from `/openapi.json` (`npx openapi-typescript`). Reply in ≤5 lines: scope, the endpoints you'll call, and your first task. Then start. Commit after each task.
+> Read `AGENTS.md`, `docs/PRD.md` (§5, §7, §8.3, §11, §12, §18) and `docs/builders/MAXYM_BUILDER.md` fully. I'm Maxym. You work only in `frontend/**` (never `frontend/src/pages/Insights.tsx` or `components/insights/**`, which Saliha owns). Use generated types from `/openapi.json` (`npx openapi-typescript`). Reply in ≤5 lines: scope, the endpoints you'll call, and your first task. Then start. Commit after each task.
 
-**Failover:** if Claude Pro hits its limit, say "handoff" → agent appends to `docs/handoff/MAXIME.md` → Codex takes the main seat with the same bootstrap prompt (and vice-versa). Because Pro is the tighter budget, give it **only the hard parts** and let Codex do volume from the start.
+**Failover:** if Claude Pro hits its limit, say "handoff" → agent appends to `docs/handoff/MAXYM.md` → Codex takes the main seat with the same bootstrap prompt (and vice-versa). Because Pro is the tighter budget, give it **only the hard parts** and let Codex do volume from the start.
 
 **Before 14:15:** check your Claude and Codex usage pages so you know your headroom.
 
