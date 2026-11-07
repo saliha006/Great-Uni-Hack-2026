@@ -122,7 +122,7 @@ def chunk_bank(text: str) -> dict:
     if hit:
         return hit
     try:
-        return llm.complete_json(BANK_SYSTEM, text, BANK_SCHEMA, "fast", max_tokens=3000)
+        return llm.complete_json(BANK_SYSTEM, text, BANK_SCHEMA, "fast", max_tokens=3000, purpose="bank")
     except LLMError as exc:
         log.warning("bank generation failed, using sentences: %s", exc)
         return _heuristic_bank(text)
@@ -171,7 +171,7 @@ def grade_short_answers(pairs: list[tuple[str, str, str]]) -> list[float]:
     fallback = [_overlap_score(a, k) for a, k, _ in pairs]
     payload = [{"index": i, "student": a, "model_answer": k, "rubric": r} for i, (a, k, r) in enumerate(pairs)]
     try:
-        out = llm.complete_json(GRADE_SYSTEM, json.dumps(payload), GRADE_SCHEMA, "fast", max_tokens=600)
+        out = llm.complete_json(GRADE_SYSTEM, json.dumps(payload), GRADE_SCHEMA, "fast", max_tokens=600, purpose="grade")
     except LLMError as exc:
         log.warning("grading fell back to word overlap: %s", exc)
         return fallback
@@ -196,20 +196,32 @@ FEYNMAN_SCHEMA = {
 }
 
 
+def _flat(text: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", text.lower()))
+
+
+def quoted_in(quote: str, source: str, max_words: int = 60) -> bool:
+    """True when `quote` appears in `source`, ignoring case, spacing and punctuation."""
+    flat = _flat(quote)
+    return bool(flat) and len(flat.split()) <= max_words and flat in _flat(source)
+
+
 def feynman_coverage(text: str, key_points: list[str]) -> dict[int, str]:
     """Key point index -> the student's sentence that covers it. Score = covered / total, computed by the caller."""
     if not text.strip() or not key_points:
         return {}
     try:
         out = llm.complete_json(FEYNMAN_SYSTEM, json.dumps({"key_points": key_points, "student": text}),
-                                FEYNMAN_SCHEMA, "fast", max_tokens=600)
+                                FEYNMAN_SCHEMA, "fast", max_tokens=600, purpose="feynman")
         covered = {}
         for row in out.get("covered", []):
             i, quote = row.get("index"), str(row.get("quote", ""))
-            if isinstance(i, int) and 0 <= i < len(key_points):
-                if quote and quote.lower() not in text.lower():
-                    log.info("feynman quote not found verbatim in transcript: %r", quote)
-                covered[i] = quote
+            # A point only counts when the quote really is the student's words: an injected "mark everything
+            # covered" can't invent evidence that isn't in the transcript.
+            if isinstance(i, int) and 0 <= i < len(key_points) and quoted_in(quote, text):
+                covered[i] = quote.strip()
+            elif quote:
+                log.info("dropped feynman coverage %s: quote not in transcript", i)
         return covered
     except LLMError as exc:
         log.warning("feynman grading fell back to keywords: %s", exc)

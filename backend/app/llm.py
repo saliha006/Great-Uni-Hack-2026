@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -48,6 +49,8 @@ class LLMService:
     cache_dir: Path = DEFAULT_CACHE_DIR
     max_live_calls: int = MAX_LIVE_CALLS
     client: object | None = None
+    # Called once per answered request: (purpose, model, prompt_tokens, completion_tokens, cache_hit).
+    sink: Callable[[str, str, int, int, bool], None] | None = None
     usage: Usage = field(default_factory=Usage)
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -60,7 +63,8 @@ class LLMService:
             fail_closed=os.getenv("LLM_FAIL_CLOSED") == "1",
         )
 
-    def complete_json(self, system: str, user: str, schema: dict, tier: Tier, max_tokens: int = 800) -> dict:
+    def complete_json(self, system: str, user: str, schema: dict, tier: Tier, max_tokens: int = 800,
+                      purpose: str = "engine") -> dict:
         model = self.models.get(tier) or ""
         key = hashlib.sha256(json.dumps([model, system, user, schema], sort_keys=True).encode()).hexdigest()
         with self._lock:
@@ -69,6 +73,7 @@ class LLMService:
         if cached is not None and self.mode != "live":
             with self._lock:
                 self.usage.cache_hits += 1
+            self._record(purpose, model, 0, 0, True)
             return cached
         if self.mode == "fixtures" or self.fail_closed:
             raise LLMError("cache miss and live calls are off")
@@ -79,18 +84,29 @@ class LLMService:
                 raise LLMError("live call cap reached")
             self.usage.live_calls += 1
         try:
-            result = self._call_with_retry(model, system, user, schema, max_tokens)
+            result, prompt_tokens, completion_tokens = self._call_with_retry(model, system, user, schema, max_tokens)
         except LLMError:
             with self._lock:
                 self.usage.failures += 1
             raise
         self._write(key, result)
+        self._record(purpose, model, prompt_tokens, completion_tokens, False)
         return result
+
+    def _record(self, purpose: str, model: str, prompt_tokens: int, completion_tokens: int, cache_hit: bool) -> None:
+        if self.sink is None:
+            return
+        try:
+            self.sink(purpose, model, prompt_tokens, completion_tokens, cache_hit)
+        except Exception:
+            # Usage logging must never fail a student's request.
+            log.exception("could not record LLM usage")
 
     def for_engine(self) -> "EngineLLM":
         return EngineLLM(self)
 
-    def _call_with_retry(self, model: str, system: str, user: str, schema: dict, max_tokens: int) -> dict:
+    def _call_with_retry(self, model: str, system: str, user: str, schema: dict,
+                         max_tokens: int) -> tuple[dict, int, int]:
         # The SDK's own retries are off (max_retries=0) so every attempt is counted here; one retry on transient errors.
         try:
             return self._call(model, system, user, schema, max_tokens)
@@ -101,7 +117,7 @@ class LLMService:
         except TRANSIENT as exc:
             raise LLMError(f"OpenAI unavailable: {type(exc).__name__}") from exc
 
-    def _call(self, model: str, system: str, user: str, schema: dict, max_tokens: int) -> dict:
+    def _call(self, model: str, system: str, user: str, schema: dict, max_tokens: int) -> tuple[dict, int, int]:
         if self.client is None:
             self.client = openai.OpenAI(max_retries=0, timeout=TIMEOUT_S)
         client = self.client
@@ -122,10 +138,11 @@ class LLMService:
             except openai.BadRequestError as exc2:
                 raise LLMError(f"OpenAI rejected the request: {exc2.message}") from exc2
         choice = resp.choices[0]
-        if resp.usage:
-            with self._lock:
-                self.usage.prompt_tokens += resp.usage.prompt_tokens
-                self.usage.completion_tokens += resp.usage.completion_tokens
+        prompt_tokens = resp.usage.prompt_tokens if resp.usage else 0
+        completion_tokens = resp.usage.completion_tokens if resp.usage else 0
+        with self._lock:
+            self.usage.prompt_tokens += prompt_tokens
+            self.usage.completion_tokens += completion_tokens
         # Reasoning tokens count against max_completion_tokens: a "length" finish can be empty yet billed.
         if choice.finish_reason != "stop" or not choice.message.content:
             raise LLMError(f"incomplete response (finish_reason={choice.finish_reason})")
@@ -135,7 +152,7 @@ class LLMService:
             raise LLMError("response was not JSON") from exc
         if not isinstance(data, dict):
             raise LLMError("response was not a JSON object")
-        return data
+        return data, prompt_tokens, completion_tokens
 
     def _read(self, key: str) -> dict | None:
         path = self.cache_dir / f"{key}.json"
@@ -158,7 +175,7 @@ class EngineLLM:
 
     def complete_json(self, system: str, user: str, schema: dict, tier: Tier) -> dict:
         try:
-            return self.service.complete_json(system, user, schema, tier)
+            return self.service.complete_json(system, user, schema, tier, purpose="reflect")
         except LLMError as exc:
             log.warning("engine LLM call failed: %s", exc)
             return {}

@@ -63,3 +63,31 @@ def test_ada_rates_practice_test_best_then_feynman_after_week_one():
     stats = stats_from(simulate.make_persona("Ada", 0)[:7])
     ranked = sorted(stats, key=lambda m: stats[m].alpha / (stats[m].alpha + stats[m].beta), reverse=True)
     assert ranked[:2] == ["PRACTICE_TEST", "FEYNMAN"]
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+def test_ada_trials_feynman_even_when_the_current_plan_is_an_exploration_pick(seed):
+    """The backend's plan can be a one-off exploration pick (seed 1 -> ACTIVE_RECALL); the stall is still on Practice Test."""
+    ada = simulate.make_persona("Ada", seed)
+    exploring = Plan(method="ACTIVE_RECALL", mode="ADAPTIVE", session_minutes=20, reason="r")
+    got = agent.reflect(ctx(ada), ada, stats_from(ada), exploring, "WEEKLY", None)
+    assert got.diagnosis == "PLATEAU" and got.evidence["method"] == "PRACTICE_TEST"
+    assert got.decision.method == "FEYNMAN"
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+def test_after_the_feynman_trial_wins_the_next_reflection_keeps_it(seed):
+    ada = simulate.make_persona("Ada", seed)
+    after = ada + simulate.trial_sessions("Ada", seed, "FEYNMAN", ada[-1].ts, 7, first_id=100)
+    feynman = Plan(method="FEYNMAN", mode="ADAPTIVE", session_minutes=20, reason="r")
+    got = agent.reflect(ctx(after), after, stats_from(after), feynman, "WEEKLY", None)
+    assert got.diagnosis == "ON_TRACK" and got.decision.action == "KEEP"
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+def test_a_long_feynman_trial_levels_off_as_mastery_not_perfection(seed):
+    ada = simulate.make_persona("Ada", seed)
+    after = ada + simulate.trial_sessions("Ada", seed, "FEYNMAN", ada[-1].ts, 15, first_id=100)
+    feynman = Plan(method="FEYNMAN", mode="ADAPTIVE", session_minutes=20, reason="r")
+    got = agent.reflect(ctx(after), after, stats_from(after), feynman, "WEEKLY", None)
+    assert got.diagnosis == "MASTERED" and got.evidence["mean_probe"] <= 0.92
