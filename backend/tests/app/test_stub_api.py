@@ -1,8 +1,8 @@
 import pytest
-from app.main import app
+from app.main import create_app
 from fastapi.testclient import TestClient
 
-client = TestClient(app)
+client = TestClient(create_app("fixtures"))
 
 GETS = [
     "/api/health",

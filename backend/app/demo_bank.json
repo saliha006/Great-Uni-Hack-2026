@@ -1,0 +1,99 @@
+{
+  "subject": "Data Structures",
+  "title": "Hash tables",
+  "chunks": [
+    {
+      "text": "A hash table stores key-value pairs so that looking up a key takes constant time on average. It keeps an array of slots, often called buckets. To store a pair, the table runs the key through a hash function, which turns the key into an integer, and then takes that integer modulo the array length to pick a bucket. Looking a key up repeats the same steps, so the table jumps straight to the right bucket instead of scanning every entry the way a list would.\n\nA good hash function has three properties. It is deterministic: the same key always gives the same hash, otherwise a stored value could never be found again. It is fast to compute, because it runs on every insert and every lookup. And it spreads keys evenly across the buckets, so that no bucket ends up holding far more than its share. A poor hash, for example one that only looks at the first letter of a string, sends many keys to the same few buckets and the table slows down.\n\nBecause keys are hashed, a hash table does not keep them in any useful order. If you need the keys sorted, or you need range queries such as all keys between 10 and 20, a balanced search tree is usually the better structure. Keys must also be immutable while they are stored: if a key changes after insertion, its hash changes, and the table will look for it in the wrong bucket.",
+      "key_points": [
+        "A hash table gives average constant-time lookup by mapping each key to a bucket in an array.",
+        "The bucket index is the key's hash taken modulo the array length.",
+        "A good hash function is deterministic, fast, and spreads keys evenly across buckets.",
+        "Hash tables keep no key order, and stored keys must not change after insertion."
+      ],
+      "recall": [
+        {"prompt": "How does a hash table decide which bucket a key goes into?", "answer": "It hashes the key to an integer and takes that integer modulo the number of buckets."},
+        {"prompt": "Name the three properties of a good hash function.", "answer": "Deterministic, fast to compute, and spreads keys evenly across buckets."},
+        {"prompt": "When is a balanced search tree a better choice than a hash table?", "answer": "When you need keys in sorted order or range queries."}
+      ],
+      "mcq": [
+        {"prompt": "What is the average-case time to look up a key in a hash table?", "options": ["O(1)", "O(log n)", "O(n)", "O(n log n)"], "answer": "O(1)"},
+        {"prompt": "Why must a hash function be deterministic?", "options": ["So stored values can be found again", "So it runs faster", "So keys stay sorted", "So the table never resizes"], "answer": "So stored values can be found again"}
+      ],
+      "short": [
+        {"prompt": "What goes wrong if a key is changed after it has been inserted into a hash table?", "answer": "Its hash changes, so the table looks in the wrong bucket and cannot find the entry.", "rubric": "Full credit: hash changes and lookup goes to the wrong bucket. Half: says it gets lost without why."},
+        {"prompt": "Why does a hash function that only looks at the first letter of a string perform badly?", "answer": "Many keys share a first letter, so they pile into a few buckets and lookups slow down.", "rubric": "Full credit: uneven spread / clustering into few buckets causes slow lookups."}
+      ],
+      "probe_mcq": [
+        {"prompt": "A hash table picks a bucket using:", "options": ["hash(key) modulo the array length", "the key's position in sorted order", "a binary search over the keys", "the time the key was inserted"], "answer": "hash(key) modulo the array length"},
+        {"prompt": "Which task suits a balanced search tree better than a hash table?", "options": ["Finding all keys between 10 and 20", "Checking if one key exists", "Counting word frequencies", "Caching recent results"], "answer": "Finding all keys between 10 and 20"},
+        {"prompt": "Which is NOT a property of a good hash function?", "options": ["It keeps keys in sorted order", "It is deterministic", "It is fast to compute", "It spreads keys evenly"], "answer": "It keeps keys in sorted order"}
+      ],
+      "probe_short": [
+        {"prompt": "Explain in one or two sentences why a hash table lookup is usually faster than searching a list.", "answer": "The hash jumps straight to one bucket instead of scanning every entry.", "rubric": "Full credit: direct jump to a bucket vs scanning all entries."},
+        {"prompt": "Why must keys stay unchanged while they are stored in a hash table?", "answer": "Changing a key changes its hash, so the table would look in the wrong bucket.", "rubric": "Full credit: changed hash, wrong bucket."}
+      ]
+    },
+    {
+      "text": "Two different keys can land in the same bucket. This is called a collision, and it is unavoidable: there are far more possible keys than buckets. A hash table needs a rule for handling collisions, and there are two common families.\n\nSeparate chaining stores a small list in each bucket. A new pair that collides is simply appended to that bucket's list, and a lookup hashes to the bucket and then walks its short list comparing keys. Chaining is simple and degrades gracefully: a slightly crowded table just has slightly longer lists.\n\nOpen addressing keeps every entry directly in the array. When the chosen slot is taken, the table probes other slots in a fixed sequence until it finds a free one. Linear probing checks the next slot, then the one after, and so on. It is cache-friendly because it reads neighbouring memory, but it suffers from primary clustering: occupied slots bunch together into long runs, and every key that hashes into a run has to walk to its end. Quadratic probing and double hashing jump further away on each step, which breaks up those runs.\n\nDeletion is tricky with open addressing. If you simply empty a slot, a later lookup can stop at the gap and wrongly conclude that a key further along the probe sequence is missing. Tables therefore mark deleted slots with a special tombstone value that lookups skip over but inserts may reuse.",
+      "key_points": [
+        "A collision is when two keys map to the same bucket, and it cannot be avoided.",
+        "Separate chaining keeps a list per bucket and appends colliding pairs to it.",
+        "Open addressing probes other slots; linear probing is cache-friendly but causes primary clustering.",
+        "Deleting under open addressing needs tombstones so lookups do not stop early."
+      ],
+      "recall": [
+        {"prompt": "What is a collision in a hash table, and why can't it be avoided?", "answer": "Two keys mapping to the same bucket; there are far more possible keys than buckets."},
+        {"prompt": "How does separate chaining handle a collision?", "answer": "Each bucket holds a list and the colliding pair is appended to it."},
+        {"prompt": "Why do open-addressing tables use tombstones when deleting?", "answer": "An empty slot would make later lookups stop early and miss keys further along the probe sequence."}
+      ],
+      "mcq": [
+        {"prompt": "Which problem is linear probing known for?", "options": ["Primary clustering", "Unbounded memory use", "Losing key order", "Non-deterministic hashing"], "answer": "Primary clustering"},
+        {"prompt": "In separate chaining, a lookup:", "options": ["hashes to a bucket then walks its list", "scans the whole array", "probes the next free slot", "sorts the bucket first"], "answer": "hashes to a bucket then walks its list"}
+      ],
+      "short": [
+        {"prompt": "Why is linear probing cache-friendly?", "answer": "It reads neighbouring slots, which sit next to each other in memory.", "rubric": "Full credit: adjacent memory / neighbouring slots."},
+        {"prompt": "How do quadratic probing and double hashing reduce clustering?", "answer": "They jump further away on each probe, which breaks up long runs of occupied slots.", "rubric": "Full credit: larger or varying jumps break up runs."}
+      ],
+      "probe_mcq": [
+        {"prompt": "Open addressing stores colliding entries:", "options": ["in other slots of the same array", "in a linked list per bucket", "in a second hash table", "nowhere; it rejects them"], "answer": "in other slots of the same array"},
+        {"prompt": "What does a tombstone do in an open-addressing table?", "options": ["Marks a deleted slot so lookups keep probing", "Locks the table during resize", "Stores the hash of a key", "Counts collisions"], "answer": "Marks a deleted slot so lookups keep probing"},
+        {"prompt": "Primary clustering means:", "options": ["occupied slots bunch into long runs", "every bucket holds one key", "keys are stored in sorted order", "the hash function is too slow"], "answer": "occupied slots bunch into long runs"}
+      ],
+      "probe_short": [
+        {"prompt": "Compare separate chaining and open addressing in one or two sentences.", "answer": "Chaining keeps a list per bucket; open addressing keeps entries in the array and probes for a free slot.", "rubric": "Full credit: list per bucket vs probing within the array."},
+        {"prompt": "What would go wrong if an open-addressing table just emptied a slot on delete?", "answer": "A lookup could stop at the gap and miss a key that sits later in its probe sequence.", "rubric": "Full credit: lookup stops early, misses later keys."}
+      ]
+    },
+    {
+      "text": "The load factor of a hash table is the number of stored entries divided by the number of buckets. It is the main dial for performance. With chaining, the average list length equals the load factor, so lookups stay fast while it is small. With open addressing the effect is sharper: as the load factor approaches 1, free slots become rare and probe sequences grow very long.\n\nTo keep the load factor low, a table resizes when it passes a threshold, commonly around 0.75 for chaining and lower, around 0.5, for open addressing. Resizing allocates a larger array, usually double the size, and rehashes every entry, because each key's bucket depends on the array length. A single resize costs O(n) time, but because the array doubles, resizes become rarer as the table grows. Spread over all the inserts, the cost per insert is still constant on average. This is called amortised O(1).\n\nThe constant-time promise is an average, not a guarantee. If many keys hash to the same bucket, either by bad luck, a weak hash function, or an attacker choosing keys on purpose, lookups degrade to O(n). Some languages defend against this by seeding their string hash with a random value at start-up, and Java's HashMap turns very long bucket chains into balanced trees so the worst case becomes O(log n).",
+      "key_points": [
+        "Load factor is entries divided by buckets, and it controls how fast lookups are.",
+        "Tables resize past a threshold by allocating a bigger array and rehashing every entry.",
+        "Doubling on resize makes the cost per insert amortised O(1) even though one resize is O(n).",
+        "Average O(1) is not guaranteed; many keys in one bucket degrade lookups to O(n)."
+      ],
+      "recall": [
+        {"prompt": "What is the load factor of a hash table?", "answer": "The number of stored entries divided by the number of buckets."},
+        {"prompt": "Why must every entry be rehashed when a hash table resizes?", "answer": "Each key's bucket depends on the array length, which has changed."},
+        {"prompt": "What does amortised O(1) insertion mean for a hash table?", "answer": "Occasional O(n) resizes, spread over all inserts, still average out to constant time per insert."}
+      ],
+      "mcq": [
+        {"prompt": "A common resize threshold for a chaining hash table is a load factor of about:", "options": ["0.75", "0.1", "2.0", "10"], "answer": "0.75"},
+        {"prompt": "What is the worst-case lookup time if every key lands in one bucket of a chaining table?", "options": ["O(n)", "O(1)", "O(log n)", "O(n^2)"], "answer": "O(n)"}
+      ],
+      "short": [
+        {"prompt": "Why does doubling the array on resize keep inserts cheap on average?", "answer": "Resizes get rarer as the table grows, so their O(n) cost spreads thinly over many inserts.", "rubric": "Full credit: rarer resizes, cost spread over inserts (amortised)."},
+        {"prompt": "How does Java's HashMap limit the damage from very long bucket chains?", "answer": "It turns a long chain into a balanced tree so the worst case becomes O(log n).", "rubric": "Full credit: treeifies long chains, O(log n) worst case."}
+      ],
+      "probe_mcq": [
+        {"prompt": "As the load factor of an open-addressing table approaches 1:", "options": ["probe sequences get very long", "lookups get faster", "collisions disappear", "keys become sorted"], "answer": "probe sequences get very long"},
+        {"prompt": "A single resize of a hash table with n entries costs:", "options": ["O(n)", "O(1)", "O(log n)", "O(n^2)"], "answer": "O(n)"},
+        {"prompt": "Seeding a string hash with a random value at start-up mainly defends against:", "options": ["attackers choosing keys that collide", "running out of memory", "keys changing after insertion", "slow hash functions"], "answer": "attackers choosing keys that collide"}
+      ],
+      "probe_short": [
+        {"prompt": "In your own words, what does the load factor tell you about a hash table?", "answer": "How full it is: entries per bucket, which predicts how long lookups take.", "rubric": "Full credit: entries per bucket / fullness linked to lookup cost."},
+        {"prompt": "Why is O(1) lookup an average and not a guarantee?", "answer": "If many keys collide into one bucket, a lookup has to check them all, which is O(n).", "rubric": "Full credit: many collisions in one bucket make it O(n)."}
+      ]
+    }
+  ]
+}
