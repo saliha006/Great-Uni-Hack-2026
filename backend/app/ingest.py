@@ -74,4 +74,5 @@ def chunk_material(text: str) -> list[ChunkDraft]:
             chunks.append(" ".join(words[start:end]))
             start = end
 
-    return [ChunkDraft(idx=idx, text=chunk, difficulty_est=_difficulty(chunk)) for idx, chunk in enumerate(chunks[:MAX_CHUNKS])]
+    return [ChunkDraft(idx=idx, text=chunk, difficulty_est=_difficulty(chunk))
+            for idx, chunk in enumerate(chunks[:MAX_CHUNKS])]
