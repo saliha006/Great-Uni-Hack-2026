@@ -123,3 +123,4 @@ Firecrawl URL ingestion → `/dev/usage` UI → Insights polish → delayed prob
 - ✅ S0 · JSON 500s inside CORS, any localhost port, tables on startup · 15:40
 - ✅ S1–S4 · real API on SQLite + engine, `app/llm.py`, demo bank, idempotent probe, Feynman coverage, dev story · 16:15
 - ✂️ S-L · Lovable cut (past cutoff) · 15:30
+- ✅ S6 · README (run, demo steps, scoring, honest limits) + `scripts/attention_burst.py` · 16:25

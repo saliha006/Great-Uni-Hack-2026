@@ -21,7 +21,7 @@
 | Progress doc | `progress.md`: history, 📌 Open board, 👥 Team, 📊 Latest |
 | Decisions | Full ADRs: vault Log. Team mirror: PRD §0 NOW. API contract changes: bottom of PRD ("Contract changes") |
 | Mirror docs | PRD §0/§1 ↔ top of this file; `CLAUDE.md` ↔ `AGENTS.md`; briefs ↔ `progress.md` 👥 Team; vault Hub + Log; `progress.md` 👥 Team + 📊 Latest. Update every mirror when a decision, owner or status changes |
-| Run · Test | Engine: `pytest backend/tests/engine` · App: `pytest backend/tests/app` · Backend run: `{{uvicorn command}}` · Frontend: `{{npm run dev}}` · coverage: `{{--cov flags}}` |
+| Run · Test | Engine: `pytest backend/tests/engine` · App: `pytest backend/tests/app` · Backend run: `cd backend && .venv/Scripts/uvicorn app.main:app --port 8000 --env-file ../.env` (macOS/Linux `.venv/bin/`; `API_MODE=fixtures` for canned data) · Frontend: `{{npm run dev}}` · coverage: `{{--cov flags}}` |
 | Scale | Single demo user, local SQLite, screen-recorded demo (PRD §2, §12) |
 | Deploy | Local for the demo; deploy only if spare time (PRD §12). Platform rules: none |
 | Verbosity | **Level 0** (§3) |
@@ -41,7 +41,7 @@ Then give one clear starting point and proceed.
 
 **"Handoff"** (usage limit near, or the human says it): append to `docs/handoff/<NAME>.md`: **Done · In progress (file, function, what's left) · Next step · Gotchas · Commands to run**. Max ~15 lines. Then stop; the next agent reads it.
 
-**"Start the demo" / "run the demo" / anything demo-related**: follow PRD §18 (demo script, ≤2:00) on the local stack. Steps: {{backend start command}} → {{frontend start command}} → {{reset/seed demo state command}} → open {{demo URL}}. Say "seeded demo data" whenever seeded history is on screen. Change the demo path only on the user's say-so.
+**"Start the demo" / "run the demo" / anything demo-related**: follow PRD §18 (demo script, ≤2:00) on the local stack. Steps: backend run (Registry) → {{frontend start command}} → `POST /api/dev/reset` then `/api/dev/seed` → open {{demo URL}}; `/api/dev/advance-days {"days":7}` for the reflection beat, `python scripts/attention_burst.py` for the attention beat. Say "seeded demo data" whenever seeded history is on screen. Change the demo path only on the user's say-so.
 
 ### 🔄 Context sync (session start, before each new brief task, and before editing a shared doc)
 Never work from a stale plan: fetch fresh context at least at those three points (and every ~30 min in a long task). Plain git, no scripts. The synced commit is kept in `.git/context-synced`.
