@@ -72,11 +72,22 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
-- **`main` (2026-11-07 14:40):** `.gitignore`, `progress.md`, `README.md` only; `context` holds the docs; role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` cut from `main` · **14:35: fixture stub API on `main`** (`backend/app`, 25 tests pass) · stub API: up (fixtures) · **14:39: engine types + stubs on `main`** (38 tests pass) · ElevenLabs key verified by the CLI, agent not created · deploy: local only (PRD §12)
+- **`main` (2026-11-07 16:25):** real backend (all §11 routes on SQLite + engine), 174 tests pass, `LLM_MODE=cache` default; OPENAI_MODEL_FAST/SMART still unset (live grading falls back to word overlap); Insights page waits on the frontend scaffold
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:25 — feat — README for the real API and an attention burst script (S6) — @saliha
+- **Where:** `sali-backend` @ `18d914d` · merged to `main`: yes
+- **Did:** README: run with `--env-file ../.env`, demo reset → seed → advance-days, how scoring works, honest limits
+  (seeded data, early-read rankings, LLM marking, non-medical, privacy). `scripts/attention_burst.py` plays steady then
+  erratic answers against a running server; smoke run: BREAK on answer 11; seed + advance 7 → PLATEAU → Feynman trial.
+- **Touched:** `README.md`, `scripts/attention_burst.py`
+- **Brief task:** S6 → ✅ (Devpost text after the freeze)
+- **⚠️ Conflicts:** @maxym: demo steps for the frontend are in the README · @yehor: thresholds can be tuned with the burst script
+- **📨 Needs:** @maxym: frontend scaffold on `main` so the Insights page (S5) can go in
+- **Status:** open
 
 ### 2026-11-07 16:15 — feat — Real backend: sessions, grading, probe, attention, Feynman, insights and dev story (S1–S4) — @saliha
 - **Where:** `sali-backend` @ `e52d3c8` · merged to `main`: yes
