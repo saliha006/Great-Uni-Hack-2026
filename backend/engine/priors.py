@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from engine.types import Method
+from engine.types import Method, ProfileName
 
 Utility = Literal["high", "moderate", "low"]
 
@@ -40,10 +40,6 @@ TECHNIQUES: tuple[Technique, ...] = (
 )
 
 METHOD_TECHNIQUE: dict[Method, Technique] = {m: t for t in TECHNIQUES for m in t.methods}
-
-# Support profiles are chosen by need, never by diagnosis (research doc; CLAUDE.md honesty rule).
-ProfileName = Literal["short_blocks", "reading_support", "dyslexia_ui"]
-
 
 class ShortBlocks(BaseModel):
     session_minutes: int = 10  # TUNE

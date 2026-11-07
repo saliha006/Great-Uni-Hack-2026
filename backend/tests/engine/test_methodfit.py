@@ -95,3 +95,13 @@ def test_confidence_levels():
     assert methodfit.confidence(priors()) == "EARLY"
     assert methodfit.confidence({m: MethodStats(alpha=5, beta=5, n=3) for m in LIVE_METHODS}) == "MODERATE"
     assert methodfit.confidence({m: MethodStats(alpha=9, beta=9, n=6) for m in LIVE_METHODS}) == "HIGH"
+
+
+def test_short_blocks_profile_fixes_session_length_in_every_phase():
+    for phase in ("SAMPLING", "ADAPTIVE"):
+        ctx = subject(phase=phase, focus_window_min=25, profiles=("short_blocks",))
+        assert methodfit.choose_plan(ctx, priors(), [], random.Random(0)).session_minutes == 10
+
+
+def test_no_profile_uses_the_focus_window():
+    assert methodfit.choose_plan(subject(focus_window_min=25), priors(), [], random.Random(0)).session_minutes == 25
