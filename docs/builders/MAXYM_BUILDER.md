@@ -35,7 +35,7 @@ git worktree add ../attune-ui -b maxym-frontend-ui   # Stream B (Codex): screens
 
 ## ▶ Current tasks (in order)
 
-**▶ Proposed 2026-11-07 16:45 by Saliha: needs your yes on the 16:45 🔀 row; your current tasks come first.** Evidence: research doc Pass 2 (`Research-Context/GreatUniHack-2026-research.md`, local to Saliha).
+**▶ Proposed 2026-11-07 16:45 by Saliha (Saliha approved 16:50; needs your yes on the 16:45 🔀 row; your current tasks come first). Security for you: plain-text rendering of all AI text, API URL from `VITE_API_URL`, and if the backend sets `DEV_TOKEN`, send it as `X-Dev-Token` from `VITE_DEV_TOKEN` on `/api/dev/*` calls (off by default).** Evidence: research doc Pass 2 (`Research-Context/GreatUniHack-2026-research.md`, local to Saliha).
 - **ElevenLabs "Sam" (~40 min):** dynamic variables (not overrides) for topic + numbered key points · agent settings: `max_duration_seconds` ~300, `turn_eagerness` patient, soft timeout 3.0 s, small low-latency LLM at low effort, auth on · persona prompt (curious novice who never explains, rules repeated twice), 3 scripted tests · collect `onMessage` turns and POST them on disconnect.
 - **UI (~45 min):** neutral calibration copy ("Trying three ways to study"), felt rating before the score reveal · quiet "easing a notch / back to normal" chip with a one-line why, never medical wording · hint/reveal button ⚖️ · render all LLM text as plain text, API base URL from env, no keys in the bundle.
 - **Post-hackathon:** user-controlled break rhythm and chunk length.

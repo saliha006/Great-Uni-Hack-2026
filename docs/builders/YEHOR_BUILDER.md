@@ -34,7 +34,7 @@ git worktree add ../attune-sim -b yehor-ml-data-sim   # Stream B (Codex): simula
 
 ## ▶ Current tasks (in order)
 
-**▶ Proposed 2026-11-07 16:45 by Saliha: DO NOT START until you say yes on the 16:45 🔀 row; finish your current Y5 first. ⚖️ = PRD §11 change.** Evidence: research doc Pass 2 (`Research-Context/GreatUniHack-2026-research.md`, local to Saliha).
+**▶ Proposed 2026-11-07 16:45 by Saliha (Saliha approved 16:50; still needs YOUR yes on the 16:45 🔀 row). Finish your current task first, then Q3 (security, 15 min) before Q1/Q2. Saliha is doing the backend half of security now and does not touch `db.py`/`ingest.py`/`engine/`. ⚖️ = PRD §11 change.** Evidence: research doc Pass 2 (`Research-Context/GreatUniHack-2026-research.md`, local to Saliha).
 - **Q1 Answer-seeking + adaptive difficulty (~110 min):** `fast_wrong_share` per window (fast AND wrong, TUNE); EASIER only when drifting AND (error streak ≥3 OR fast_wrong_share ≥0.4) · recovery: back up one notch after two good windows + minimum dwell (TUNE 5 min, "default, not research-derived"), never more than one notch below baseline · pure `engine` re-rank helper (same skill, nearest target difficulty) · accept a hint count in the window once Saliha's hint event lands ⚖️.
 - **Q2 Method selection (~70 min):** equal Beta prior pseudo-counts (4-6, TUNE) so one session can't flip the ranking · "leading" only when P(best) > 0.8 with ≥3 observations ⚖️ · plateau only on a drop beyond the 5-item noise band (~0.2).
 - **Q3 Security (~15 min):** engine prompts delimit chunk text; range-check `_apply_decision` inputs; cap lengths in `ingest.chunk_material` · add `user_id` to `llm_usage` in `db.py` (Saliha's quotas need it).
