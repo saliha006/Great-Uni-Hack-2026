@@ -1,5 +1,6 @@
 """Why progress stalled: tired vs absent vs plateau vs mastered (PRD §8.4). All thresholds are TUNE."""
 import statistics
+from collections import Counter
 from datetime import timedelta
 from itertools import combinations
 
@@ -54,7 +55,10 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
     attention_rising = len(last3) == 3 and last3[0] < last3[1] < last3[2] and last3[2] - last3[0] >= RISING_MIN
     attention_ok = statistics.median(not_focused) < NOT_FOCUSED_MAX and not attention_rising
 
-    on_method = [s.probe_score for s in window if s.method == plan.method]
+    # The plan can be a one-off exploration pick; judge the method actually studied in the window.
+    counts = Counter(s.method for s in window)
+    method = plan.method if counts[plan.method] >= MIN_SESSIONS else counts.most_common(1)[0][0]
+    on_method = [s.probe_score for s in window if s.method == method]
     probes = on_method if len(on_method) >= MIN_SESSIONS else [s.probe_score for s in window]
     slope = theil_sen_slope(probes)
     drop = sudden_drop(probes)
@@ -64,7 +68,7 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
     evidence = {
         "sessions": len(window),
         "days": (latest - window[0].ts).days,
-        "method": plan.method,
+        "method": method,
         "mean_probe": round(mean_probe, 3),
         "slope_per_session": round(slope, 3),
         "sudden_drop": drop,

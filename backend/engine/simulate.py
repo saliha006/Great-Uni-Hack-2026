@@ -7,6 +7,7 @@ from engine.types import LIVE_METHODS, Method, SessionMode, SessionSummary
 
 START = datetime(2026, 10, 17, 18, 0)
 NOISE = 0.015
+TRIAL_CEILING = 0.9  # a long trial levels off here (reads MASTERED) instead of climbing to 100%
 
 
 def _session(rng: random.Random, session_id: int, day: int, method: Method, mode: SessionMode, probe: float,
@@ -71,7 +72,9 @@ def trial_sessions(name: str, seed: int, method: Method, after: datetime, days: 
                    first_id: int) -> list[SessionSummary]:
     """Sessions a persona would log during a method trial, for /dev/advance-days. Ada does better on Feynman."""
     rng = random.Random(f"{name}:{seed}:trial:{method}")
-    base = 0.74 if (name, method) == ("Ada", "FEYNMAN") else 0.64
+    # Ada keeps improving on Feynman (clearly above the 0.02/session "flat" line); other trials stay flat.
+    base, step = (0.72, 0.025) if (name, method) == ("Ada", "FEYNMAN") else (0.64, 0.0)
     start_day = (after - START).days + 1
-    return [_session(rng, first_id + i, start_day + i, method, "TRIAL", base + 0.01 * i, 0.10, 1.0, 18, 1.0)
+    return [_session(rng, first_id + i, start_day + i, method, "TRIAL", min(TRIAL_CEILING, base + step * i), 0.10,
+                     1.0, 18, 1.0)
             for i in range(days)]

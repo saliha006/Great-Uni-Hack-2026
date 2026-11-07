@@ -54,7 +54,7 @@ def decide(found: Diagnosis, plan: Plan, stats: dict[Method, MethodStats]) -> De
         return Decision(action="SHORTEN_SESSIONS",
                         session_minutes=max(MIN_SESSION_MINUTES, round(plan.session_minutes * 0.75)))
     if found.name == "PLATEAU":
-        return Decision(action="TRIAL_METHOD", method=_second_best(stats, plan.method), trial_days=TRIAL_DAYS)
+        return Decision(action="TRIAL_METHOD", method=_second_best(stats, found.evidence["method"]), trial_days=TRIAL_DAYS)
     return Decision(action="KEEP")
 
 
@@ -62,7 +62,7 @@ def template(found: Diagnosis, decision: Decision, plan: Plan) -> str:
     ev = found.evidence
     if ev.get("insufficient_data"):
         return "Not enough sessions yet to spot a pattern, so the plan stays as it is for now."
-    days, method = ev["days"], METHOD_LABELS[plan.method]
+    days, method = ev["days"], METHOD_LABELS[ev["method"]]
     focus = round(100 * (1 - ev["median_not_focused"]))
     texts = {
         "MASTERED": f"Your {method} scores have held at {ev['mean_probe']:.0%} over {days} days. "
@@ -81,7 +81,7 @@ def template(found: Diagnosis, decision: Decision, plan: Plan) -> str:
 
 def _narrate(llm: LLM, found: Diagnosis, decision: Decision, plan: Plan) -> str | None:
     user = json.dumps({"diagnosis": found.name, "decision": decision.model_dump(exclude_none=True),
-                       "current_method": plan.method, "evidence": found.evidence})
+                       "current_method": found.evidence["method"], "evidence": found.evidence})
     try:
         text = llm.complete_json(SYSTEM, user, SCHEMA, "smart").get("explanation")
     except Exception:  # noqa: BLE001 — any provider failure must fall back to the template, never fail the call
