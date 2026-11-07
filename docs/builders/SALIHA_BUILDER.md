@@ -120,3 +120,6 @@ Firecrawl URL ingestion → `/dev/usage` UI → Insights polish → delayed prob
 
 ## ✅ Done log
 *(finished task → one line: ✅ id · what · `progress.md` stamp)*
+- ✅ S0 · JSON 500s inside CORS, any localhost port, tables on startup · 15:40
+- ✅ S1–S4 · real API on SQLite + engine, `app/llm.py`, demo bank, idempotent probe, Feynman coverage, dev story · 16:15
+- ✂️ S-L · Lovable cut (past cutoff) · 15:30
