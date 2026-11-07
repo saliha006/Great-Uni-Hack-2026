@@ -14,7 +14,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import httpx
-from engine import agent, attention, methodfit, predict, simulate
+from engine import agent, attention, methodfit, personas, predict
 from engine import diagnose as dg
 from engine import types as t
 from fastapi import HTTPException
@@ -29,7 +29,7 @@ from app.llm import service as llm
 log = logging.getLogger("attune.flow")
 
 DEMO_USER = "demo"
-PERSONA, PERSONA_SEED = "Ada", 1  # Yehor's tests check the Ada story for seeds 0-4
+DEFAULT_PERSONA, PERSONA_SEED = "breakthrough", 1
 DEMO_EPOCH = datetime(2026, 11, 7, 18, 0)
 MIN_WORDS = 50
 LATENCY_CAP = 3  # an answer slower than 3x its expected time counts as 3x: stepping away isn't study time
@@ -65,6 +65,8 @@ clock = Clock()
 # In memory on purpose: a demo run is reset + seed in one process; a restart only loses the attention chart detail.
 _attention_state: dict[int, dict] = {}
 _shares: dict[int, tuple[float, float]] = {}
+# Seeded subject -> its persona and RNG, so advance-days continues the same student's story.
+_seeded: dict[int, dict] = {}
 
 
 # ---- Content bank -----------------------------------------------------------
@@ -696,8 +698,9 @@ def _reflection_view(row: db.ReflectionRow) -> s.Reflection:
                         explanation=row.explanation)
 
 
-def _store_reflection(ses: Session, subject_id: int, ref: t.Reflection, seeded: bool) -> db.ReflectionRow:
-    row = db.ReflectionRow(subject_id=subject_id, ts=clock.now(), trigger=ref.trigger, diagnosis=ref.diagnosis,
+def _store_reflection(ses: Session, subject_id: int, ref: t.Reflection, seeded: bool,
+                      ts: datetime | None = None) -> db.ReflectionRow:
+    row = db.ReflectionRow(subject_id=subject_id, ts=ts or clock.now(), trigger=ref.trigger, diagnosis=ref.diagnosis,
                            evidence_json=json.dumps(ref.evidence), decision_json=ref.decision.model_dump_json(),
                            explanation=_label(ref.explanation, seeded))
     ses.add(row)
@@ -705,15 +708,20 @@ def _store_reflection(ses: Session, subject_id: int, ref: t.Reflection, seeded: 
     return row
 
 
-def _apply_decision(ses: Session, subject: db.SubjectRow, ref: t.Reflection, plan: t.Plan) -> None:
+def _decided_plan(ref: t.Reflection, plan: t.Plan, now: datetime) -> t.Plan:
     d = ref.decision
     if d.action == "TRIAL_METHOD" and d.method:
-        until = (clock.now() + timedelta(days=d.trial_days or agent.TRIAL_DAYS)).date().isoformat()
-        plan = t.Plan(method=d.method, mode="TRIAL", session_minutes=plan.session_minutes, trial_until=until,
+        until = (now + timedelta(days=d.trial_days or agent.TRIAL_DAYS)).date().isoformat()
+        return t.Plan(method=d.method, mode="TRIAL", session_minutes=plan.session_minutes, trial_until=until,
                       reason=f"Trying {t.METHOD_LABELS[d.method]} until {until} to see if it beats the plateau.")
-    elif d.action in ("SHORTEN_SESSIONS", "EASE_IN") and d.session_minutes:
-        plan = plan.model_copy(update={"session_minutes": d.session_minutes})
-    _save_plan(ses, subject.id, plan)
+    if d.action in ("SHORTEN_SESSIONS", "EASE_IN") and d.session_minutes:
+        return plan.model_copy(update={"session_minutes": d.session_minutes,
+                                       "reason": f"Shorter {d.session_minutes}-minute sessions while focus recovers."})
+    return plan
+
+
+def _apply_decision(ses: Session, subject: db.SubjectRow, ref: t.Reflection, plan: t.Plan) -> None:
+    _save_plan(ses, subject.id, _decided_plan(ref, plan, clock.now()))
 
 
 class _TemplateOnly:
@@ -885,62 +893,73 @@ def _add_seeded(ses: Session, subject_id: int, chunks: list[db.ChunkRow], summar
         _shares[row.id] = (h.drift_share, h.lapse_share)
 
 
-def seed(ses: Session) -> dict:
+def _run_period(ses: Session, subject: db.SubjectRow, info: dict, start: datetime, days: int,
+                plan: t.Plan, sampler: bool = False) -> tuple[t.Plan, s.Reflection]:
+    """Generate one period of the persona's sessions, then let the engine reflect on them as it would live."""
+    new = personas.period(info["key"], info["rng"], start, days, plan.method, plan.session_minutes, info["index"], 0)
+    if sampler:
+        new[:len(t.LIVE_METHODS)] = [h.model_copy(update={"mode": "SAMPLER", "method": m})
+                                     for h, m in zip(new, t.LIVE_METHODS)]
+    _add_seeded(ses, subject.id, _chunks(ses, subject.id), new)
+    rows = _completed(ses, subject.id)
+    history = _history(rows)
+    stats = methodfit.stats_from_history(history)
+    _save_stats(ses, subject.id, stats)
+    now = new[-1].ts + timedelta(hours=12)
+    ctx = _ctx(subject, rows, history, plan).model_copy(update={"now": now})
+    ref = agent.reflect(ctx, history, stats, plan, "WEEKLY", _TemplateOnly())
+    view = _reflection_view(_store_reflection(ses, subject.id, ref, True, ts=now))
+    info["index"] += 1
+    return _decided_plan(ref, plan, now), view
+
+
+def seed(ses: Session, persona: str = DEFAULT_PERSONA) -> dict:
+    if persona not in personas.PERSONAS:
+        raise HTTPException(422, f"unknown persona; pick one of {', '.join(personas.PERSONAS)}")
+    who = personas.PERSONAS[persona]
     _ensure_user(ses)
     subject = db.SubjectRow(user_id=DEMO_USER, name="Data Structures", kind="PERFORMANCE", phase="ADAPTIVE")
     ses.add(subject)
     ses.flush()
     add_material(ses, subject.id, s.MaterialBody(title=BANK["title"], text=DEMO_MATERIAL))
-    persona = simulate.make_persona(PERSONA, PERSONA_SEED)
-    _add_seeded(ses, subject.id, _chunks(ses, subject.id), persona)
-    clock.reset(base=max(h.ts for h in persona).replace(hour=18, minute=0) + timedelta(days=1))
-    stats = methodfit.stats_from_history(persona)
-    _save_stats(ses, subject.id, stats)
-    rows = _completed(ses, subject.id)
-    history = _history(rows)
-    _save_plan(ses, subject.id, methodfit.choose_plan(_ctx(subject, rows, history, None), stats, history,
-                                                      random.Random(PERSONA_SEED)))
+    info = {"key": persona, "rng": random.Random(f"{persona}:{PERSONA_SEED}"), "index": 0}
+    lengths = [personas.period_days(info["rng"]) for _ in range(personas.PERIODS)]
+    day = (DEMO_EPOCH - timedelta(days=sum(lengths) + 1)).replace(hour=18, minute=0)
+    plan = t.Plan(method="ACTIVE_RECALL", mode="ADAPTIVE", session_minutes=20,
+                  reason="Calibration finished; starting with the method that fit best.")
+    for i, n in enumerate(lengths):
+        plan, _ = _run_period(ses, subject, info, day, n, plan, sampler=i == 0)
+        day += timedelta(days=n)
+    _save_plan(ses, subject.id, plan)
+    last = max(r.started_at for r in _completed(ses, subject.id))
+    clock.reset(base=last.replace(hour=18, minute=0) + timedelta(days=1))
+    _seeded[subject.id] = info
     ses.commit()
-    return {"subject_ids": [subject.id]}
+    return {"subject_ids": [subject.id], "persona": persona, "name": who.name, "label": who.label}
 
 
 def advance_days(ses: Session, days: int) -> s.AdvanceDaysResult:
-    before = clock.now()
     clock.advance(days)
     out = []
     for subject in ses.exec(select(db.SubjectRow)).all():
-        rows = _completed(ses, subject.id)
-        if not any(r.is_seeded for r in rows):
+        info = _seeded.get(subject.id)
+        if info is None:
             continue
-        plan = _plan(ses, subject.id)
-        if plan.mode == "TRIAL" and plan.trial_until:
-            last = max(r.started_at for r in rows)
-            trial_end = datetime.fromisoformat(plan.trial_until)
-            n = max(0, min((clock.now() - last).days, (trial_end - last).days))
-            new = simulate.trial_sessions(PERSONA, PERSONA_SEED, plan.method, after=last, days=n, first_id=0)
-            _add_seeded(ses, subject.id, _chunks(ses, subject.id), new)
-            stats = _stats(ses, subject.id)
-            median = methodfit.median_efficiency(_history(rows))
-            for h in new:
-                reward = methodfit.session_reward(h.probe_score, None, h.active_minutes, h.felt_rating, median)
-                stats[h.method] = methodfit.update_stats(stats[h.method], reward)
-            _save_stats(ses, subject.id, stats)
-            if clock.now() >= trial_end:
-                rows = _completed(ses, subject.id)
-                history = _history(rows)
-                outcome = dg.evaluate_trial(history, plan)
-                name = t.METHOD_LABELS[plan.method]
-                if outcome.adopt:
-                    plan = plan.model_copy(update={"mode": "ADAPTIVE", "trial_until": None, "reason": (
-                        f"The {name} trial beat the old method by {outcome.delta:+.2f}, so it stays.")})
-                else:
-                    plan = methodfit.choose_plan(_ctx(subject, rows, history, None), stats, history,
-                                                 random.Random(PERSONA_SEED))
-                _save_plan(ses, subject.id, plan)
-        if (clock.now() - before).days >= 7:
-            out.append(_reflect(ses, subject, "WEEKLY"))
+        remaining = days
+        while remaining >= personas.MIN_DAYS or (remaining > 0 and not out):
+            n = min(remaining, personas.period_days(info["rng"]))
+            last = max(r.started_at for r in _completed(ses, subject.id))
+            plan, view = _run_period(ses, subject, info, (last + timedelta(days=1)).replace(hour=18), n,
+                                     _plan(ses, subject.id))
+            _save_plan(ses, subject.id, plan)
+            out.append(view)
+            remaining -= n
     ses.commit()
     return s.AdvanceDaysResult(advanced_to=clock.now().isoformat(), reflections=out)
+
+
+def persona_list() -> list[dict]:
+    return [p.model_dump() for p in personas.PERSONAS.values()]
 
 
 def reset() -> dict:
@@ -950,6 +969,7 @@ def reset() -> dict:
     guard_db.init(db.engine)
     _attention_state.clear()
     _shares.clear()
+    _seeded.clear()
     clock.reset()
     return {"ok": True}
 

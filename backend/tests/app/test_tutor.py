@@ -95,3 +95,30 @@ def test_unknown_quiz_question_is_404(client, subject):
     r = client.post(f"/api/subjects/{subject}/quiz-answer", json={"qid": "1:probe_mcq:0", "answer": "x",
                                                                    "latency_ms": 10})
     assert r.status_code == 404
+
+
+def _set(client, sid, kind, **extra):
+    return client.post(f"/api/subjects/{sid}/study-set", json={"kind": kind, **extra}).json()
+
+
+def test_flashcards_have_backs_and_quotes(client, subject):
+    cards = _set(client, subject, "flashcards")["items"]
+    assert cards and all(c["back"] and c["kind"] == "FLASHCARD" for c in cards)
+    assert all(flow.quoted_in(c["quote"], flow.DEMO_MATERIAL) for c in cards if c["quote"])
+
+
+def test_quiz_covers_every_chunk_and_never_uses_the_probe(client, subject):
+    quiz = _set(client, subject, "quiz", count=6)["items"]
+    probe = {q["prompt"] for c in flow.BANK["chunks"] for q in c["probe_mcq"] + c["probe_short"]}
+    assert len(quiz) == 6 and {q["source"] for q in quiz} == {"Chunk 1", "Chunk 2", "Chunk 3"}
+    assert not {q["prompt"] for q in quiz} & probe
+    answer = client.post(f"/api/subjects/{subject}/quiz-answer",
+                         json={"qid": quiz[0]["qid"], "answer": "a confident wrong answer", "latency_ms": 9000}).json()
+    assert answer["reveal"] is None and answer["hint"]
+
+
+def test_paper_has_sections_and_marks(client, subject):
+    paper = _set(client, subject, "paper")
+    sections = [i["section"] for i in paper["items"]]
+    assert sections == sorted(sections) and {"A · Multiple choice", "B · Short answer", "C · Explain"} == set(sections)
+    assert all(i["marks"] for i in paper["items"]) and paper["minutes"] > 0

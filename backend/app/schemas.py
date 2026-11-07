@@ -308,6 +308,10 @@ class ReflectBody(BaseModel):
     trigger: Literal["MANUAL", "WEEKLY"]
 
 
+class SeedBody(BaseModel):
+    persona: Literal["steady", "breakthrough", "bursts"] = "breakthrough"  # additive (contract change 2026-11-07)
+
+
 class AdvanceDaysBody(BaseModel):
     days: int = Field(ge=0, le=60)
 
@@ -353,6 +357,31 @@ class QuizAnswerBody(BaseModel):
     answer: str = Field(max_length=TEXT_MAX)
     latency_ms: int = Field(ge=0, le=LATENCY_MAX_MS)
     previous: list[str] = Field(default=[], max_length=8)  # client-held: it only affects the student's own practice
+
+
+
+class StudySetBody(BaseModel):
+    kind: Literal["quiz", "flashcards", "paper"]
+    count: int | None = Field(default=None, ge=1, le=40)
+
+
+class StudyItem(BaseModel):
+    qid: str
+    kind: Literal["MCQ", "SHORT_ANSWER", "RECALL_PROMPT", "FLASHCARD"]
+    prompt: str
+    options: list[str] | None = None
+    back: str | None = None  # flashcards only: flipping the card is the method
+    quote: str | None = None  # the sentence in the notes this item is built on
+    source: str
+    marks: int | None = None
+    section: str | None = None
+
+
+class StudySet(BaseModel):
+    kind: Literal["quiz", "flashcards", "paper"]
+    title: str
+    minutes: int
+    items: list[StudyItem]
 
 
 Item.model_rebuild()
