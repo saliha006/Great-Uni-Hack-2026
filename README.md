@@ -64,6 +64,15 @@ uv venv --python 3.11 .venv && uv pip install -r requirements.txt
 
 The API runs at `http://localhost:8000/api`, with interactive docs at `http://localhost:8000/docs`.
 
+**Frontend** (needs Node 18+), in a second terminal:
+
+```bash
+cd frontend && cp .env.example .env && npm install && npm run dev   # http://127.0.0.1:5173
+```
+
+Set `VITE_API_URL=http://localhost:8000` in `frontend/.env` to use the backend; left empty, the frontend runs on a
+built-in mock API with demo data.
+
 | Setting | Values | Use |
 |---|---|---|
 | `API_MODE` | `real` (default) · `fixtures` | `fixtures` serves canned responses for frontend work |
@@ -142,7 +151,7 @@ Browser (React)  ──REST──>  FastAPI backend  ──>  Engine (pure Pytho
 
 | Layer | Path | Status |
 |---|---|---|
-| Frontend (React + Vite) | `frontend/` | in progress |
+| Frontend (React + Vite) | `frontend/` | onboarding, home, session, progress, insights and dev pages |
 | Backend API (FastAPI + SQLModel) | `backend/app/` | all endpoints live (`/openapi.json`) |
 | Engine (pure functions, no I/O) | `backend/engine/` | method fit, attention, diagnosis, reflection, readiness, demo personas |
 | Data | SQLite | local; seeded rows are flagged and labelled |
