@@ -97,3 +97,8 @@ Attention chip → Dev panel "simulate drift" → `SWITCH_FORMAT` UX → Onboard
 
 ## ✅ Done log
 *(finished task → one line: ✅ id · what · `progress.md` stamp)*
+✅ M1 · Vite scaffold, typed §11 client + mock, Home with one-tap Start and eat-the-frog, onboarding · `progress.md` 2026-11-07 16:05 (M0 🟡: ElevenLabs agent still to create)
+✅ M2 · session runner, telemetry, probe + felt rating, interventions (toast, break modal, wrap-up) · `progress.md` 2026-11-07 16:06
+🟡 M3 · Feynman typed fallback on 502 ✅; live voice waits on the "Sam" agent · `progress.md` 2026-11-07 16:07
+✅ M4 · `/dev` panel, reflection card, progress grid, questions inbox · `progress.md` 2026-11-07 16:08
+🟡 M5 · PRD §18 path run 3× at 1280×720 with no console errors; palette polish · `progress.md` 2026-11-07 16:09
