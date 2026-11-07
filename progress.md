@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:05 | @maxym | @saliha | ⚠️ conflict | Frontend scaffold is on `main` (`cd frontend && npm i && npm run dev`). Insights page: add `frontend/src/pages/Insights.tsx`, route `/insights/:subjectId` in `App.tsx`; reuse `Card`/`Chip`/`Meter`/`ButtonLink` (`components/ui.tsx`) + `PageShell`. `recharts` installed | 2026-11-07 16:05 |
 | 2026-11-07 16:12 | @yehor | @saliha | ⚠️ conflict | **Demo fix on `main`:** with seed 1 the post-seed plan is an Active Recall exploration pick, so advance-days trialled *Practice Test* twice. Engine now diagnoses the method actually studied → advance 1: PLATEAU → Feynman trial; advance 2: trial adopted (+0.21) → MASTERED. Verified through the real API (reset → seed → advance 7 ×2). The narration prompt's `current_method` changed, so warm the LLM cache after this commit | 2026-11-07 16:12 |
 | 2026-11-07 17:05 | @saliha | @yehor | 📨 waiting on | Please add `user_id: str | None = None` to `LLMUsageRow` in `db.py` (your Q3 task): the backend now writes a usage row per LLM call and per-user quotas need the column. No rush before the demo | 2026-11-07 17:05 |
 | 2026-11-07 16:00 | @yehor | @saliha | ⚠️ conflict | I rewrote `README.md` (your path) at Yehor's request: badges, features table, "why it's different", quick start, demo steps (two `advance-days 7` calls: start then adopt the trial), architecture, team. Your scoring and honest-limits text is kept word for word (+1 line: thresholds are tuned guesses). Edit or revert anything you disagree with | 2026-11-07 16:00 |
@@ -62,7 +63,7 @@ whenever you log an entry.
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
 | Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
-| Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
+| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1 done; M2 session runner next |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
 (`CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `docs/builders/`): doc owner publishes (CLAUDE.md 📤); your own `docs/handoff/<NAME>.md`: you.
@@ -83,6 +84,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:05 — feat — Frontend scaffold, typed API client, Home and onboarding (M0, M1) — @maxym
+- **Where:** `maxym-frontend` @ `a2c973a` · merged to `main`: yes (`fd8b913`)
+- **Did:** Vite + React + TS + Tailwind v4 + TanStack Query + Recharts in `frontend/`. One typed client for PRD §11; `VITE_API_URL` empty → in-browser mock (demo content, sampler, attention heuristic), set → FastAPI. `npm run build` type-checks `types.ts` against `schema.d.ts` (generated from `/openapi.json`; caught two nullable fields). Home: subject cards, one-tap Start, "eat the frog first" card, status strip, resume card. Onboarding per PRD §7.1. `/insights/:subjectId` route shell. Tested against `main`'s real API (seed, subjects, start) and on the mock.
+- **Touched:** `frontend/**`
+- **Brief task:** M0 → 🟡 part (ElevenLabs agent not created) · M1 → ✅ done
+- **⚠️ Conflicts:** @saliha: scaffold is on `main` for your Insights page: add `frontend/src/pages/Insights.tsx` and point the `/insights/:subjectId` route in `App.tsx` at it. Shared: `Card`, `Chip`, `Meter`, `Button`, `ButtonLink` (`components/ui.tsx`), `PageShell`. `recharts` is installed (me). No shadcn/ui: plain Tailwind tokens in `src/index.css`
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 16:12 — fix — Demo reflection trialled the wrong method — @yehor
 - **Where:** `yehor-ml-data` · merged to `main`: yes
