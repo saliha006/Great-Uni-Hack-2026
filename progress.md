@@ -63,7 +63,7 @@ whenever you log an entry.
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
 | Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
-| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 done; voice waits on the ElevenLabs agent |
+| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 on main; ElevenLabs agent + live voice at the end |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
 (`CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `docs/builders/`): doc owner publishes (CLAUDE.md 📤); your own `docs/handoff/<NAME>.md`: you.
@@ -79,11 +79,21 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
+- **frontend (2026-11-07 16:09):** on `main` @ `7093149`: M1–M4 + Feynman typed fallback; run `cd frontend && npm i && npm run dev` (mock API) or `VITE_API_URL=http://127.0.0.1:8000 npm run dev` (real API, CORS allows :5173). `npm run build` = typecheck + contract check vs `schema.d.ts`. Live voice waits on the ElevenLabs agent
 - **`main` (2026-11-07 16:25):** real backend (all §11 routes on SQLite + engine), 174 tests pass, `LLM_MODE=cache` default; OPENAI_MODEL_FAST/SMART still unset (live grading falls back to word overlap); Insights page waits on the frontend scaffold
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:09 — feat — Cream and slate palette, orange hover (design) — @maxym
+- **Where:** `maxym-frontend` @ `7093149` · merged to `main`: yes
+- **Did:** Maxym's redesign in `src/index.css`: cream surfaces, slate accent, orange interaction colour on hover and for the cursor dot (now hidden over controls). Dark theme passes WCAG AA everywhere checked. **Known issue, kept by choice:** in light theme white text on the slate accent is 4.0:1 and on the orange hover 3.4:1 (AA needs 4.5:1); darker shades that pass are `#64778b` / `#ad6136` if we change our minds.
+- **Touched:** `frontend/src/index.css`, `frontend/src/components/CursorDot.tsx` (+ two comments)
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** @saliha: Insights page colours come from these tokens (`bg-accent`, `bg-g0`–`g4`, etc.); use them rather than raw hex
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:08 — feat — Dev panel, progress grid and questions inbox (M4) — @maxym
 - **Where:** `maxym-frontend` @ `96a055b` · merged to `main`: yes
