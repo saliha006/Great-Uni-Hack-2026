@@ -38,9 +38,9 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:42 | @maxym | @saliha | ⚖️ optional | Dashboard focus time is an estimate on the real API because §11 `attention_by_session` has no `active_minutes` (25 min guess per session, labelled "Est."). If you and @yehor agree to add the field, the dashboard drops the guess. Not urgent | 2026-11-07 16:42 |
 | 2026-11-07 16:40 | @yehor | @maxym | 📨 for you | **15-minute frontend polish window, stop by 16:58, then presentation.** Frontend design review (polish, your call; post-freeze safe): 7 ranked suggestions for the video in `docs/handoff/YEHOR.md` → "Frontend design review for Maxym" on `context`. Top 3: make the reflection card the 1:30 climax (decision as headline + evidence), let the attention state change read on camera, drop the global orange hover swap (UI flickers as the cursor moves) | 2026-11-07 16:40 |
 | 2026-11-07 16:30 | @yehor | @saliha | 📨 waiting on | **You run the demo recording.** Engine + data are final and verified end to end (stack, API demo path, attention burst, frontend build). Before recording: (1) record on your machine with `.env` + `OPENAI_MODEL_FAST/SMART` set; (2) re-warm the LLM cache after `6d20c83`; (3) get @maxym's `/insights/:subjectId` swap to your page, or record Insights last; (4) Feynman = typed fallback until the ElevenLabs agent lands; (5) `/dev/reset` + `/dev/seed` before each take. Full run order + voice-over: `docs/handoff/YEHOR.md` → "Demo handoff for Saliha" on `context` (`ad6e001`) | 2026-11-07 16:30 |
-| 2026-11-07 16:35 | @saliha | @maxym | 📨 waiting on | Insights page is on `main` (`frontend/src/pages/Insights.tsx`, export `Insights`). Please point `/insights/:subjectId` in `App.tsx` at it instead of `InsightsShell` (one line, your file) | 2026-11-07 16:35 |
 | 2026-11-07 16:20 | @yehor | @saliha @all | 🔀 answer | Yehor on the 16:45 proposals: **Q3 yes, done** (`llm_usage.user_id`, `ingest` 200-chunk cap; the engine's narration prompt never includes chunk text). **Q1 and Q2 parked** to post-hackathon: no time before freeze and they would change the tested demo story. Also: `SubjectState.confidence` now reflects the leading method (demo shows MODERATE, was EARLY). An old `attune.db` needs `/dev/reset` to get the new column | 2026-11-07 16:20 |
 | 2026-11-07 16:07 | @maxym | @saliha | 📨 waiting on | ElevenLabs "Sam" agent (M0) comes at the end of the day; then `ELEVENLABS_AGENT_ID` goes in your `.env`. Until then keep `/voice/signed-url` returning `502 voice_unavailable`: the UI falls back to typed Feynman | 2026-11-07 16:07 |
 | 2026-11-07 16:05 | @maxym | @saliha | ⚠️ conflict | Frontend scaffold is on `main` (`cd frontend && npm i && npm run dev`). Insights page: add `frontend/src/pages/Insights.tsx`, route `/insights/:subjectId` in `App.tsx`; reuse `Card`/`Chip`/`Meter`/`ButtonLink` (`components/ui.tsx`) + `PageShell`. `recharts` installed | 2026-11-07 16:05 |
@@ -66,7 +66,7 @@ whenever you log an entry.
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
 | Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | All tasks done; demo handed to Saliha 16:30 |
-| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 on main; ElevenLabs agent + live voice at the end |
+| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 + dashboard on main; ElevenLabs agent + live voice at the end |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
 (`CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `docs/builders/`): doc owner publishes (CLAUDE.md 📤); your own `docs/handoff/<NAME>.md`: you.
@@ -82,12 +82,40 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
+- **frontend (2026-11-07 16:43):** `main` @ `04a25a3`: dashboard at `/`, Study at `/study`, Insights page wired
 - **frontend (2026-11-07 16:09):** on `main` @ `7093149`: M1–M4 + Feynman typed fallback; run `cd frontend && npm i && npm run dev` (mock API) or `VITE_API_URL=http://127.0.0.1:8000 npm run dev` (real API, CORS allows :5173). `npm run build` = typecheck + contract check vs `schema.d.ts`. Live voice waits on the ElevenLabs agent
 - **`main` (2026-11-07 16:25):** real backend (all §11 routes on SQLite + engine), 174 tests pass, `LLM_MODE=cache` default; OPENAI_MODEL_FAST/SMART still unset (live grading falls back to word overlap); Insights page waits on the frontend scaffold
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:43 — feat — Cursor orb that blooms into hovered controls — @maxym
+- **Where:** `maxym-frontend` @ `04a25a3` · merged to `main`: yes
+- **Did:** The orange cursor dot is now an orb that trails slower and fades out over a control, which takes the orange highlight. Still off in study sessions, on touch screens, with reduced motion and when switched off in `/dev`. @yehor's 16:40 review suggests dropping the orange hover swap; kept for now (Maxym's design call).
+- **Touched:** `frontend/src/components/CursorDot.tsx`, `frontend/src/index.css`
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
+
+### 2026-11-07 16:42 — feat — Dashboard home page; Home moves to /study — @maxym
+- **Where:** `maxym-frontend` @ `95e3d52` · merged to `main`: yes
+- **Did:** `/` is now a dashboard: estimated focus time, sessions, questions cleared, small wins today, a 7-day effort chart, a 13-week grid, readiness per subject and the nearest exam. The old Home (eat-the-frog, Start) is `/study`; `/progress` redirects to `/`. Status strip hidden on the dashboard. Seeded history still shows the Demo data badge. **Gap:** `attention_by_session` has no `active_minutes` in §11, so on the real API focus time is a 25 min guess per session and is labelled "Est."; the mock returns real minutes.
+- **Touched:** `frontend/src/pages/{Dashboard,Progress}.tsx`, `frontend/src/App.tsx`, `frontend/src/components/{PageShell,ContributionGrid}.tsx`, `frontend/src/api/{mock,types}.ts`
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** @saliha: optional, contract ⚖️: add `active_minutes` to `AttentionBySession` so the dashboard can drop the guess (needs @yehor too; not urgent)
+- **📨 Needs:** none
+- **Status:** open
+
+### 2026-11-07 16:41 — feat — Insights page wired to /insights/:subjectId (S5 route swap) — @maxym
+- **Where:** `maxym-frontend` @ `39a27e3` · merged to `main`: yes
+- **Did:** `App.tsx` now routes `/insights/:subjectId` to @saliha's `Insights`; removed the placeholder `InsightsShell.tsx`. Checked on `main`'s real API: method fit, scores, focus and readiness sections render, no console errors.
+- **Touched:** `frontend/src/App.tsx`, `frontend/src/pages/InsightsShell.tsx` (deleted)
+- **Brief task:** answers @saliha's 16:35 row
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:30 — docs — Demo handed to Saliha — @yehor
 - **Where:** `context` @ `ad6e001` (handoff) · `main` (board)
@@ -108,7 +136,7 @@ whenever you log an entry.
 - **Brief task:** S5 → ✅ (route swap is Maxym's)
 - **⚠️ Conflicts:** @maxym: none of your files changed; reuses `PageShell`, `Card`, `Chip`, `Meter`, `ReflectionCard`, `api`
 - **📨 Needs:** @maxym: route swap (16:35 row)
-- **Status:** open
+- **Status:** open · *2026-11-07 16:41: route swap done by @maxym (`39a27e3`)*
 
 ### 2026-11-07 16:20 — feat — Q3 security (data side) done; confidence reads the leading method — @yehor
 - **Where:** `yehor-ml-data` → `main` @ `6f78e65` · merged to `main`: yes
