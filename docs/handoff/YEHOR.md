@@ -61,7 +61,7 @@ Reviewed `frontend/src` against the frontend-design skill, ranked by impact on t
 **0:00–0:30 · Saliha, intro.** "Every student is told to 'just study smarter', but nobody tells you *which* method works for *you*. Flashcards for one person, explaining out loud for another. And if your focus comes in bursts, a fixed 25-minute timer just doesn't fit. Attune tries three proven study methods on your own notes, measures which one teaches you the most per minute, adapts each session to your attention, and when you stall, works out why."
 
 **0:30–1:30 · Maxym, live demo** (reset + seed before going on stage; recorded video as backup)
-- 0:30 session (20 s): start a session from the dashboard, answer a couple of questions, switch tabs twice → attention chip changes and Attune offers an easier question. "It's watching my pace against my own baseline, not a fixed timer."
+- 0:30 session (20 s): start a session from the dashboard, answer question 1 normally, **switch tabs twice while on question 2**, answer it, then answer question 3 → chip turns Drifting and the toast says "Let's try a smaller step." (Verified through the API: the state needs two readings in a row, so the change shows on answer 3, not straight after the switch.) "It's watching my pace against my own baseline, not a fixed timer."
 - 0:50 Insights (15 s): `/insights/1`. "After three calibration rounds it knows Practice Test teaches this student the most per minute."
 - 1:05 the loop (25 s): `/dev` → advance 7 days, **say "this is seeded demo data"** → reflection card. "Scores went flat but focus was fine, so this is a plateau, not tiredness. Attune starts a one-week Feynman trial and only keeps it if scores actually rise."
 
