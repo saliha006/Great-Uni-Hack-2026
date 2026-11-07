@@ -1,11 +1,13 @@
 // Session runner: LOADING → ITEM → (feedback) → ITEM … → BREAK? → PROBE → FELT_RATING → RESULT (brief M2).
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
-import { isDone, METHOD_LABEL, type Intervention, type Item, type ProbeBody, type SessionResult } from '../api/types'
+import { isDone, METHOD_LABEL, type FeynmanResult, type Intervention, type Item, type ProbeBody, type SessionResult } from '../api/types'
 import { PageShell } from '../components/PageShell'
 import { BreakModal } from '../components/session/BreakModal'
+// The ElevenLabs SDK is most of the bundle; load it only when a Feynman item appears.
+const Feynman = lazy(() => import('../components/session/Feynman').then((m) => ({ default: m.Feynman })))
 import { FocusBar, useSessionTimer } from '../components/session/FocusBar'
 import { ItemView } from '../components/session/ItemView'
 import { Probe } from '../components/session/Probe'
@@ -147,6 +149,11 @@ function Runner() {
     void next()
   }
 
+  const afterFeynman = (_r: FeynmanResult) => {
+    save({ currentItem: undefined, itemsDone: done + 1 })
+    void toProbe()
+  }
+
   const submitProbe = async (body: ProbeBody) => {
     setBusy(true)
     setError(null)
@@ -172,7 +179,7 @@ function Runner() {
   }
 
   const stepLabel =
-    phase === 'probe' ? 'Quick check' : phase === 'result' ? 'Done' : `Question ${done + 1}`
+    phase === 'probe' ? 'Quick check' : phase === 'result' ? 'Done' : item?.kind === 'FEYNMAN_BRIEF' ? 'Teaching Sam' : `Question ${done + 1}`
 
   return (
     <PageShell
@@ -212,7 +219,9 @@ function Runner() {
         {(phase === 'loading' || phase === 'finishing') && <Spinner label={phase === 'loading' ? 'Getting your first question' : 'Preparing the quick check'} />}
 
         {phase === 'item' && item && (
-          <ItemView key={item.id} sessionId={session.id} item={item} itemShown={tel.itemShown} itemAnswered={tel.itemAnswered} onNext={afterItem} />
+          item.kind === 'FEYNMAN_BRIEF'
+            ? <Suspense fallback={<Spinner label="Loading the Feynman room" />}><Feynman sessionId={session.id} item={item} emit={tel.emit} onDone={afterFeynman} /></Suspense>
+            : <ItemView key={item.id} sessionId={session.id} item={item} itemShown={tel.itemShown} itemAnswered={tel.itemAnswered} onNext={afterItem} />
         )}
 
         {phase === 'probe' && <Probe items={probeItems} onSubmit={submitProbe} busy={busy} error={error} />}
