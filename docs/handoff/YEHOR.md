@@ -5,12 +5,13 @@ Codex (worktree `../attune-data`, branch `yehor-ml-data-yd`) takes the queue bel
 push your branch, never merge; Claude merges and writes `progress.md`.
 
 ## Codex queue (top = now)
-- **Y-D (in progress):** `backend/app/db.py`, `backend/app/ingest.py` + tests. `ingest.py` pushed `54bcded`; `db.py` next.
-- **Next: Y3 Stream B** `engine/simulate.py` personas Ada + Ben and the six diagnose scenario tests (brief Y3). Claude dispatches it.
+- ✅ Y-D done 15:14 (`6f8aa65`, SQLite default; merged to `main`). Claude did the personas itself.
+- **Next (Claude dispatches):** Y5 adversarial review of the TUNE thresholds on Ada/Ben; CUSUM sudden-drop check in `diagnose.py`.
+- Codex's sandbox can't take git's index lock: leave changes uncommitted and say so; Claude commits.
 
 ## Claude stream
-- Done: Y0 types, Y0b stubs, Y1 methodfit + priors, short_blocks profile (`3da2acd`).
-- Now: Y2 `engine/attention.py` (15:00–15:55).
+- Done by 15:15: Y0–Y4 (types, stubs, methodfit + priors, attention, diagnose, agent, predict, personas). 150 tests.
+- Now: Y5 tune + demo support. Gaps: CUSUM drop check, CI-overlap rule for HIGH confidence.
 
 ## Gotchas
 - Python: `GUH_2026/backend/.venv/bin/python` (3.11). Lint: `uvx ruff check backend --exclude backend/.venv`.
