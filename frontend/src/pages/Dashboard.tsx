@@ -2,6 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { api, clockNow } from '../api/client'
 import { METHOD_LABEL, type SubjectSummary } from '../api/types'
 import { ContributionGrid } from '../components/ContributionGrid'
+import { HoursHeatmap } from '../components/HoursHeatmap'
 import { PageShell } from '../components/PageShell'
 import { ButtonLink, Card, ErrorBox, Spinner } from '../components/ui'
 import { semesterOf, type DaySummary } from '../lib/activity'
@@ -24,12 +25,11 @@ export function Dashboard() {
   const today = todayKey()
   const now = new Date(clockNow())
   const semester = semesterOf(now)
-  const map =new Map<string, DaySummary>()
+  const map = new Map<string, DaySummary>()
   const day = (key: string) => map.get(key) ?? (map.set(key, { date: key, sessions: 0, tasks: 0, labels: [] }), map.get(key)!)
   let sessions = 0
   let focusMinutes = 0
-  const dailyStudy = new Map<string, { minutes: number; tasks: number; sessions: number }>()
-  const metricDay = (key: string) => dailyStudy.get(key) ?? (dailyStudy.set(key, { minutes: 0, tasks: 0, sessions: 0 }), dailyStudy.get(key)!)
+  const hourly = new Map<string, number[]>()
   insights.forEach((query, i) => {
     const subject = list[i]?.subject.name ?? 'Subject'
     for (const [method, points] of Object.entries(query.data?.method_series ?? {})) {
@@ -45,14 +45,14 @@ export function Dashboard() {
       const estimate = session.active_minutes ?? 25
       const focused = focusedShare * estimate
       focusMinutes += focused
-      metricDay(key).minutes += focused
-      metricDay(key).sessions++
+      const byHour = hourly.get(key) ?? Array<number>(24).fill(0)
+      byHour[new Date(session.ts).getHours()] += focused // a session counts in the hour it started
+      hourly.set(key, byHour)
     }
   })
   for (const entry of activity) {
     if (entry.kind === 'SESSION') continue
     const d = day(entry.date); d.tasks++; d.labels.push(entry.label)
-    metricDay(entry.date).tasks++
   }
   const tasks = activity.filter((a) => a.kind !== 'SESSION').length
   const answered = questions.filter((q) => q.resolved).length
@@ -73,7 +73,7 @@ export function Dashboard() {
         <Metric label="Small wins today" value={day(today).sessions + day(today).tasks} />
       </section>
       <section className="grid grid-cols-2 gap-3" aria-label="Dashboard overview">
-        <Card className="!p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">Time and effort</h2><span className="text-xs text-muted">Last 7 days</span></div><DailyEffort days={dailyStudy} endDate={new Date(clockNow())} /></Card>
+        <Card className="!p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">Time and effort</h2><span className="text-xs text-muted">Last 7 days</span></div><HoursHeatmap hours={hourly} endDate={now} /></Card>
         <Card className="flex flex-col !p-4"><div className="mb-2 flex items-baseline justify-between"><h2 className="font-bold">{semester.name}</h2><span className="text-xs text-muted">{semester.start.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })} – {semester.end.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span></div><ContributionGrid days={map} start={semester.start} end={semester.end} today={now} /></Card>
         <Card className="!p-4"><h2 className="mb-2 font-bold">Subjects in progress</h2><div className="max-h-36 space-y-2 overflow-y-auto">{list.map((s) => <div key={s.subject.id}><div className="flex justify-between text-sm"><span className="font-semibold">{s.subject.name}</span><span className="text-muted">{readiness(s) === null ? 'Not enough data' : `${Math.round(readiness(s)! * 100)}% readiness`}</span></div><div className="mt-1 h-1.5 rounded-full bg-sunken"><div className="h-full rounded-full bg-accent" style={{ width: `${(readiness(s) ?? 0) * 100}%` }} /></div></div>)}{!list.length && <p className="text-sm text-muted">Add a subject to begin.</p>}</div></Card>
         <Card className="!p-4"><h2 className="mb-2 font-bold">Coming up next</h2><Upcoming list={list} resume={resume} /></Card>
@@ -91,30 +91,4 @@ function Upcoming({ list, resume }: { list: SubjectSummary[]; resume: Resume | n
   if (!nearest) return <p className="text-sm text-muted">No upcoming exam dates. Add one to a subject to see it here.</p>
   const date = new Date(`${nearest.subject.exam_date!.slice(0, 10)}T12:00:00`)
   return <><p className="text-xs uppercase tracking-wide text-muted">Nearest exam · {date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</p><p className="mt-1 text-lg font-bold">{nearest.subject.name}</p><p className="text-sm text-muted">{Math.max(0, Math.ceil((date.getTime() - Date.parse(clockNow())) / 86400000))} days to prepare</p>{resume && <ButtonLink to={`/session/${resume.session.id}`} size="sm" className="mt-2">Resume {resume.subjectName}</ButtonLink>}</>
-}
-
-function DailyEffort({ days, endDate }: { days: Map<string, { minutes: number; tasks: number; sessions: number }>; endDate: Date }) {
-  const chartDays = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(endDate)
-    date.setDate(date.getDate() - (6 - i))
-    const key = dayKey(date.toISOString())
-    return { key, date, ...(days.get(key) ?? { minutes: 0, tasks: 0, sessions: 0 }) }
-  })
-  const max = Math.max(30, ...chartDays.map((d) => d.minutes))
-  const activeDays = chartDays.filter((d) => d.minutes > 0 && d.tasks === 0)
-  const avgTasks = chartDays.reduce((n, d) => n + d.tasks, 0) / chartDays.length
-  const checkIn = activeDays.length >= 2 && chartDays.some((d) => d.tasks >= avgTasks * 2 && d.tasks > 0)
-  return <div>
-    <div className="grid h-24 grid-cols-7 items-end gap-2" role="img" aria-label="Daily study minutes and completed tasks over the last 7 days">
-      {chartDays.map((d) => <div key={d.key} className="flex h-full flex-col items-center justify-end gap-1" title={`${d.date.toLocaleDateString()}: ${Math.round(d.minutes)} focus minutes, ${d.tasks} small wins`}>
-        <div className="flex h-[82%] w-full items-end justify-center gap-0.5">
-          <span className="w-2/5 rounded-t bg-accent" style={{ height: `${d.minutes ? Math.max(5, d.minutes / max * 100) : 0}%` }} />
-          <span className="w-2/5 rounded-t bg-interaction" style={{ height: `${d.tasks ? Math.min(100, Math.max(7, d.tasks * 15)) : 0}%` }} />
-        </div><span className="text-[10px] text-muted">{d.date.toLocaleDateString(undefined, { weekday: 'narrow' })}</span>
-      </div>)}
-    </div>
-    <div className="mt-1 flex flex-wrap gap-4 text-xs text-muted"><span><i className="mr-1 inline-block size-2.5 rounded-sm bg-accent" />Estimated focus</span><span><i className="mr-1 inline-block size-2.5 rounded-sm bg-interaction" />Small wins</span></div>
-    {checkIn && <p className="mt-3 rounded-(--radius-ctl) bg-sunken p-3 text-sm">Some days took more time and others brought more small wins. If that feels surprising, take a moment to reflect on what helped.</p>}
-    {!chartDays.some((d) => d.minutes || d.tasks) && <p className="mt-3 text-sm text-muted">Complete a study session or log a small win to start your daily picture.</p>}
-  </div>
 }
