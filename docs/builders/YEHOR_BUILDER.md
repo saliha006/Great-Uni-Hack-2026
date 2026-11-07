@@ -14,7 +14,7 @@ Claude Pro has tighter limits, so spend it on the logic with judgement in it and
 | Tool | Role | Use it for |
 |---|---|---|
 | **Claude Pro** (main driver) | Stream A, main worktree | `types.py`, `attention.py`, `methodfit.py`, `diagnose.py`, `agent.py`: all the logic with judgement in it |
-| **Codex Plus** | Stream B, second worktree | `simulate.py` (personas), unit tests, adversarial review of thresholds, `predict.py` first draft |
+| **Codex Plus** | Stream B, second worktree | **Y-D first** (DB tables + ingestion), then `simulate.py` (personas), unit tests, adversarial review of thresholds, `predict.py` first draft |
 | OpenAI / ElevenLabs / Firecrawl | You don't call these directly | The engine takes an injected `LLM`. Saliha owns the clients |
 
 **Run two streams, no more.** Worktrees:
@@ -23,16 +23,27 @@ git worktree add ../attune-sim -b yehor-ml-data-sim   # Stream B (Codex): simula
 # main checkout on yehor-ml-data = Stream A (Claude Pro): logic modules
 ```
 **Bootstrap prompt (paste as the first message to any agent working for you):**
-> Read `AGENTS.md`, `docs/PRD.md` (§8, §11, §13) and `docs/builders/YEHOR_BUILDER.md` fully. I'm Yehor. You work only in `backend/engine/**` and `backend/tests/engine/**`. Reply in ≤5 lines with: your scope, the interfaces you must match (PRD §11 "Engine ↔ backend interface"), and your first task. Then start. Commit after each task. Keep engine functions pure (no I/O, no network).
+> Read `AGENTS.md`, `docs/PRD.md` (§8, §11, §13) and `docs/builders/YEHOR_BUILDER.md` fully. I'm Yehor. You work only in `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py` and their tests in `backend/tests/app/`. Reply in ≤5 lines with: your scope, the interfaces you must match (PRD §11 "Engine ↔ backend interface"), and your first task. Then start. Commit after each task. Keep engine functions pure (no I/O, no network).
 
 **Failover:** if Claude Pro nears its limit → "handoff" → agent appends to `docs/handoff/YEHOR.md` → Codex takes the main seat with the same bootstrap prompt (and vice-versa). Don't wait for the limit to fully hit.
 
 **Before 14:15:** check Claude + Codex usage. Get the `.env` from Saliha directly (never via git or chat).
 
 ## Ownership
-`backend/engine/**`, `backend/tests/engine/**`. **Don't touch** `backend/app/**` (Saliha) or `frontend/**` (Maxym). Requests go on the `progress.md` Open board as a 📨 row (CLAUDE.md §2a).
+`backend/engine/**`, `backend/tests/engine/**`, **plus** `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` (from 14:50). **Don't touch** the rest of `backend/app/**` (Saliha) or `frontend/**` (Maxym). Requests go on the `progress.md` Open board as a 📨 row (CLAUDE.md §2a).
 
 ## ▶ Current tasks (in order)
+
+**▶ Added 2026-11-07 14:50 (from Saliha's S1; she's on the backend critical path)**
+
+**Y-D · 14:50–15:20 · DB tables + material ingestion** *(Codex, Stream B worktree, in parallel with Y1 on Claude)*
+- `backend/app/db.py`: SQLModel tables per PRD §10 (field names exact, `is_seeded` where listed), SQLite engine from `DATABASE_URL`, `init_db()`, `get_session()` (FastAPI dependency). No endpoints: Saliha writes the routes and calls these.
+- `backend/app/ingest.py`: `extract_text(pdf_bytes) -> str` (`pypdf`), `chunk_material(text) -> list[ChunkDraft]` (~300 words, split on headings/paragraphs, **min 3 chunks**, split by length if needed; `difficulty_est` = avg sentence length + rare-word share). P1: `fetch_url(url) -> str` via Firecrawl (`FIRECRAWL_API_KEY`), off by default.
+- Tests in `backend/tests/app/test_db.py` + `test_ingest.py`. Push to `yehor-ml-data`, merge to `main`, post a `progress.md` entry with ⚠️ to @saliha.
+- ✅ Accept: pasting ~1,500 words yields ≥3 chunks; `init_db()` creates every PRD §10 table on a fresh SQLite file.
+
+**── Original plan ──**
+
 
 **Y0 · 14:15–14:35 · Types first** *(unblocks Saliha)*
 - `engine/types.py`: Pydantic models for everything in PRD §11 that the engine touches (`Method`, `Plan`, `AttentionReading`, `Intervention`, `Reflection`, `Decision`, `Readiness`, …) **plus** internals: `Event`, `ItemMeta`, `Baseline`, `MethodStats{alpha,beta,n}`, `SessionSummary{session_id, ts, method, mode, probe_score, delayed_score?, active_minutes, completion, felt_rating, drift_share, lapse_share, gap_days_before, hour_of_day, is_seeded}`, `SubjectCtx`, `Diagnosis{name, evidence}`, `TrialOutcome{adopt, delta, n}`, and the `LLM` Protocol (`complete_json(system, user, schema, tier)`).
@@ -77,7 +88,7 @@ git worktree add ../attune-sim -b yehor-ml-data-sim   # Stream B (Codex): simula
 - If ahead: help Maxym with intervention UX or Saliha with the Insights page.
 
 ## Interfaces
-- **You provide:** the functions in PRD §11. **You consume:** nothing from the network or DB. Saliha passes in plain data.
+- **You provide:** the functions in PRD §11, plus `app/db.py` (tables, `init_db`, `get_session`) and `app/ingest.py` (`extract_text`, `chunk_material`) for Saliha's routes. **You consume:** nothing from the network or DB. Saliha passes in plain data.
 - **Your inputs arrive as:** `list[Event]`, `dict[int, ItemMeta]`, `Baseline`, `list[SessionSummary]`, `MethodStats`.
 
 ## Cut list (if behind)

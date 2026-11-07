@@ -11,13 +11,13 @@
 
 **Decisions in force**
 - Stack per §12; architecture per §9; `engine/` stays pure (no I/O).
-- Roles (team confirmed 14:40, swapped from the v0.1 draft): **Saliha backend + DB + LLM/voice services** · **Maxym frontend + voice UI** · **Yehor AI/ML engine + data (personas) + reflection agent**.
+- Roles (team confirmed 14:40, swapped from the v0.1 draft): **Saliha backend + DB + LLM/voice services** · **Maxym frontend + voice UI** · **Yehor AI/ML engine + data (personas, DB tables `app/db.py`, ingestion `app/ingest.py`) + reflection agent**. ElevenLabs "Sam" agent: Maxym (M0).
 - Repo `saliha006/Great-Uni-Hack-2026`. Docs live on the **`context` branch** only (`AGENTS.md` = `CLAUDE.md`, this PRD in `docs/`, briefs in `docs/builders/`, `docs/handoff/`), never merged to `main`. `main` holds code, `progress.md` and `README.md`. Role branches: `sali-backend`, `maxym-frontend`, `yehor-ml-data`.
 - Keys only in each machine's git-ignored `.env`. OpenAI and ElevenLabs usage is tracked: spend only on what the demo needs (§13 guards).
 - §11 API contract is **locked from 14:45**; changes need all three and go under "Contract changes" (bottom).
 - Cross-person requests: 📨 row on the `progress.md` Open board. Agent failover notes: `docs/handoff/<NAME>.md`.
 
-**Pending** (not decided): whether Yehor's "data" also takes DB tables + ingestion (S1, now Saliha's) · §19 open questions · doc owner (assumed Saliha) · team name · Maxym/Yehor GitHub handles.
+**Pending** (not decided): §19 open questions · doc owner (assumed Saliha) · team name · Maxym/Yehor GitHub handles.
 
 **Active tasks:** Phase 0 (14:15–14:40, §17): Saliha S0 collaborators + stub API (repo done) · Yehor Y0/Y0b types + stubs · Maxym M0 scaffold + ElevenLabs agent.
 
@@ -445,7 +445,7 @@ DATABASE_URL=sqlite:///./attune.db
 
 ## 13. Team, tools & spend
 
-**Humans:** Saliha (backend + DB + LLM/voice services), Maxym (frontend + voice UI), Yehor (AI/ML engine + data/personas + reflection agent). *Confirmed by the team at 14:40.*
+**Humans:** Saliha (backend API + LLM/voice services), Maxym (frontend + voice UI), Yehor (AI/ML engine + data: personas, DB tables, ingestion + reflection agent). *Confirmed by the team at 14:40; DB + ingestion moved to Yehor 14:50.*
 
 **Resources:** ElevenLabs API · OpenAI API (key is uncapped but **spend is tracked**) · Firecrawl · Lovable Pro (100 credits, Saliha's account) · Saliha: Claude Enterprise + Claude Pro + Codex Plus · Maxym: Claude Pro + Codex Plus · Yehor: Claude Pro + Codex Plus.
 

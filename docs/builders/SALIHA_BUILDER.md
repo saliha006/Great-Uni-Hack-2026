@@ -25,14 +25,14 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 # main checkout on sali-backend = Stream A (Claude Enterprise): llm.py, sessions flow, voice, engine glue
 ```
 **Bootstrap prompt (first message to any agent working for you):**
-> Read `AGENTS.md`, `docs/PRD.md` (§9–§13, §18) and `docs/builders/SALIHA_BUILDER.md` fully. I'm Saliha. You work only in `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, and `frontend/src/pages/Insights.tsx` + `frontend/src/components/insights/**`. Never edit `backend/engine/**` (Yehor) or other `frontend/**` (Maxym). Match PRD §11 field-for-field. Default `LLM_MODE=cache`. Reply in ≤5 lines: scope, interfaces, first task. Then start; commit after each task.
+> Read `AGENTS.md`, `docs/PRD.md` (§9–§13, §18) and `docs/builders/SALIHA_BUILDER.md` fully. I'm Saliha. You work only in `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, and `frontend/src/pages/Insights.tsx` + `frontend/src/components/insights/**`. Never edit `backend/engine/**`, `backend/app/db.py` or `backend/app/ingest.py` (Yehor) or other `frontend/**` (Maxym). Match PRD §11 field-for-field. Default `LLM_MODE=cache`. Reply in ≤5 lines: scope, interfaces, first task. Then start; commit after each task.
 
 **Failover:** when an agent says it's near a limit → say "handoff" → it appends to `docs/handoff/SALIHA.md` → open the next tool with the bootstrap prompt. Don't wait for the limit to fully hit.
 
 **Before 14:15:** check quota on Enterprise, Pro, and Codex. Keys are already in your local `.env`; send Yehor and Maxym the `.env` directly (never via git or chat).
 
 ## Ownership
-`backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, plus the Insights page files in the frontend. **Don't touch** `backend/engine/**` or the rest of `frontend/**`.
+`backend/app/**` (except Yehor's `backend/app/db.py` and `backend/app/ingest.py`), `backend/tests/app/**` (except his `test_db.py`, `test_ingest.py`), `scripts/**`, `.env.example`, `README.md`, plus the Insights page files in the frontend. **Don't touch** `backend/engine/**`, Yehor's two `app/` files, or the rest of `frontend/**`.
 
 ## ▶ Current tasks (in order)
 
@@ -48,10 +48,10 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 - Paste Prompt 1 and Prompt 2 below into Lovable. Let it generate while you work. At ~14:50 send Maxym the preview/repo link. He copies the components, so no two-way sync.
 - Spend: aim ≤ ~40 credits; keep the rest for fixes. If output is poor at 14:50, drop it. Maxym builds by hand.
 
-**S1 · 14:40–15:05 · DB + subjects + ingestion**
-- Tables per PRD §10. `POST /subjects`, `GET /subjects`, `POST /subjects/{id}/material` (paste text or PDF via `pypdf`; **P1: `{url}` via Firecrawl** → markdown).
-- Chunking: ~300 words per chunk, split on headings/paragraphs, **min 3 chunks** (split by length if needed); `difficulty_est` = cheap heuristic (avg sentence length + rare-word share). `key_points_json` filled by the LLM in Y2 (fast tier).
-- ✅ Accept: pasting ~1,500 words yields ≥3 chunks; `GET /subjects` returns real data.
+**S1 · 14:40–15:05 · Subject + material endpoints** *(DB tables + ingestion moved to Yehor 14:50; you wire them)*
+- `POST /subjects`, `GET /subjects`, `POST /subjects/{id}/material` (paste text, PDF upload, P1 `{url}`): validate the request, call Yehor's `ingest` functions and `db` session helpers, return PRD §11 shapes. Until his land (~15:20), keep serving fixtures.
+- `key_points_json` filled by the LLM in S2 (fast tier).
+- ✅ Accept: pasting ~1,500 words yields ≥3 chunks via Yehor's `ingest`; `GET /subjects` returns real data.
 
 **S2 · 15:05–15:35 · LLM service (the spend-critical piece)** *(Claude, main)*
 - `app/llm.py` implementing the engine's `LLM` protocol: `complete_json(system, user, schema, tier)`. Models from `OPENAI_MODEL_FAST` / `OPENAI_MODEL_SMART` (pick current ones from the OpenAI dashboard; **don't hardcode**). Structured/JSON-schema output, `max_tokens` on every call, retries with backoff, timeouts.
@@ -92,7 +92,7 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 > Using the same stack and mocked data, add (1) an **Insights** page for one subject: a bar chart comparing three study methods (Active Recall, Practice Test, Feynman) with credible-interval error bars and an "Early read / Moderate / High" confidence badge; a line chart of probe score over time per method; a stacked bar per session showing focused/drifting/lapsed share; a timeline of events (Sampler done, Break, Recalibration, Trial start/end); a readiness card with two gauges (Performance, Understanding) and a confidence label; and a "Reflections" list of cards (diagnosis chip, plain-language explanation, decision). Use Recharts. (2) A hidden **/dev** page with buttons: Seed demo persona, Advance 7 days, Force reflection, Reset — plus a visible "Demo data" badge. Types for all mock data are in the block I paste next: *(paste the TypeScript block from PRD §11)*.
 
 ## Interfaces
-- **You provide:** PRD §11 API. **You consume:** `backend/engine/*` (Yehor), ElevenLabs, OpenAI, optional Firecrawl.
+- **You provide:** PRD §11 API. **You consume:** `backend/engine/*`, `backend/app/db.py` (SQLModel tables + `get_session`), `backend/app/ingest.py` (chunking) (all Yehor), ElevenLabs, OpenAI, optional Firecrawl.
 - Match field names exactly. If you must deviate, append to "Contract changes" in the PRD and tell Maxym + Yehor.
 
 ## Cut list (if behind)
