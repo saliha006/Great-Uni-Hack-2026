@@ -4,7 +4,7 @@ from engine import agent, diagnose, methodfit, simulate
 from engine.types import LIVE_METHODS, Plan, SubjectCtx
 
 PT_PLAN = Plan(method="PRACTICE_TEST", mode="ADAPTIVE", session_minutes=20, reason="r")
-SEEDS = range(5)
+SEEDS = (*range(5), 7)  # 7: proposed as the demo seed on the board (15:30); 0-4 cover the default
 
 
 def stats_from(history):
