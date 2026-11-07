@@ -1,7 +1,7 @@
 import io
 
 import pytest
-from app.ingest import chunk_material, extract_text
+from app.ingest import MAX_CHUNKS, chunk_material, extract_text
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
@@ -81,3 +81,12 @@ def test_pdf_extracts_text_from_multiple_pages():
     output = io.BytesIO()
     writer.write(output)
     assert extract_text(output.getvalue()) == "First page\n\nSecond page"
+
+
+def test_oversized_material_keeps_first_max_chunks():
+    words = [f"word{idx}" for idx in range(300 * (MAX_CHUNKS + 1))]
+    chunks = chunk_material(" ".join(words))
+    assert len(chunks) == MAX_CHUNKS
+    assert [chunk.idx for chunk in chunks] == list(range(MAX_CHUNKS))
+    assert all(chunk.text.strip() for chunk in chunks)
+    assert " ".join(chunk.text for chunk in chunks).split() == words[:300 * MAX_CHUNKS]

@@ -155,6 +155,7 @@ class ReflectionRow(SQLModel, table=True):
 class LLMUsageRow(SQLModel, table=True):
     __tablename__ = "llm_usage"
     id: int | None = Field(default=None, primary_key=True)
+    user_id: str | None = Field(default=None, index=True)  # per-user LLM quotas
     ts: datetime
     purpose: str
     model: str

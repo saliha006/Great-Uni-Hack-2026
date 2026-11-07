@@ -7,6 +7,8 @@ from pypdf import PdfReader
 TARGET_WORDS = 300  # TUNE
 MAX_BLOCK_WORDS = 450  # TUNE
 MIN_CHUNKS = 3
+# About 60k words bounds DB rows per paste; the API already rejects bodies over 1 MB.
+MAX_CHUNKS = 200
 
 
 class ChunkDraft(BaseModel):
@@ -72,4 +74,4 @@ def chunk_material(text: str) -> list[ChunkDraft]:
             chunks.append(" ".join(words[start:end]))
             start = end
 
-    return [ChunkDraft(idx=idx, text=chunk, difficulty_est=_difficulty(chunk)) for idx, chunk in enumerate(chunks)]
+    return [ChunkDraft(idx=idx, text=chunk, difficulty_est=_difficulty(chunk)) for idx, chunk in enumerate(chunks[:MAX_CHUNKS])]

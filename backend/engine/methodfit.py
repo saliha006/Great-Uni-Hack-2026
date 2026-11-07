@@ -120,11 +120,11 @@ def choose_plan(
 
 
 def confidence(stats: dict[Method, MethodStats]) -> Confidence:
-    fewest = min((s.n for s in stats.values()), default=0)
-    if fewest < 2:
-        return "EARLY"
-    if fewest < 5:
-        return "MODERATE"
-    # HIGH also needs the best method's interval to clear the runner-up's (PRD §8.2).
+    """How sure we are about the leading method: its session count, and whether its interval clears the runner-up's.
+    A method tried once doesn't hold the label at EARLY after weeks of evidence on the leader."""
     views = sorted((stat_view(m, s) for m, s in stats.items()), key=lambda v: v.mean_reward, reverse=True)
+    if not views or views[0].n < 2:
+        return "EARLY"
+    if views[0].n < 5:
+        return "MODERATE"
     return "HIGH" if len(views) < 2 or views[0].ci_low > views[1].ci_high else "MODERATE"
