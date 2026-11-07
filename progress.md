@@ -38,13 +38,15 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:07 | @maxym | @saliha | 📨 waiting on | ElevenLabs "Sam" agent (M0) comes at the end of the day; then `ELEVENLABS_AGENT_ID` goes in your `.env`. Until then keep `/voice/signed-url` returning `502 voice_unavailable`: the UI falls back to typed Feynman | 2026-11-07 16:07 |
+| 2026-11-07 16:05 | @maxym | @saliha | ⚠️ conflict | Frontend scaffold is on `main` (`cd frontend && npm i && npm run dev`). Insights page: add `frontend/src/pages/Insights.tsx`, route `/insights/:subjectId` in `App.tsx`; reuse `Card`/`Chip`/`Meter`/`ButtonLink` (`components/ui.tsx`) + `PageShell`. `recharts` installed | 2026-11-07 16:05 |
+| 2026-11-07 16:12 | @yehor | @saliha | ⚠️ conflict | **Demo fix on `main`:** with seed 1 the post-seed plan is an Active Recall exploration pick, so advance-days trialled *Practice Test* twice. Engine now diagnoses the method actually studied → advance 1: PLATEAU → Feynman trial; advance 2: trial adopted (+0.21) → MASTERED. Verified through the real API (reset → seed → advance 7 ×2). The narration prompt's `current_method` changed, so warm the LLM cache after this commit | 2026-11-07 16:12 |
 | 2026-11-07 17:05 | @saliha | @yehor | 📨 waiting on | Please add `user_id: str | None = None` to `LLMUsageRow` in `db.py` (your Q3 task): the backend now writes a usage row per LLM call and per-user quotas need the column. No rush before the demo | 2026-11-07 17:05 |
 | 2026-11-07 16:00 | @yehor | @saliha | ⚠️ conflict | I rewrote `README.md` (your path) at Yehor's request: badges, features table, "why it's different", quick start, demo steps (two `advance-days 7` calls: start then adopt the trial), architecture, team. Your scoring and honest-limits text is kept word for word (+1 line: thresholds are tuned guesses). Edit or revert anything you disagree with | 2026-11-07 16:00 |
 | 2026-11-07 15:55 | @yehor | @saliha | 📨 for you | Video voice-over ("how it learns", ~20 s) and the honest-limits list for Devpost/README are in `docs/handoff/YEHOR.md` → "For the video + Devpost" on `context` (`2af3c2b`). Edit freely | 2026-11-07 15:55 |
 | 2026-11-07 16:45 | @saliha | @all | 🔀 scope proposal | **Post-freeze proposals from research pass 2** are at the top of each brief, marked *Proposed*: backend security (dev routes gated, rate-limit scopes left unlimited, size limits), quote-grounded LLM output, answer-seeking detection with gradual easing and ramp-back, steadier method selection, ElevenLabs Sam settings. Reply yes/no per block. Items marked ⚖️ change the PRD §11 contract (hint event, 429s, dev token, field limits, leading-method field) and need all three of you. Nothing starts until you agree | 2026-11-07 16:45 |
 | 2026-11-07 15:52 | @yehor | @saliha @maxym | ⚠️ conflict | Attention fix (`add9ff4`): `scripts/attention_burst.py` on the 45 s demo recall items now goes FOCUSED ×8 → **LAPSED at answer 9 → `BREAK`** (was answer 11). It skips DRIFTING/EASIER because the burst is ~3.5× expected; for an EASIER beat first, use a milder burst (~2× expected, e.g. 90 s answers). New for `reading_support`: `engine.readability.needs_simplification(text)` and `flesch_kincaid_grade(text)` (optional to wire) | 2026-11-07 15:52 |
 | 2026-11-07 15:30 | @yehor | @saliha | ⚠️ conflict | For S4 (`dc7d0d9`): build `SubjectState.method_stats` with `engine.methodfit.stat_view(method, stats)` (mean + 90% interval); after seeding Ada set `method_stats` from `engine.methodfit.stats_from_history(sessions)` so stats match the rows; pin the demo epoch **after 2026-11-06 18:00** (Ada's last seeded session). Optional: `[tool.ruff] src = ["."]` in `backend/pyproject.toml` so ruff groups imports the same from any folder | 2026-11-07 15:30 |
-| 2026-11-07 15:30 | @saliha | @maxym | 📨 waiting on | Contract notes for the frontend: MCQ `answer` = the option text; `finish` never fails (no transcript = 0 coverage); `/voice/signed-url` is minted on the Start click and returns `502 {detail:"voice_unavailable"}` → switch to typed Feynman (one explanation turn); `context.key_points` is a string list, join it for `dynamicVariables`. Also: push your Vite scaffold so the Insights page (my path) can go in, and say who installs `recharts` | 2026-11-07 15:30 |
 | 2026-11-07 15:10 | @yehor | @all | ⚠️ conflict | **Supersedes the 14:50 Supabase/handoff row:** DB stays **SQLite** for the demo (PRD §12; Supabase is P2, later just a `DATABASE_URL`). **Y-D stays with Yehor** (Codex finishing `db.py`; `ingest.py` done). @saliha: no backend handoff needed; you consume `app/db.py` + `app/ingest.py` | 2026-11-07 15:10 |
 | 2026-11-07 14:40 | @saliha | @yehor @maxym | ⚠️ conflict | **Roles swapped:** Saliha = backend (`sali-backend`), Yehor = AI/ML + data (`yehor-ml-data`), Maxym = frontend (`maxym-frontend`). Briefs and PRD updated on `context`; re-sync. @yehor: start Y0 `engine/types.py` (Saliha's stub API waits on it). Both: send @saliha your GitHub handle | 2026-11-07 14:40 |
 | 2026-11-07 14:25 | @saliha | @all | ⚠️ conflict | **How docs work now:** every `.md` except `progress.md` and `README.md` lives on the `context` branch, never `main`. Clone, then `git fetch origin context && git archive origin/context \| tar -x && git rev-parse origin/context > .git/context-synced`. Your agent re-syncs per CLAUDE.md 🔄. Work on your role branch: `sali-backend` / `maxym-frontend` / `yehor-ml-data`. Keys: get the `.env` from @saliha directly, never via git or chat | 2026-11-07 14:25 |
@@ -61,7 +63,7 @@ whenever you log an entry.
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
 | Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
-| Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
+| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M4 done; voice waits on the ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
 (`CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `docs/builders/`): doc owner publishes (CLAUDE.md 📤); your own `docs/handoff/<NAME>.md`: you.
@@ -82,6 +84,51 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:08 — feat — Dev panel, progress grid and questions inbox (M4) — @maxym
+- **Where:** `maxym-frontend` @ `96a055b` · merged to `main`: yes
+- **Did:** `/dev`: seed demo persona, advance N days, force reflection per subject, reset, `/dev/usage` totals, "simulate drift" (mock only), "Demo data" badge in the header whenever seeded history exists. Reflection card (diagnosis chip + explanation + decision) on Home and Result. `/progress`: GitHub-style day grid from `insights.method_series` + local tasks (frogs eaten, questions answered), no streaks; territory bar per subject. `/questions`: inbox for questions parked with Q. Passed on `main`'s real API (reset → seed → advance 7 → plateau reflection).
+- **Touched:** `frontend/src/pages/{Dev,Progress,Questions}.tsx`, `frontend/src/components/ContributionGrid.tsx`, `frontend/src/lib/activity.ts`, `frontend/src/App.tsx`
+- **Brief task:** M4 → ✅ done
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
+
+### 2026-11-07 16:07 — feat — Feynman screen: voice + typed fallback (M3) — @maxym
+- **Where:** `maxym-frontend` @ `e70df73` · merged to `main`: yes
+- **Did:** Feynman item → mic explainer → "Talk to Sam" mints `/voice/signed-url` on the click (per @saliha 15:30) → `@elevenlabs/react` `startSession({signedUrl, dynamicVariables: {topic, key_points joined}})`, live transcript, speaking indicator, `VOICE_TURN` events. `502 voice_unavailable` or a failed connection → one typed explanation turn → `/feynman-transcript` → score, covered, gaps → probe. Typed path passed on `main`'s real API (502 → typed → graded).
+- **Touched:** `frontend/src/components/session/Feynman.tsx`, `frontend/src/pages/Session.tsx`
+- **Brief task:** M3 → 🟡 part (typed fallback ✅; live voice untested until the agent exists)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** @saliha: `ELEVENLABS_AGENT_ID` in your `.env` once I create "Sam" (end of day); until then keep returning 502
+- **Status:** open
+
+### 2026-11-07 16:06 — feat — Session runner, telemetry and interventions (M2) — @maxym
+- **Where:** `maxym-frontend` @ `81269c0` · merged to `main`: yes
+- **Did:** `/session/:id` state machine: item → feedback → … → Standard Probe → 1–5 felt rating → result ("quick check x/5 · focused x of y"). Active Recall reveal + one-tap self-grade (`self_grade`); MCQ sends the option text. `useTelemetry`: `ITEM_SHOWN`/`ITEM_ANSWERED` (latency = render → submit), `TAB_BLUR`/`TAB_FOCUS`, `IDLE` after 30 s; batched every 5 s and on each answer. Interventions: `EASIER`/`SWITCH_FORMAT` toast, `BREAK` modal with countdown (`BREAK_START`/`BREAK_END`), `WRAP_UP` banner. Timer: adaptive (plan minutes), Pomodoro 25/5 or untimed. Reload resumes item + timer. Q parks a question. Full session passed on `main`'s real API.
+- **Touched:** `frontend/src/pages/Session.tsx`, `frontend/src/components/session/**`, `frontend/src/hooks/useTelemetry.ts`
+- **Brief task:** M2 → ✅ done
+- **⚠️ Conflicts:** none (calls only §11 endpoints)
+- **📨 Needs:** none
+- **Status:** —
+
+### 2026-11-07 16:05 — feat — Frontend scaffold, typed API client, Home and onboarding (M0, M1) — @maxym
+- **Where:** `maxym-frontend` @ `a2c973a` · merged to `main`: yes (`fd8b913`)
+- **Did:** Vite + React + TS + Tailwind v4 + TanStack Query + Recharts in `frontend/`. One typed client for PRD §11; `VITE_API_URL` empty → in-browser mock (demo content, sampler, attention heuristic), set → FastAPI. `npm run build` type-checks `types.ts` against `schema.d.ts` (generated from `/openapi.json`; caught two nullable fields). Home: subject cards, one-tap Start, "eat the frog first" card, status strip, resume card. Onboarding per PRD §7.1. `/insights/:subjectId` route shell. Tested against `main`'s real API (seed, subjects, start) and on the mock.
+- **Touched:** `frontend/**`
+- **Brief task:** M0 → 🟡 part (ElevenLabs agent not created) · M1 → ✅ done
+- **⚠️ Conflicts:** @saliha: scaffold is on `main` for your Insights page: add `frontend/src/pages/Insights.tsx` and point the `/insights/:subjectId` route in `App.tsx` at it. Shared: `Card`, `Chip`, `Meter`, `Button`, `ButtonLink` (`components/ui.tsx`), `PageShell`. `recharts` is installed (me). No shadcn/ui: plain Tailwind tokens in `src/index.css`
+- **📨 Needs:** none
+- **Status:** open
+
+### 2026-11-07 16:12 — fix — Demo reflection trialled the wrong method — @yehor
+- **Where:** `yehor-ml-data` · merged to `main`: yes
+- **Did:** Codex's threshold review found it; `debug` skill reproduced it through the API. Root cause: `diagnose`/`agent` used `plan.method`, which was a one-off exploration pick. Now the method with ≥3 sessions in the window. Ada's Feynman trial now rises clearly and caps at 0.9. 3 regression tests (×6 seeds) failed before, pass after; `no-slop` clean. 219 tests pass. Codex's other 12 findings: leave as is (edge cases off the demo path).
+- **Touched:** `backend/engine/diagnose.py`, `agent.py`, `simulate.py`, `backend/tests/engine/test_simulate.py`
+- **Brief task:** Y5 → 🟡 part
+- **⚠️ Conflicts:** @saliha: narration prompt changed (re-warm cache); see the 16:12 row.
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 17:05 — feat — API security: dev route gating, rate limits, size limits, headers, LLM usage log (P1) — @saliha
 - **Where:** `sali-backend` @ `a51528f` · merged to `main`: yes
@@ -187,7 +234,7 @@ whenever you log an entry.
 - **⚠️ Conflicts:** @maxym: see the 15:30 contract-notes row · @yehor: see the 15:30 row (prompts, `{}` fallback, Ada seed)
 - **📨 Needs:** @maxym: frontend scaffold on `main` for the Insights page
 - **Agreed by:** @saliha
-- **Status:** open
+- **Status:** open · *2026-11-07 16:07: @maxym's contract-notes row resolved (MCQ option text, signed URL on Start, 502 → typed, key_points joined)*
 
 ### 2026-11-07 15:15 — feat — Engine complete (Y3, Y4) and DB + ingestion on main (Y-D) — @yehor
 - **Where:** `yehor-ml-data` (+ Codex `yehor-ml-data-yd` @ `6f8aa65`) · merged to `main`: yes
