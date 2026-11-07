@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 14:50 | @saliha | @yehor | 📨 waiting on | **New task Y-D (top of your brief):** DB tables (`backend/app/db.py`, PRD §10) + ingestion (`backend/app/ingest.py`) on your Codex stream, by ~15:20. Saliha's routes call them and keep serving fixtures until then. Say no if it slows Y1–Y2 and it goes back to her | 2026-11-07 14:50 |
 | 2026-11-07 14:40 | @yehor | @saliha | ⚠️ conflict | Engine Y0 + Y0b on `main` (`5f85968`): `from engine.types import ...` and every §11 engine function is callable. Real so far: `session_reward`, `update_stats`, `confidence`. Placeholders: attention → FOCUSED/NONE, diagnose → ON_TRACK, reflect → templated, `choose_plan` → round-robin. Added `Event.score` (fill from the graded response; §8.3 error streak needs it) and `SubjectCtx.now` (engine never reads the clock; pass the dev-shifted now) | 2026-11-07 14:40 |
 | 2026-11-07 14:38 | @yehor | @saliha | ⚠️ conflict | I pushed a fixture stub API to `main` at 14:35 (`backend/app/**`: all 16 §11 groups + `/api/health`, 25 tests) before I saw the role swap. It's your path now: keep it as your S0 or replace it. Run: `cd backend && uv venv --python 3.11 .venv && uv pip install -r requirements.txt && .venv/bin/uvicorn app.main:app --port 8000`. I also re-created branch `yehor-backend` by pushing; safe to delete | 2026-11-07 14:38 |
 | 2026-11-07 14:40 | @saliha | @yehor @maxym | ⚠️ conflict | **Roles swapped:** Saliha = backend (`sali-backend`), Yehor = AI/ML + data (`yehor-ml-data`), Maxym = frontend (`maxym-frontend`). Briefs and PRD updated on `context`; re-sync. @yehor: start Y0 `engine/types.py` (Saliha's stub API waits on it). Both: send @saliha your GitHub handle | 2026-11-07 14:40 |
@@ -53,8 +54,8 @@ whenever you log an entry.
 
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
-| Saliha | `saliha006` | Backend + DB + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `yehorm14` | AI/ML engine + data (personas) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**` | Y1: `methodfit.py` (Y0 + Y0b done 14:39) |
+| Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
+| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y1: `methodfit.py` (Y0 + Y0b done 14:39) |
 | Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -76,6 +77,18 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 14:50 — decision — DB tables + ingestion move to Yehor; Maxym creates the ElevenLabs agent — @saliha
+- **Where:** `context` (briefs, PRD) · merged to `main`: yes (`progress.md`)
+- **Did:** Saliha's S1 split: Yehor owns `backend/app/db.py` + `backend/app/ingest.py` (task Y-D, his Codex stream); Saliha
+  keeps the subject/material endpoints and wires them. The ElevenLabs "Sam" agent stays with Maxym (M0). Also: this file's
+  Log had every line doubled after the 14:40 merges; duplicates collapsed, no entry removed.
+- **Touched:** `docs/builders/SALIHA_BUILDER.md`, `docs/builders/YEHOR_BUILDER.md`, PRD §0/§13, `CLAUDE.md`/`AGENTS.md`, `progress.md`
+- **Brief task:** S1 → split
+- **⚠️ Conflicts:** @yehor: `backend/app/db.py` and `backend/app/ingest.py` are now yours; the rest of `backend/app/` (incl. your 14:35 stub) is Saliha's
+- **📨 Needs:** @yehor: Y-D by ~15:20
+- **Agreed by:** @saliha (Yehor to confirm on the board)
+- **Status:** open
 
 ### 2026-11-07 14:40 — feat — Engine types and correctly shaped stubs (Y0, Y0b) — @yehor
 - **Where:** `yehor-ml-data` @ `5f85968` · merged to `main`: yes
@@ -105,7 +118,7 @@ whenever you log an entry.
 - **⚠️ Conflicts:** @yehor @maxym: your brief changed; branch names changed (old `sali-engine`/`yehor-backend` deleted)
 - **📨 Needs:** @yehor: does "data" mean you also take DB tables + ingestion (S1)? Today S1 is Saliha's
 - **Agreed by:** @saliha (on behalf of the team, per chat)
-- **Status:** open
+- **Status:** open · *14:50: data question answered, see the 14:50 entry*
 
 ### 2026-11-07 14:25 — docs — Repo wired up: docs on `context`, role branches, keys in `.env` — @saliha
 - **Where:** `main` + `context` · merged to `main`: yes (`.gitignore`, `progress.md`)
