@@ -1,0 +1,39 @@
+# Secrets: keys live only in .env on each machine
+.env
+.env.*
+!.env.example
+
+# Context docs live on the `context` branch, never on main.
+# The only markdown on main is progress.md and README.md.
+*.md
+!/progress.md
+!/README.md
+docs/
+Research-Context/
+.claude/
+
+# Local data and caches
+*.db
+*.sqlite
+*.log
+.cache/
+.llm_cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
