@@ -134,3 +134,4 @@ Firecrawl URL ingestion → `/dev/usage` UI → Insights polish → delayed prob
 - ✅ S6 · README (run, demo steps, scoring, honest limits) + `scripts/attention_burst.py` · 16:25
 - ✅ P1 · API security: dev route gating, hand-written rate limits (off by default), size caps, headers, log redaction, Feynman quote check, LLM usage log · 17:05
 - ✅ P2 · grounded LLM: quotes on every generated item, MCQ key checks, per-job tier/effort/caps, refusals handled; live-checked luna + terra · 16:20
+- ✅ S5 · Insights page (fit + range, scores over time, focus, readiness, timeline, reflections, demo-data banner); route swap is Maxym's · 16:35
