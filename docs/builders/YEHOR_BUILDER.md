@@ -117,3 +117,5 @@ LLM narration → exploration floor (keep Thompson) → `evaluate_trial` UI → 
 - ✅ Y-D · `app/db.py` + `app/ingest.py` (Codex), SQLite default · 15:15
 - ✅ Y3 · `diagnose` + Ada/Ben personas · 15:15
 - ✅ Y4 · `agent.reflect` + `predict_readiness` · 15:15
+- ✅ Y5 (part) · attention trimmed CV, CUSUM drop check, demo-reflection fix, readability, threshold review (Codex), voice-over text · 16:12
+- ✅ Q3 · `llm_usage.user_id`, `ingest` 200-chunk cap · 16:20 · Q1/Q2 parked post-hackathon (Yehor, 16:20)
