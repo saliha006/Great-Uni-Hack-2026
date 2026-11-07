@@ -82,13 +82,22 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
-- **frontend (2026-11-07 16:43):** `main` @ `04a25a3`: dashboard at `/`, Study at `/study`, Insights page wired
+- **frontend (2026-11-07 16:43):** `main` @ `2dd4095`: dashboard at `/`, Study at `/study`, Insights page wired; semester grid on the dashboard
 - **frontend (2026-11-07 16:09):** on `main` @ `7093149`: M1–M4 + Feynman typed fallback; run `cd frontend && npm i && npm run dev` (mock API) or `VITE_API_URL=http://127.0.0.1:8000 npm run dev` (real API, CORS allows :5173). `npm run build` = typecheck + contract check vs `schema.d.ts`. Live voice waits on the ElevenLabs agent
 - **`main` (2026-11-07 16:25):** real backend (all §11 routes on SQLite + engine), 174 tests pass, `LLM_MODE=cache` default; OPENAI_MODEL_FAST/SMART still unset (live grading falls back to word overlap); Insights page waits on the frontend scaffold
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:46 — feat — Dashboard effort grid covers the whole semester — @maxym
+- **Where:** `maxym-frontend` @ `2dd4095` · merged to `main`: yes
+- **Did:** The dashboard grid now spans the semester edge to edge (Autumn = Sep to Jan, Spring = Feb to Jun, Summer = Jul to Aug, from the dev clock), one square per day, empty days outlined, filled days in four slate steps. Heading names the semester ("Autumn 2026") with its date range. Removed the day-detail panel and the Less/More legend under the grid; each square keeps the day and counts as its tooltip and `aria-label`. Arrow keys move by day and week. Checked in dark and light, at 1280 px and phone width.
+- **Touched:** `frontend/src/components/ContributionGrid.tsx`, `frontend/src/lib/activity.ts`, `frontend/src/pages/Dashboard.tsx`
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:43 — feat — Cursor orb that blooms into hovered controls — @maxym
 - **Where:** `maxym-frontend` @ `04a25a3` · merged to `main`: yes
