@@ -21,7 +21,7 @@ from fastapi import HTTPException
 from sqlalchemy import update
 from sqlmodel import Session, SQLModel, select
 
-from app import db, ingest
+from app import db, guard_db, ingest
 from app import schemas as s
 from app.llm import LLMError
 from app.llm import service as llm
@@ -489,12 +489,18 @@ def _item_view(row: db.ItemRow) -> s.Item:
 
 
 def next_item(ses: Session, session_id: int) -> s.Item | s.Done:
+    from app import guard  # guard imports flow, so it's loaded on first use
     _get(ses, db.SessionRow, session_id, "session")
     answered = _responses(ses, session_id)
-    for item in _items(ses, session_id, "MAIN"):
-        if item.id not in answered:
-            return _item_view(item)
-    return s.Done()
+    unanswered = [i for i in _items(ses, session_id, "MAIN") if i.id not in answered]
+    # An item mid-ladder stays first, so a reload doesn't skip a question the student is working on.
+    started = [i for i in unanswered if guard.progress(ses, i.id)]
+    item, adapt_note = (started[0], None) if started else guard.serve(ses, session_id, unanswered)
+    if item is None:
+        return s.Done()
+    view = _item_view(item)
+    view.adapt, view.progress = adapt_note, guard.progress(ses, item.id)
+    return view
 
 
 def _session_item(ses: Session, session_id: int, item_id: int) -> db.ItemRow:
@@ -505,7 +511,12 @@ def _session_item(ses: Session, session_id: int, item_id: int) -> db.ItemRow:
 
 
 def answer(ses: Session, session_id: int, body: s.AnswerBody) -> s.AnswerResult:
+    from app import guard
     item = _session_item(ses, session_id, body.item_id)
+    if body.guided and item.phase == "MAIN" and item.kind != "FEYNMAN_BRIEF":
+        guided = guard.answer(ses, session_id, item, body)
+        if guided is not None:
+            return guided
     if item.kind == "MCQ":
         ok = mcq_correct(body.answer, item.answer_key or "", json.loads(item.options_json or "[]"))
         result = s.AnswerResult(score=float(ok), correct=ok, reveal=item.answer_key)
@@ -522,6 +533,9 @@ def answer(ses: Session, session_id: int, body: s.AnswerBody) -> s.AnswerResult:
                                 feedback="Provisional score; the probe at the end is graded properly.")
     ses.add(db.ResponseRow(item_id=item.id, session_id=session_id, answer=body.answer, score=result.score,
                            latency_ms=body.latency_ms, ts=clock.now()))
+    ses.flush()
+    if item.phase == "MAIN":
+        guard.after_item(ses, session_id)
     ses.commit()
     return result
 
@@ -571,10 +585,13 @@ def events(ses: Session, session_id: int, body: s.EventsBody) -> s.EventsResult:
     since = (latest - state["last_intervention"]) / timedelta(minutes=1) if state["last_intervention"] else None
     try:
         reading = attention.score_attention(events_, metas, _baseline(ses))
+        state["state"] = reading.state
         state["drifting"] = state["drifting"] + 1 if reading.state == "DRIFTING" else 0
+        ease = ses.get(guard_db.SessionStateRow, session_id)
         ctx = t.SessionCtx(session_id=session_id, method=row.method,
                            elapsed_minutes=(latest - events_[0].ts) / timedelta(minutes=1) if events_ else 0.0,
-                           focus_window_min=_baseline(ses).focus_window_min, current_difficulty=3,
+                           focus_window_min=_baseline(ses).focus_window_min,
+                           current_difficulty=ease.target if ease else 3,
                            minutes_since_intervention=since, breaks_taken=state["breaks"],
                            drifting_windows=state["drifting"])
         intervention = attention.recommend_intervention(reading, ctx)
@@ -928,7 +945,9 @@ def advance_days(ses: Session, days: int) -> s.AdvanceDaysResult:
 
 def reset() -> dict:
     SQLModel.metadata.drop_all(db.engine)
+    guard_db.drop(db.engine)
     db.init_db(db.engine)
+    guard_db.init(db.engine)
     _attention_state.clear()
     _shares.clear()
     clock.reset()
