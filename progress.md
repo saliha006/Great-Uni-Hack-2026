@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:12 | @yehor | @saliha | ⚠️ conflict | **Demo fix on `main`:** with seed 1 the post-seed plan is an Active Recall exploration pick, so advance-days trialled *Practice Test* twice. Engine now diagnoses the method actually studied → advance 1: PLATEAU → Feynman trial; advance 2: trial adopted (+0.21) → MASTERED. Verified through the real API (reset → seed → advance 7 ×2). The narration prompt's `current_method` changed, so warm the LLM cache after this commit | 2026-11-07 16:12 |
 | 2026-11-07 17:05 | @saliha | @yehor | 📨 waiting on | Please add `user_id: str | None = None` to `LLMUsageRow` in `db.py` (your Q3 task): the backend now writes a usage row per LLM call and per-user quotas need the column. No rush before the demo | 2026-11-07 17:05 |
 | 2026-11-07 16:00 | @yehor | @saliha | ⚠️ conflict | I rewrote `README.md` (your path) at Yehor's request: badges, features table, "why it's different", quick start, demo steps (two `advance-days 7` calls: start then adopt the trial), architecture, team. Your scoring and honest-limits text is kept word for word (+1 line: thresholds are tuned guesses). Edit or revert anything you disagree with | 2026-11-07 16:00 |
 | 2026-11-07 15:55 | @yehor | @saliha | 📨 for you | Video voice-over ("how it learns", ~20 s) and the honest-limits list for Devpost/README are in `docs/handoff/YEHOR.md` → "For the video + Devpost" on `context` (`2af3c2b`). Edit freely | 2026-11-07 15:55 |
@@ -82,6 +83,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:12 — fix — Demo reflection trialled the wrong method — @yehor
+- **Where:** `yehor-ml-data` · merged to `main`: yes
+- **Did:** Codex's threshold review found it; `debug` skill reproduced it through the API. Root cause: `diagnose`/`agent` used `plan.method`, which was a one-off exploration pick. Now the method with ≥3 sessions in the window. Ada's Feynman trial now rises clearly and caps at 0.9. 3 regression tests (×6 seeds) failed before, pass after; `no-slop` clean. 219 tests pass. Codex's other 12 findings: leave as is (edge cases off the demo path).
+- **Touched:** `backend/engine/diagnose.py`, `agent.py`, `simulate.py`, `backend/tests/engine/test_simulate.py`
+- **Brief task:** Y5 → 🟡 part
+- **⚠️ Conflicts:** @saliha: narration prompt changed (re-warm cache); see the 16:12 row.
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 17:05 — feat — API security: dev route gating, rate limits, size limits, headers, LLM usage log (P1) — @saliha
 - **Where:** `sali-backend` @ `a51528f` · merged to `main`: yes
