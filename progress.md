@@ -86,6 +86,16 @@ whenever you log an entry.
 
 ## Log (newest first)
 
+### 2026-11-07 15:40 — feat — API errors come back as JSON with CORS headers; tables created on startup (S0) — @saliha
+- **Where:** `sali-backend` · merged to `main`: yes
+- **Did:** Unhandled errors return `500 {"detail":"internal_error"}` inside CORS (before, the browser showed them as CORS
+  failures). CORS allows any localhost port. `init_db()` runs on startup. 154 tests pass.
+- **Touched:** `backend/app/main.py`, `backend/tests/app/test_main.py`
+- **Brief task:** S0 → 🟡 part (voice signed URL next)
+- **⚠️ Conflicts:** @maxym: error bodies are `{detail}`; any localhost port works now
+- **📨 Needs:** none
+- **Status:** open
+
 ### 2026-11-07 15:30 — decision — Backend design locked after a design review — @saliha
 - **Where:** `context` (brief, PRD §0) · merged to `main`: yes (`progress.md`)
 - **Did:** Five-agent review (design, research, two critics, refine). Build in demo-beat order on a committed question bank
