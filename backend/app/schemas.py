@@ -84,6 +84,18 @@ class Session(BaseModel):
     reason: str
 
 
+class Hint(BaseModel):
+    level: int
+    text: str
+    quote: str | None = None  # a sentence (or masked sentence) from the notes, shown as a blockquote
+    source: str | None = None
+
+
+class Adapt(BaseModel):
+    state: Literal["EASED", "RESTORED"]
+    reason: str
+
+
 class Item(BaseModel):
     id: int
     kind: Literal["RECALL_PROMPT", "MCQ", "SHORT_ANSWER", "PROBLEM", "FEYNMAN_BRIEF"]
@@ -93,6 +105,9 @@ class Item(BaseModel):
     difficulty: Literal[1, 2, 3, 4, 5]
     expected_seconds: int
     hint: str | None = None
+    # Additive (contract change 2026-11-07): easing status, and the last hint state so a reload restores it.
+    adapt: Adapt | None = None
+    progress: "AnswerResult | None" = None
 
 
 class Done(BaseModel):
@@ -104,6 +119,9 @@ class AnswerBody(BaseModel):
     answer: str = Field(max_length=TEXT_MAX)
     latency_ms: int = Field(ge=0, le=LATENCY_MAX_MS)
     self_grade: Literal[0, 0.5, 1] | None = None
+    # Additive (contract change 2026-11-07): opt in to the hint ladder; skip is honoured only after can_skip.
+    guided: bool = False
+    skip: bool = False
 
 
 class AnswerResult(BaseModel):
@@ -111,6 +129,20 @@ class AnswerResult(BaseModel):
     correct: bool | None = None
     feedback: str | None = None
     reveal: str | None = None
+    # Additive (contract change 2026-11-07), set only for guided answers. done_with_item None = legacy, item is over.
+    attempt: int | None = None
+    max_attempts: int | None = None
+    hint_level: int | None = None
+    hint: Hint | None = None
+    eliminated: list[str] | None = None
+    explanation: str | None = None
+    quotes: list[str] | None = None
+    example: str | None = None
+    why_wrong: str | None = None
+    source: str | None = None
+    signal: Literal["ATTEMPT", "ANSWER_SEEKING", "REPEAT"] | None = None
+    can_skip: bool | None = None
+    done_with_item: bool | None = None
 
 
 class SessionEvent(BaseModel):
@@ -286,3 +318,41 @@ class AdvanceDaysResult(BaseModel):
 
 
 NextItem = Item | Done
+
+
+class AskBody(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    session_id: int | None = None
+
+
+class Quote(BaseModel):
+    text: str
+    quote: str
+    chunk_idx: int
+    label: str
+
+
+class QuizQuestion(BaseModel):
+    qid: str
+    kind: Literal["MCQ", "SHORT_ANSWER", "RECALL_PROMPT"]
+    prompt: str
+    options: list[str] | None = None
+
+
+class AskResult(BaseModel):
+    intent: Literal["ASK", "QUIZ", "REFUSED_CURRENT", "NOT_IN_NOTES", "BLOCKED"]
+    message: str | None = None
+    answer: list[Quote] = []
+    hint: Hint | None = None
+    quiz: list[QuizQuestion] | None = None
+    grounded_by: Literal["llm", "extractive"] | None = None
+
+
+class QuizAnswerBody(BaseModel):
+    qid: str = Field(max_length=100)
+    answer: str = Field(max_length=TEXT_MAX)
+    latency_ms: int = Field(ge=0, le=LATENCY_MAX_MS)
+    previous: list[str] = Field(default=[], max_length=8)  # client-held: it only affects the student's own practice
+
+
+Item.model_rebuild()

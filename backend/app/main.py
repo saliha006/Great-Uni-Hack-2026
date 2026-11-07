@@ -11,7 +11,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
-from app import db, flow
+from app import db, flow, guard_db, tutor
 from app import fixtures as fx
 from app import schemas as s
 from app.limits import limit
@@ -123,6 +123,15 @@ def _real_routes() -> APIRouter:
     @api.get("/subjects/{subject_id}/reflections", response_model=list[s.Reflection])
     def reflections(subject_id: int, ses: Session = DB):
         return flow.reflections(ses, subject_id)
+
+    @api.post("/subjects/{subject_id}/ask", response_model=s.AskResult, dependencies=[Depends(limit("ask"))])
+    def ask(subject_id: int, body: s.AskBody, ses: Session = DB):
+        return tutor.ask(ses, subject_id, body)
+
+    @api.post("/subjects/{subject_id}/quiz-answer", response_model=s.AnswerResult,
+              dependencies=[Depends(limit("answer"))])
+    def quiz_answer(subject_id: int, body: s.QuizAnswerBody, ses: Session = DB):
+        return tutor.quiz_answer(ses, subject_id, body)
 
     @api.post("/agent/reflect", response_model=s.Reflection, dependencies=[Depends(limit("reflect"))])
     def reflect(body: s.ReflectBody, ses: Session = DB):
@@ -242,6 +251,7 @@ def _fixture_routes() -> APIRouter:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     db.init_db()
+    guard_db.init(db.engine)
     yield
 
 
