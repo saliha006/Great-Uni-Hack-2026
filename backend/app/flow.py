@@ -29,7 +29,7 @@ from app.llm import service as llm
 log = logging.getLogger("attune.flow")
 
 DEMO_USER = "demo"
-DEFAULT_PERSONA, PERSONA_SEED = "breakthrough", 1
+DEFAULT_PERSONA, PERSONA_SEED = "ada", 1
 DEMO_EPOCH = datetime(2026, 11, 7, 18, 0)
 MIN_WORDS = 50
 LATENCY_CAP = 3  # an answer slower than 3x its expected time counts as 3x: stepping away isn't study time
@@ -898,7 +898,9 @@ def _run_period(ses: Session, subject: db.SubjectRow, info: dict, start: datetim
     """Generate one period of the persona's sessions, then let the engine reflect on them as it would live."""
     new = personas.period(info["key"], info["rng"], start, days, plan.method, plan.session_minutes, info["index"], 0)
     if sampler:
-        new[:len(t.LIVE_METHODS)] = [h.model_copy(update={"mode": "SAMPLER", "method": m})
+        probes = personas.SAMPLER_PROBES.get(info["key"], {})
+        new[:len(t.LIVE_METHODS)] = [h.model_copy(update={"mode": "SAMPLER", "method": m,
+                                                          "probe_score": probes.get(m, h.probe_score)})
                                      for h, m in zip(new, t.LIVE_METHODS)]
     _add_seeded(ses, subject.id, _chunks(ses, subject.id), new)
     rows = _completed(ses, subject.id)
@@ -923,9 +925,9 @@ def seed(ses: Session, persona: str = DEFAULT_PERSONA) -> dict:
     ses.flush()
     add_material(ses, subject.id, s.MaterialBody(title=BANK["title"], text=DEMO_MATERIAL))
     info = {"key": persona, "rng": random.Random(f"{persona}:{PERSONA_SEED}"), "index": 0}
-    lengths = [personas.period_days(info["rng"]) for _ in range(personas.PERIODS)]
+    lengths = [personas.period_days(info["rng"]) for _ in range(personas.SEED_PERIODS.get(persona, personas.PERIODS))]
     day = (DEMO_EPOCH - timedelta(days=sum(lengths) + 1)).replace(hour=18, minute=0)
-    plan = t.Plan(method="ACTIVE_RECALL", mode="ADAPTIVE", session_minutes=20,
+    plan = t.Plan(method=personas.START_METHOD.get(persona, "ACTIVE_RECALL"), mode="ADAPTIVE", session_minutes=20,
                   reason="Calibration finished; starting with the method that fit best.")
     for i, n in enumerate(lengths):
         plan, _ = _run_period(ses, subject, info, day, n, plan, sampler=i == 0)

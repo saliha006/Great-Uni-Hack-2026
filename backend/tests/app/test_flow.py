@@ -159,7 +159,7 @@ def test_advance_continues_the_same_student(client):
 
 def test_unknown_persona_is_rejected(client):
     assert client.post("/api/dev/seed", json={"persona": "nobody"}).status_code == 422
-    assert [p["key"] for p in client.get("/api/dev/personas").json()] == ["steady", "breakthrough", "bursts"]
+    assert [p["key"] for p in client.get("/api/dev/personas").json()] == ["ada", "steady", "breakthrough", "bursts"]
 
 
 def test_reset_clears_everything(client):

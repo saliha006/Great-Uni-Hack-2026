@@ -19,6 +19,9 @@ class Persona(BaseModel):
 
 
 PERSONAS: dict[str, Persona] = {p.key: p for p in (
+    Persona(key="ada", name="Ada", label="The full story",
+            blurb="Calibrates (Practice Test fits best), has a tired spell, then plateaus. Advance 7 days to see the "
+                  "plateau diagnosed and a Feynman trial start; advance again to see it pay off."),
     Persona(key="steady", name="Mia", label="Steady",
             blurb="Scores hold at about the same level whatever she tries, so recalibrations confirm her plan."),
     Persona(key="breakthrough", name="Leo", label="Plateaus, then breaks through",
@@ -27,6 +30,11 @@ PERSONAS: dict[str, Persona] = {p.key: p for p in (
             blurb="Tired late-night spells make his focus slip; shorter sessions bring it back and scores climb."),
 )}
 PERIODS = 5
+# Ada stops before her plateau so the demo's "advance 7 days" reveals it live (PRD §18).
+SEED_PERIODS = {"ada": 2}
+# Calibration-round scores, so the sampler ranks the methods the way the story needs.
+START_METHOD: dict[str, Method] = {"ada": "PRACTICE_TEST"}
+SAMPLER_PROBES = {"ada": {"ACTIVE_RECALL": 0.35, "PRACTICE_TEST": 0.68, "FEYNMAN": 0.8}}
 MIN_DAYS, MAX_DAYS = 7, 9
 NOISE = 0.012
 
@@ -41,7 +49,16 @@ def period(key: str, rng: random.Random, start: datetime, days: int, method: Met
     out = []
     for d in range(days):
         jitter = rng.uniform(-NOISE, NOISE)
-        if key == "steady":
+        if key == "ada":
+            if method == "FEYNMAN":
+                probe, drift, hour = 0.76 + 0.025 * d, 0.1, 18  # the trial pays off
+            elif index == 0:
+                probe, drift, hour = min(0.74, 0.6 + 0.025 * d), 0.12, 18  # rising on Practice Test
+            elif index == 1:
+                probe, drift, hour = 0.74, 0.45, 23  # tired late nights: focus slips, scores hold
+            else:
+                probe, drift, hour = 0.74, 0.12, 18  # focus fine, scores flat: a plateau
+        elif key == "steady":
             probe, drift, hour = 0.74, 0.12, 18
         elif key == "breakthrough":
             probe, drift, hour = min(0.9, 0.5 + 0.1 * index), 0.12, 18

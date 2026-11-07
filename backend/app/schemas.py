@@ -309,7 +309,7 @@ class ReflectBody(BaseModel):
 
 
 class SeedBody(BaseModel):
-    persona: Literal["steady", "breakthrough", "bursts"] = "breakthrough"  # additive (contract change 2026-11-07)
+    persona: Literal["ada", "steady", "breakthrough", "bursts"] = "ada"  # additive (contract change 2026-11-07)
 
 
 class AdvanceDaysBody(BaseModel):
