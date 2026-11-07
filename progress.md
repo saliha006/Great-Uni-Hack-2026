@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 15:15 | @yehor | @saliha | ⚠️ conflict | On `main`: **`app/db.py`** (13 §10 tables as `*Row` classes, `init_db()`, `get_session()`; SQLite default, `DATABASE_URL` overrides; `users.id` is the `X-User-Id` string; extra cols `users.profiles_json`, `sessions.minutes_to_first_drift`) and **`app/ingest.py`** (`extract_text(pdf_bytes)` raises `ValueError` on scanned PDFs → offer paste; `chunk_material(text)` → ≥3 `ChunkDraft`). Engine is complete: `agent.reflect`, `predict.predict_readiness`, `simulate.make_persona("Ada"|"Ben", seed)` + `simulate.trial_sessions(...)` for `/dev/advance-days`. `reflect` returns `id=0`: assign the stored id | 2026-11-07 15:15 |
 | 2026-11-07 15:10 | @yehor | @all | ⚠️ conflict | **Supersedes the 14:50 Supabase/handoff row:** DB stays **SQLite** for the demo (PRD §12; Supabase is P2, later just a `DATABASE_URL`). **Y-D stays with Yehor** (Codex finishing `db.py`; `ingest.py` done). @saliha: no backend handoff needed; you consume `app/db.py` + `app/ingest.py` | 2026-11-07 15:10 |
 | 2026-11-07 15:06 | @yehor | @saliha | ⚠️ conflict | `attention` is real (`1938d25`). For `POST events`: pass **all** the session's events so far (not just the new batch) to `score_attention`; keep `SessionCtx.drifting_windows` = consecutive DRIFTING readings (reset on any other state) and `minutes_since_intervention`. At session end call `attention.minutes_to_first_drift(events, items, baseline)` and store it (I'm adding `sessions.minutes_to_first_drift` in `db.py`); `focus_window` reads it from `SessionSummary` | 2026-11-07 15:06 |
 | 2026-11-07 14:52 | @yehor | @saliha | ⚠️ conflict | `SubjectCtx` has a new optional field `profiles: tuple[ProfileName, ...] = ()` (`3da2acd`); existing calls still work. Pass the user's profiles (e.g. `("short_blocks",)`) and `choose_plan` uses 10-min fixed blocks. Profiles are need-based, never diagnoses. Codex is adding `users.profiles_json` in Y-D | 2026-11-07 14:52 |
@@ -60,7 +61,7 @@ whenever you log an entry.
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y4 `agent.py` + `predict.py`; Y0–Y2 + Y3 diagnose done; Codex finishing Y-D `db.py` |
+| Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
 | Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -82,6 +83,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 15:15 — feat — Engine complete (Y3, Y4) and DB + ingestion on main (Y-D) — @yehor
+- **Where:** `yehor-ml-data` (+ Codex `yehor-ml-data-yd` @ `6f8aa65`) · merged to `main`: yes
+- **Did:** `agent.reflect`: PRD §8.4 table decides, LLM only narrates; any bad/off-policy/medical-sounding reply falls back to a template. `predict_readiness`: recency-weighted (7-day half-life), shrunk by n/(n+3). Personas: Ada (FATIGUE → PLATEAU → Feynman trial adopted, checked on 5 seeds), Ben (ON_TRACK → MASTERED). Y-D by Codex: SQLite tables + ingestion. 150 tests pass.
+- **Touched:** `backend/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/**`, `backend/requirements.txt` (`pypdf`)
+- **Brief task:** Y3 → ✅ done · Y4 → ✅ done · Y-D → ✅ done
+- **⚠️ Conflicts:** @saliha: see the 15:15 board row (what to call, two extra columns, `reflect` id). Gap: PRD's CUSUM sudden-drop check and the CI-overlap rule for `HIGH` confidence aren't in yet (Y5).
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 15:10 — decision — SQLite for the demo; Y-D stays with Yehor — @yehor
 - **Where:** board only
