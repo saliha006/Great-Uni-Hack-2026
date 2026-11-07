@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 17:05 | @saliha | @yehor | 📨 waiting on | Please add `user_id: str | None = None` to `LLMUsageRow` in `db.py` (your Q3 task): the backend now writes a usage row per LLM call and per-user quotas need the column. No rush before the demo | 2026-11-07 17:05 |
 | 2026-11-07 16:00 | @yehor | @saliha | ⚠️ conflict | I rewrote `README.md` (your path) at Yehor's request: badges, features table, "why it's different", quick start, demo steps (two `advance-days 7` calls: start then adopt the trial), architecture, team. Your scoring and honest-limits text is kept word for word (+1 line: thresholds are tuned guesses). Edit or revert anything you disagree with | 2026-11-07 16:00 |
 | 2026-11-07 15:55 | @yehor | @saliha | 📨 for you | Video voice-over ("how it learns", ~20 s) and the honest-limits list for Devpost/README are in `docs/handoff/YEHOR.md` → "For the video + Devpost" on `context` (`2af3c2b`). Edit freely | 2026-11-07 15:55 |
 | 2026-11-07 16:45 | @saliha | @all | 🔀 scope proposal | **Post-freeze proposals from research pass 2** are at the top of each brief, marked *Proposed*: backend security (dev routes gated, rate-limit scopes left unlimited, size limits), quote-grounded LLM output, answer-seeking detection with gradual easing and ramp-back, steadier method selection, ElevenLabs Sam settings. Reply yes/no per block. Items marked ⚖️ change the PRD §11 contract (hint event, 429s, dev token, field limits, leading-method field) and need all three of you. Nothing starts until you agree | 2026-11-07 16:45 |
@@ -81,6 +82,19 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 17:05 — feat — API security: dev route gating, rate limits, size limits, headers, LLM usage log (P1) — @saliha
+- **Where:** `sali-backend` @ `a51528f` · merged to `main`: yes
+- **Did:** Hand-written limiter (`app/limits.py`, no dependency), per IP + per user, scopes for every costly route, all
+  unlimited until `RL_<SCOPE>=count/seconds` is set. `ATTUNE_ENV=prod` drops `/api/dev/*` and `/openapi.json`;
+  `DEV_TOKEN` gates dev routes; `ALLOWED_HOSTS` turns on host checks. 1 MB body cap, field size caps, `nosniff`/`no-store`
+  headers, keys scrubbed from logs. Feynman credit needs a real quote from the student. Every LLM call logs a
+  `llm_usage` row. Models set to `gpt-6-luna` / `gpt-6.1-terra`. 217 tests pass. README merge kept Yehor's new layout.
+- **Touched:** `backend/app/{limits.py,main.py,schemas.py,llm.py,flow.py}`, `backend/tests/app/{test_security.py,test_llm.py}`, `.env.example`, `README.md`
+- **Brief task:** P1 → ✅
+- **⚠️ Conflicts:** @maxym: defaults change nothing, but if `DEV_TOKEN` is set send `X-Dev-Token`; handle 413/422 (oversized input), 429 (`Retry-After`) and 403 on dev routes when limits are switched on · @yehor: none of your files touched; your README rewrite is kept, security settings added as a collapsible block
+- **📨 Needs:** @yehor: `user_id` column on `llm_usage` (17:05 row)
+- **Status:** open
 
 ### 2026-11-07 16:00 — docs — README rewritten as a project overview — @yehor
 - **Where:** `yehor-ml-data` · merged to `main`: yes
