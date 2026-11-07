@@ -54,7 +54,7 @@ export interface VoiceContext { topic: string; key_points: string[]; first_messa
 export interface SignedUrl { signed_url: string; context: VoiceContext }
 export interface Insights {
   method_series: Record<string, { ts: string; probe_score: number }[]>
-  attention_by_session: { session_id: number; ts: string; method: Method; drift_share: number; lapse_share: number }[]
+  attention_by_session: { session_id: number; ts: string; method: Method; drift_share: number; lapse_share: number; active_minutes?: number }[]
   timeline: { ts: string; kind: 'RECALIBRATION' | 'BREAK' | 'TRIAL_START' | 'TRIAL_END' | 'SAMPLER_DONE'; label: string }[]
   readiness_series: { ts: string; performance: number | null; understanding: number | null }[]
 }

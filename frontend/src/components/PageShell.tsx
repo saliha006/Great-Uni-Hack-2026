@@ -6,8 +6,8 @@ import { CursorDot } from './CursorDot'
 import { StatusStrip, type StatusItem } from './StatusStrip'
 
 const links = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/progress', label: 'Progress' },
+  { to: '/', label: 'Dashboard', end: true },
+  { to: '/study', label: 'Study' },
   { to: '/questions', label: 'Questions' },
   { to: '/dev', label: 'Dev' },
 ]
@@ -76,8 +76,8 @@ export function PageShell({
           </nav>
         </header>
       )}
-      <StatusStrip where={where} items={status} next={next} />
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
+      {pathname !== '/' && <StatusStrip where={where} items={status} next={next} />}
+      <main id="main" className={`mx-auto w-full max-w-6xl flex-1 px-4 ${pathname === '/' ? 'py-3' : 'py-6 sm:py-8'}`}>
         {children}
       </main>
       <CursorDot enabled={cursorDot && !focus && !pathname.startsWith('/session')} />

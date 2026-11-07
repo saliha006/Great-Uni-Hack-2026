@@ -67,12 +67,12 @@ export function ContributionGrid({ days, endDate, weeks = 20 }: { days: Map<stri
           </div>
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
         <span className="text-muted">Less</span>
         {SHADE.map((c) => <span key={c} className={`size-3.5 rounded-[3px] ${c}`} aria-hidden />)}
         <span className="text-muted">More</span>
       </div>
-      <div className="mt-3 min-h-16 rounded-(--radius-ctl) bg-sunken p-3" aria-live="polite">
+      <div className="mt-2 rounded-(--radius-ctl) bg-sunken p-2 text-xs" aria-live="polite">
         <p className="font-semibold">{fmt(sel.date)}</p>
         {sel.labels.length ? (
           <ul className="mt-1 text-sm">{sel.labels.map((l, i) => <li key={i}>{l}</li>)}</ul>

@@ -322,7 +322,7 @@ export const mock = {
     for (const h of rec.history) (series[h.method] ??= []).push({ ts: h.ts, probe_score: +h.probe_score.toFixed(2) })
     return clone({
       method_series: series,
-      attention_by_session: rec.history.map((h) => ({ session_id: h.session_id, ts: h.ts, method: h.method, drift_share: +h.drift_share.toFixed(2), lapse_share: h.lapse_share })),
+      attention_by_session: rec.history.map((h) => ({ session_id: h.session_id, ts: h.ts, method: h.method, drift_share: +h.drift_share.toFixed(2), lapse_share: h.lapse_share, active_minutes: h.active_minutes })),
       timeline: rec.timeline,
       readiness_series: rec.history.map((h, i) => {
         const r = readiness({ ...rec, history: rec.history.slice(0, i + 1) })

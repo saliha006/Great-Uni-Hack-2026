@@ -6,12 +6,14 @@ import { Insights } from './pages/Insights'
 import { Dev } from './pages/Dev'
 import { Progress } from './pages/Progress'
 import { Questions } from './pages/Questions'
+import { Dashboard } from './pages/Dashboard'
 import { PageShell } from './components/PageShell'
 
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/study" element={<Home />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/session/:id" element={<SessionPage />} />
       <Route path="/insights/:subjectId" element={<Insights />} />
