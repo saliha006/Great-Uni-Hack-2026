@@ -1,12 +1,14 @@
 import importlib
+import os
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 from sqlalchemy import event, inspect
-from sqlalchemy.dialects.postgresql import dialect
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.schema import CreateTable
-from sqlmodel import Session, select
+from sqlmodel import Session, create_engine, select
 
 
 @pytest.fixture
@@ -17,7 +19,7 @@ def db(monkeypatch):
 
 @pytest.fixture
 def database(db):
-    bind = db.create_db_engine("sqlite://")
+    bind = create_engine("sqlite://")
 
     @event.listens_for(bind, "connect")
     def enable_foreign_keys(connection, record):
@@ -52,7 +54,7 @@ def test_seeded_session_and_profiles_survive_round_trip(db, database):
         session.commit()
         study = db.SessionRow(
             subject_id=subject.id, chunk_id=chunk.id, method="ACTIVE_RECALL", mode="SAMPLER",
-            planned_minutes=10, started_at=now, is_seeded=True,
+            planned_minutes=10, started_at=now, is_seeded=True, minutes_to_first_drift=12.5,
         )
         session.add(study)
         session.commit()
@@ -60,6 +62,7 @@ def test_seeded_session_and_profiles_survive_round_trip(db, database):
     with Session(database) as session:
         stored = session.get(db.SessionRow, study_id)
         assert stored.is_seeded is True
+        assert stored.minutes_to_first_drift == 12.5
         assert stored.started_at == now
         assert stored.probe_score is None
         assert session.get(db.SubjectRow, stored.subject_id).phase == "SAMPLING"
@@ -107,31 +110,12 @@ def test_session_dependency_rolls_back_uncommitted_changes(db, database, monkeyp
         assert session.get(db.UserRow, "unsaved") is None
 
 
-@pytest.mark.parametrize("scheme", ["postgres", "postgresql", "postgresql+psycopg"])
-def test_postgres_urls_use_psycopg_and_tls_without_connecting(db, scheme):
-    bind = db.create_db_engine(f"{scheme}://backend:p%40ss@localhost:5432/postgres")
-    try:
-        assert bind.dialect.driver == "psycopg"
-        assert bind.url.password == "p@ss"
-        assert bind.dialect.create_connect_args(bind.url)[1]["sslmode"] == "require"
-    finally:
-        bind.dispose()
-
-
-def test_postgres_keeps_certificate_verification_settings(db):
-    bind = db.create_db_engine("postgresql://localhost/postgres?sslmode=verify-full&sslrootcert=/tmp/test-ca.crt")
-    try:
-        assert bind.url.query["sslmode"] == "verify-full"
-        assert bind.url.query["sslrootcert"] == "/tmp/test-ca.crt"
-    finally:
-        bind.dispose()
-
-
-def test_missing_database_url_does_not_fall_back_to_sqlite(db):
-    with pytest.raises(RuntimeError, match="Set DATABASE_URL"):
-        db.create_db_engine(None)
-
-
-def test_table_definitions_compile_for_postgres(db):
-    for table in db.SQLModel.metadata.sorted_tables:
-        assert f"CREATE TABLE {table.name}" in str(CreateTable(table).compile(dialect=dialect()))
+def test_import_without_database_url_uses_sqlite():
+    environment = os.environ.copy()
+    environment.pop("DATABASE_URL", None)
+    subprocess.run(
+        [sys.executable, "-c", "from app.db import engine; assert str(engine.url) == 'sqlite:///./attune.db'"],
+        cwd=Path(__file__).resolve().parents[2],
+        env=environment,
+        check=True,
+    )

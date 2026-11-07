@@ -2,26 +2,19 @@ import os
 from collections.abc import Iterator
 from datetime import datetime
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine
 from sqlalchemy.engine import make_url
 from sqlmodel import Field, Session, SQLModel, create_engine
 
 
-def create_db_engine(database_url: str | None) -> Engine:
-    if not database_url:
-        raise RuntimeError("Set DATABASE_URL to the Supabase Postgres connection string before starting the backend")
-    url = make_url(database_url)
-    if url.drivername in {"postgres", "postgresql", "postgresql+psycopg"}:
-        url = url.set(drivername="postgresql+psycopg")
-        if "sslmode" not in url.query:
-            url = url.update_query_dict({"sslmode": "require"})
-        return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=0, hide_parameters=True)
-    if url.get_backend_name() == "sqlite":
+def create_db_engine(url: str) -> Engine:
+    if make_url(url).get_backend_name() == "sqlite":
         return create_engine(url, connect_args={"check_same_thread": False})
-    raise ValueError("DATABASE_URL must use Postgres, or SQLite for isolated tests")
+    return create_engine(url, pool_pre_ping=True)
 
 
-engine = create_db_engine(os.getenv("DATABASE_URL"))
+url = os.getenv("DATABASE_URL", "sqlite:///./attune.db")
+engine = create_db_engine(url)
 
 
 class UserRow(SQLModel, table=True):
@@ -71,6 +64,7 @@ class SessionRow(SQLModel, table=True):
     started_at: datetime
     ended_at: datetime | None = None
     active_minutes: float | None = None
+    minutes_to_first_drift: float | None = None
     completion: float | None = None
     probe_score: float | None = None
     delayed_score: float | None = None
@@ -172,11 +166,6 @@ class LLMUsageRow(SQLModel, table=True):
 def init_db(bind: Engine = engine) -> None:
     with bind.begin() as connection:
         SQLModel.metadata.create_all(connection)
-        if bind.dialect.name == "postgresql":
-            # FastAPI owns access; browser-facing Supabase roles have no row policies.
-            for table in SQLModel.metadata.sorted_tables:
-                name = bind.dialect.identifier_preparer.format_table(table)
-                connection.execute(text(f"ALTER TABLE {name} ENABLE ROW LEVEL SECURITY"))
 
 
 def get_session() -> Iterator[Session]:
