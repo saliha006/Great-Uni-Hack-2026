@@ -1,29 +1,31 @@
 @import "tailwindcss";
 
-/* Mono + one red. Red only marks the primary action, the frog, focus and the cursor dot. */
+/* Cream surfaces and slate accents keep the palette consistent across the app. */
 @theme {
   --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
 
-  --color-bg: oklch(0.967 0.003 100);
-  --color-surface: oklch(0.995 0 0);
-  --color-sunken: oklch(0.935 0.004 100);
-  --color-line: oklch(0.86 0.004 100);
-  --color-ink: oklch(0.18 0 0);
-  --color-muted: oklch(0.45 0.005 100);
-  --color-accent: oklch(0.56 0.215 28);
-  --color-accent-ink: oklch(0.99 0 0);
-  --color-accent-soft: oklch(0.94 0.035 28);
+  --color-bg: #ffffe3;
+  --color-surface: #fffef0;
+  --color-sunken: #f0f0d8;
+  --color-line: #d8d8bd;
+  --color-ink: #262a2d;
+  --color-muted: #646960;
+  --color-accent: #6d8196;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #e2e7ec;
+  --color-interaction: #c7774a;
+  --color-interaction-ink: #ffffff;
   --color-ok: oklch(0.5 0.12 150);
   --color-ok-soft: oklch(0.94 0.04 150);
   --color-warn: oklch(0.52 0.12 70);
   --color-warn-soft: oklch(0.95 0.05 85);
 
-  /* Grid shades for the activity map: empty, then four steps of red. */
-  --color-g0: oklch(0.91 0.004 100);
-  --color-g1: oklch(0.86 0.07 28);
-  --color-g2: oklch(0.75 0.13 28);
-  --color-g3: oklch(0.64 0.18 28);
-  --color-g4: oklch(0.52 0.21 28);
+  /* Grid shades for the activity map: empty, then four steps of the slate accent. */
+  --color-g0: #eeeed7;
+  --color-g1: #c3ccd4;
+  --color-g2: #9eafbe;
+  --color-g3: #8297ab;
+  --color-g4: #6d8196;
 
   --radius-card: 14px;
   --radius-ctl: 10px;
@@ -33,45 +35,49 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg: oklch(0.17 0 0);
-    --color-surface: oklch(0.215 0 0);
-    --color-sunken: oklch(0.14 0 0);
-    --color-line: oklch(0.32 0 0);
-    --color-ink: oklch(0.95 0 0);
-    --color-muted: oklch(0.72 0.004 100);
-    --color-accent: oklch(0.65 0.2 28);
-    --color-accent-ink: oklch(0.15 0 0);
-    --color-accent-soft: oklch(0.3 0.07 28);
+    --color-bg: #292c2e;
+    --color-surface: #363a3d;
+    --color-sunken: #222527;
+    --color-line: #50565a;
+    --color-ink: #ffffe3;
+    --color-muted: #c4c7bd;
+    --color-accent: #91a4b8;
+    --color-accent-ink: #29201b;
+    --color-accent-soft: #414d58;
+    --color-interaction: #db956b;
+    --color-interaction-ink: #29201b;
     --color-ok: oklch(0.75 0.13 150);
     --color-ok-soft: oklch(0.28 0.05 150);
     --color-warn: oklch(0.8 0.12 80);
     --color-warn-soft: oklch(0.3 0.05 80);
-    --color-g0: oklch(0.27 0 0);
-    --color-g1: oklch(0.36 0.08 28);
-    --color-g2: oklch(0.46 0.13 28);
-    --color-g3: oklch(0.56 0.17 28);
-    --color-g4: oklch(0.66 0.2 28);
+    --color-g0: #363a3d;
+    --color-g1: #4a5865;
+    --color-g2: #617386;
+    --color-g3: #7a8fa4;
+    --color-g4: #91a4b8;
   }
 }
 :root[data-theme="dark"] {
-  --color-bg: oklch(0.17 0 0);
-  --color-surface: oklch(0.215 0 0);
-  --color-sunken: oklch(0.14 0 0);
-  --color-line: oklch(0.32 0 0);
-  --color-ink: oklch(0.95 0 0);
-  --color-muted: oklch(0.72 0.004 100);
-  --color-accent: oklch(0.65 0.2 28);
-  --color-accent-ink: oklch(0.15 0 0);
-  --color-accent-soft: oklch(0.3 0.07 28);
+  --color-bg: #292c2e;
+  --color-surface: #363a3d;
+  --color-sunken: #222527;
+  --color-line: #50565a;
+  --color-ink: #ffffe3;
+  --color-muted: #c4c7bd;
+  --color-accent: #91a4b8;
+  --color-accent-ink: #29201b;
+  --color-accent-soft: #414d58;
+  --color-interaction: #db956b;
+  --color-interaction-ink: #29201b;
   --color-ok: oklch(0.75 0.13 150);
   --color-ok-soft: oklch(0.28 0.05 150);
   --color-warn: oklch(0.8 0.12 80);
   --color-warn-soft: oklch(0.3 0.05 80);
-  --color-g0: oklch(0.27 0 0);
-  --color-g1: oklch(0.36 0.08 28);
-  --color-g2: oklch(0.46 0.13 28);
-  --color-g3: oklch(0.56 0.17 28);
-  --color-g4: oklch(0.66 0.2 28);
+  --color-g0: #363a3d;
+  --color-g1: #4a5865;
+  --color-g2: #617386;
+  --color-g3: #7a8fa4;
+  --color-g4: #91a4b8;
 }
 
 html {
@@ -97,6 +103,18 @@ body {
 }
 a {
   text-underline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(a, button, input, select, textarea, label, summary, [role="button"], [role="tab"]):not(:disabled) {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  :is(a, button, input, select, textarea, label, summary, [role="button"], [role="tab"]):not(:disabled):hover {
+    --color-accent: var(--color-interaction);
+    --color-accent-ink: var(--color-interaction-ink);
+    --color-accent-soft: color-mix(in srgb, var(--color-interaction) 16%, var(--color-bg));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
