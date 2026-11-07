@@ -1,13 +1,13 @@
-// GitHub-style activity map for one semester: one square per day, start to end, filling the card's
-// width. Empty days keep a visible outline; filled days get darker the more was done. Keyboard: Tab
-// into the grid, then arrow keys move day by day (up/down) or week by week (left/right).
+// GitHub-style activity map for one semester: month labels on top, Mon/Wed/Fri on the left, one
+// square per day from start to end, Less/More legend underneath. Empty days keep a visible outline.
+// Keyboard: Tab into the grid, then arrow keys move day by day (up/down) or week by week (left/right).
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { shadeFor, type DaySummary } from '../lib/activity'
+import { SHADE_CLASS, shadeFor, type DaySummary } from '../lib/activity'
 
-const SHADE = ['border-line', 'border-transparent bg-g1', 'border-transparent bg-g2', 'border-transparent bg-g3', 'border-transparent bg-g4']
 const keyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const label = (d: DaySummary) =>
   `${new Date(`${d.date}T12:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}: ${d.sessions} sessions, ${d.tasks} tasks`
+const WEEKDAY_LABELS: Record<number, string> = { 1: 'Mon', 3: 'Wed', 5: 'Fri' } // rows are Sunday-first, like GitHub
 
 export function ContributionGrid({ days, start, end, today }: { days: Map<string, DaySummary>; start: Date; end: Date; today: Date }) {
   const { cells, weeks, months } = useMemo(() => {
@@ -46,20 +46,22 @@ export function ContributionGrid({ days, start, end, today }: { days: Map<string
       move(active + step)
     }
   }
-  const columns = { gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` }
+
+  // One grid for labels and squares so the weekday labels line up with their rows at any card width.
+  // The weekday labels have zero height, otherwise their text would stretch those rows and distort the squares.
+  const layout = { gridTemplateColumns: `2rem repeat(${weeks}, minmax(0, 1fr))` }
 
   return (
-    <div className="flex flex-1 flex-col justify-center gap-1">
-      <div className="grid gap-1 text-xs text-muted" style={columns} aria-hidden>
+    <div className="flex flex-1 flex-col justify-center gap-2">
+      <div role="grid" aria-label="Study activity by day" onKeyDown={onKey} className="grid gap-1" style={layout}>
         {months.map((m) => (
-          <span key={m.week} className="overflow-visible whitespace-nowrap" style={{ gridColumnStart: m.week + 1 }}>{m.name}</span>
+          <span key={m.week} aria-hidden className="overflow-visible whitespace-nowrap text-xs text-muted" style={{ gridRow: 1, gridColumn: m.week + 2 }}>{m.name}</span>
         ))}
-      </div>
-      <div role="grid" aria-label="Study activity by day" onKeyDown={onKey} className="grid grid-flow-col grid-rows-7 gap-1" style={columns}>
+        {Object.entries(WEEKDAY_LABELS).map(([row, name]) => (
+          <span key={name} aria-hidden className="flex h-0 items-center text-xs text-muted" style={{ gridRow: Number(row) + 2, gridColumn: 1 }}>{name}</span>
+        ))}
         {cells.map((c, i) =>
-          c === null ? (
-            <span key={i} aria-hidden />
-          ) : (
+          c === null ? null : (
             <button
               key={c.date}
               ref={(el) => { refs.current[i] = el }}
@@ -68,10 +70,16 @@ export function ContributionGrid({ days, start, end, today }: { days: Map<string
               onFocus={() => setActive(i)}
               aria-label={label(c)}
               title={label(c)}
-              className={`aspect-square w-full rounded-[3px] border ${SHADE[shadeFor(c)]}`}
+              style={{ gridRow: (i % 7) + 2, gridColumn: Math.floor(i / 7) + 2 }}
+              className={`aspect-square w-full rounded-[3px] border ${SHADE_CLASS[shadeFor(c)]}`}
             />
           ),
         )}
+      </div>
+      <div className="flex items-center justify-end gap-1.5 text-xs text-muted" aria-hidden>
+        <span className="mr-0.5">Less</span>
+        {SHADE_CLASS.map((c) => <span key={c} className={`size-3 rounded-[3px] border ${c}`} />)}
+        <span className="ml-0.5">More</span>
       </div>
     </div>
   )

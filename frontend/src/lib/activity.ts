@@ -9,6 +9,9 @@ export interface DaySummary {
 
 export type Shade = 0 | 1 | 2 | 3 | 4
 
+// Square colours by shade. Shade 0 stays an outline so empty days are visible but not loud.
+export const SHADE_CLASS = ['border-line', 'border-transparent bg-g1', 'border-transparent bg-g2', 'border-transparent bg-g3', 'border-transparent bg-g4']
+
 export interface Semester {
   name: string
   start: Date
