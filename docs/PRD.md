@@ -11,15 +11,15 @@
 
 **Decisions in force**
 - Stack per §12; architecture per §9; `engine/` stays pure (no I/O).
-- Roles per §13: Saliha engine + reflection agent · Maxime frontend + voice UI · Yehor backend + data + LLM/voice services.
-- Repo `saliha006/Great-Uni-Hack-2026`. Docs live on the **`context` branch** only (`AGENTS.md` = `CLAUDE.md`, this PRD in `docs/`, briefs in `docs/builders/`, `docs/handoff/`), never merged to `main`. `main` holds code, `progress.md` and `README.md`. Role branches: `sali-engine`, `maxime-frontend`, `yehor-backend`.
+- Roles (team confirmed 14:40, swapped from the v0.1 draft): **Saliha backend + DB + LLM/voice services** · **Maxime frontend + voice UI** · **Yehor AI/ML engine + data (personas) + reflection agent**.
+- Repo `saliha006/Great-Uni-Hack-2026`. Docs live on the **`context` branch** only (`AGENTS.md` = `CLAUDE.md`, this PRD in `docs/`, briefs in `docs/builders/`, `docs/handoff/`), never merged to `main`. `main` holds code, `progress.md` and `README.md`. Role branches: `sali-backend`, `maxime-frontend`, `yehor-ml-data`.
 - Keys only in each machine's git-ignored `.env`. OpenAI and ElevenLabs usage is tracked: spend only on what the demo needs (§13 guards).
 - §11 API contract is **locked from 14:45**; changes need all three and go under "Contract changes" (bottom).
 - Cross-person requests: 📨 row on the `progress.md` Open board. Agent failover notes: `docs/handoff/<NAME>.md`.
 
-**Pending** (not decided): §19 open questions · doc owner (assumed Saliha) · team name · Maxime/Yehor GitHub handles.
+**Pending** (not decided): whether Yehor's "data" also takes DB tables + ingestion (S1, now Saliha's) · §19 open questions · doc owner (assumed Saliha) · team name · Maxime/Yehor GitHub handles.
 
-**Active tasks:** Phase 0 (14:15–14:40, §17): Yehor Y0 collaborators + stub API (repo done) · Saliha S0/S0b types + stubs · Maxime M0 scaffold + ElevenLabs agent.
+**Active tasks:** Phase 0 (14:15–14:40, §17): Saliha S0 collaborators + stub API (repo done) · Yehor Y0/Y0b types + stubs · Maxime M0 scaffold + ElevenLabs agent.
 
 ---
 
@@ -288,10 +288,10 @@ Shown as "Readiness" with confidence, never as a predicted grade. The write-up l
 attune/
   AGENTS.md  CLAUDE.md                 # identical; agent instructions (root)
   docs/PRD.md  docs/builders/{MAXIME,SALIHA,YEHOR}_BUILDER.md  docs/handoff/
-  backend/app/        # Yehor  — FastAPI, DB, LLM service, ingestion, voice
-  backend/engine/     # Saliha — attention, methodfit, diagnose, agent, predict, simulate, types
+  backend/app/        # Saliha — FastAPI, DB, LLM service, ingestion, voice
+  backend/engine/     # Yehor  — attention, methodfit, diagnose, agent, predict, simulate, types
   backend/tests/
-  frontend/           # Maxime — Vite + React + TS (Insights page: Yehor)
+  frontend/           # Maxime — Vite + React + TS (Insights page: Saliha)
   scripts/            # seed/dev helpers
   .env.example
 ```
@@ -385,7 +385,7 @@ interface Insights {
 | 15 | `POST /agent/reflect` | `{subject_id, trigger:'MANUAL'\|'WEEKLY'}` → `Reflection` |
 | 16 | `POST /dev/seed` · `POST /dev/advance-days` `{days}` · `POST /dev/reset` · `GET /dev/usage` | → seed ids / `{advanced_to, reflections}` / ok / LLM usage totals |
 
-**Engine ↔ backend interface (Python)** — Saliha owns signatures; Yehor calls them.
+**Engine ↔ backend interface (Python)** — Yehor owns signatures; Saliha calls them.
 ```python
 # backend/engine/types.py defines all models + Protocol LLM
 class LLM(Protocol):
@@ -445,7 +445,7 @@ DATABASE_URL=sqlite:///./attune.db
 
 ## 13. Team, tools & spend
 
-**Humans:** Saliha (AI/ML engine + reflection agent), Maxime (frontend + voice UI), Yehor (backend + data + LLM service). *Roles are my assumption from your brief; swap freely, but keep ownership of folders unambiguous.*
+**Humans:** Saliha (backend + DB + LLM/voice services), Maxime (frontend + voice UI), Yehor (AI/ML engine + data/personas + reflection agent). *Confirmed by the team at 14:40.*
 
 **Resources:** ElevenLabs API · OpenAI API (key is uncapped but **spend is tracked**) · Firecrawl · Lovable Pro (100 credits, Saliha's account) · Saliha: Claude Enterprise + Claude Pro + Codex Plus · Maxime: Claude Pro + Codex Plus · Yehor: Claude Pro + Codex Plus.
 
@@ -511,15 +511,15 @@ DATABASE_URL=sqlite:///./attune.db
 | When | Milestone | Owner(s) |
 |---|---|---|
 | 14:15 | Everyone: read PRD + own builder file; check tool quotas; agents bootstrapped | All |
-| 14:15–14:40 | **Phase 0: contract & scaffolding.** Repo + collaborators, stub API (fixtures), `engine/types.py` + engine stubs, Vite app + ElevenLabs agent | Yehor / Saliha / Maxime |
+| 14:15–14:40 | **Phase 0: contract & scaffolding.** Repo + collaborators, stub API (fixtures), `engine/types.py` + engine stubs, Vite app + ElevenLabs agent | Saliha / Yehor / Maxime |
 | **14:45** | **Sync 1: contract frozen; stub API reachable; engine stubs importable** | All |
 | 14:45–15:50 | **Phase 1: vertical slice.** create subject → material → session → answer → probe → stats update (stub engine OK) | All |
 | **15:50** | **Sync 2: vertical slice demo (2 min)** | All |
-| 15:50–16:30 | **Phase 2: intelligence.** real attention + methodfit + diagnose + reflection; Feynman voice; interventions; Insights | Saliha / Maxime / Yehor |
+| 15:50–16:30 | **Phase 2: intelligence.** real attention + methodfit + diagnose + reflection; Feynman voice; interventions; Insights | Yehor / Maxime / Saliha |
 | **16:30** | **FEATURE FREEZE.** Only bugs, tuning, polish after this | All |
 | 16:30–17:00 | Seed demo persona, tune thresholds, rehearse demo path, README, repo hygiene | All |
 | **17:00** | Development ends. Presentation hour begins | |
-| 17:00–17:10 | Reset demo state; smoke test full path | Maxime + Yehor |
+| 17:00–17:10 | Reset demo state; smoke test full path | Maxime + Saliha |
 | 17:10–17:40 | **Record demo (≤2:00)** — 2 takes, pick best | Saliha (voice-over) + Maxime (driving UI) |
 | 17:40–17:55 | Devpost: name, short write-up, video, repo link; confirm every teammate is on Devpost and a repo collaborator | Yehor + Saliha |
 | **17:45** | **Target submit.** Hard deadline 18:00 | |
@@ -549,7 +549,7 @@ DATABASE_URL=sqlite:///./attune.db
 ## 19. Open questions
 
 1. Hackathon name, tracks, required/sponsor tech, team-size and originality rules (affects LLM/voice choices).
-2. Do any of you want a different split than my assumption (Saliha engine/agent, Maxime frontend/voice, Yehor backend/data)?
+2. ~~Role split~~ Answered 14:40: Saliha backend, Maxime frontend, Yehor AI/ML + data.
 3. ElevenLabs quota (minutes/credits) and which voice/LLM the agent should use.
 4. Which demo material do we use? Recommend something openly licensed, ~1,500 words, on one algorithms topic.
 
