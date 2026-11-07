@@ -103,3 +103,18 @@ def test_non_object_json_is_rejected(tmp_path):
 def test_engine_adapter_turns_failures_into_empty_dict(tmp_path):
     engine_llm = svc(tmp_path, mode="fixtures").for_engine()
     assert engine_llm.complete_json("s", "u", SCHEMA, "smart") == {}
+
+
+def test_usage_sink_gets_purpose_tokens_and_cache_hits(tmp_path):
+    rows = []
+    s = svc(tmp_path, _resp('{"x": 1}'), sink=lambda *row: rows.append(row))
+    s.complete_json("sys", "u", SCHEMA, "fast", purpose="grade")
+    s.complete_json("sys", "u", SCHEMA, "fast", purpose="grade")
+    assert rows == [("grade", "m-fast", 10, 5, False), ("grade", "m-fast", 0, 0, True)]
+
+
+def test_a_failing_sink_never_fails_the_call(tmp_path):
+    def broken(*row):
+        raise RuntimeError("db down")
+
+    assert svc(tmp_path, _resp('{"x": 1}'), sink=broken).complete_json("s", "u", SCHEMA, "fast") == {"x": 1}
