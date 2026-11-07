@@ -119,3 +119,13 @@ def test_import_without_database_url_uses_sqlite():
         env=environment,
         check=True,
     )
+
+
+def test_llm_usage_records_the_user_and_allows_none(db, database):
+    with Session(database) as session:
+        common = {"ts": datetime.now(), "purpose": "grade", "model": "m", "prompt_tokens": 1, "completion_tokens": 1,
+                  "cache_hit": False}
+        session.add(db.LLMUsageRow(user_id="demo", **common))
+        session.add(db.LLMUsageRow(**common))
+        session.commit()
+        assert sorted(r.user_id or "" for r in session.exec(select(db.LLMUsageRow)).all()) == ["", "demo"]

@@ -128,3 +128,14 @@ def test_short_blocks_profile_fixes_session_length_in_every_phase():
 
 def test_no_profile_uses_the_focus_window():
     assert methodfit.choose_plan(subject(focus_window_min=25), priors(), [], random.Random(0)).session_minutes == 25
+
+
+def test_a_method_tried_once_does_not_hold_confidence_at_early():
+    stats = {"ACTIVE_RECALL": MethodStats(alpha=2.5, beta=2.5, n=1), "PRACTICE_TEST": MethodStats(alpha=6, beta=5, n=7),
+             "FEYNMAN": MethodStats(alpha=40, beta=5, n=30)}
+    assert methodfit.confidence(stats) == "HIGH"
+
+
+def test_leader_with_few_sessions_stays_early():
+    stats = {"FEYNMAN": MethodStats(alpha=4, beta=1, n=1), "PRACTICE_TEST": MethodStats(alpha=2, beta=2, n=0)}
+    assert methodfit.confidence(stats) == "EARLY"
