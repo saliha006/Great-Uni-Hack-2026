@@ -155,3 +155,17 @@ def test_focus_window_default_median_and_clamps():
     assert attention.focus_window([summary(30, d) for d in (12, 14, 16)]) == 14
     assert attention.focus_window([summary(30, 3)]) == 10
     assert attention.focus_window([summary(90)]) == 45
+
+
+def test_demo_burst_leaves_focused_within_four_erratic_answers():
+    """scripts/attention_burst.py's pattern on 45 s demo recall items: 5 steady answers, then an erratic burst."""
+    steady = [1.0] * 5
+    burst = [150 / 45, 20 / 45, 160 / 45, 15 / 45, 170 / 45, 140 / 45]
+    states = states_over_time(steady + burst)
+    assert set(states[:5]) == {"FOCUSED"}
+    assert any(s != "FOCUSED" for s in states[5:9])
+
+
+def test_two_slow_answers_in_a_row_are_noticed_by_the_next_answer():
+    # Hysteresis needs two agreeing windows, so the state can move one answer after the second slow one.
+    assert any(s != "FOCUSED" for s in states_over_time(STEADY[:6] + [3.0, 3.0] + STEADY[:2])[7:9])

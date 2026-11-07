@@ -1,7 +1,7 @@
 """Real-time attention reading and interventions (PRD §8.3). Pure functions over client events.
 
-Spread is measured robustly (median and MAD, not mean and SD): one slow answer must not flip the state,
-and with mean/SD a single outlier in a window of 8 reads as a lapse for the next 8 windows.
+Spread is a trimmed CV (drop the fastest and slowest answer, then SD / mean): one slow answer must not flip
+the state, but two or more must. Plain SD over-reacts to a single outlier; MAD ignores up to half the window.
 """
 import math
 import statistics
@@ -20,7 +20,6 @@ from engine.types import (
 
 WINDOW = 8
 MIN_WINDOW = 5
-MAD_TO_SD = 1.4826  # makes MAD comparable to an SD for normal noise
 MIN_SD = 0.05  # floor so a very consistent user doesn't get z-scores that explode
 COOLDOWN_MIN = 4.0  # TUNE
 FIRST_BREAK_S, LATER_BREAK_S = 180, 300
@@ -35,10 +34,10 @@ def _ratio(event: Event, items: dict[int, ItemMeta]) -> float | None:
     return event.latency_ms / 1000 / item.expected_seconds
 
 
-def _robust_cv(ratios: list[float]) -> float:
-    median = statistics.median(ratios)
-    mad = statistics.median(abs(r - median) for r in ratios)
-    return MAD_TO_SD * mad / median if median > 0 else 0.0
+def _trimmed_cv(ratios: list[float]) -> float:
+    trimmed = sorted(ratios)[1:-1]
+    mean = statistics.mean(trimmed)
+    return statistics.pstdev(trimmed) / mean if mean > 0 else 0.0
 
 
 def _z(value: float, mean: float, sd: float) -> float:
@@ -47,7 +46,7 @@ def _z(value: float, mean: float, sd: float) -> float:
 
 def _classify(ratios: list[float], scores: list[float | None], idle: int, blur: int, base: Baseline) -> AttentionStateName:
     z_lat = _z(statistics.median(ratios), base.baseline_ratio, base.baseline_ratio_sd) if ratios else 0.0
-    z_cv = _z(_robust_cv(ratios), base.baseline_cv, base.baseline_cv_sd) if len(ratios) >= MIN_WINDOW else 0.0
+    z_cv = _z(_trimmed_cv(ratios), base.baseline_cv, base.baseline_cv_sd) if len(ratios) >= MIN_WINDOW else 0.0
     streak = 0
     for score in reversed(scores):
         if score is None or score >= 0.5:
@@ -93,7 +92,7 @@ def score_attention(events: list[Event], items: dict[int, ItemMeta], baseline: B
         previous = raw
     return AttentionReading(
         state=state,
-        latency_cv=round(_robust_cv(ratios), 3) if len(ratios) >= MIN_WINDOW else None,
+        latency_cv=round(_trimmed_cv(ratios), 3) if len(ratios) >= MIN_WINDOW else None,
         latency_ratio=round(statistics.median(ratios), 3) if ratios else None,
         idle_count=idle,
         blur_count=blur,
@@ -141,7 +140,7 @@ def update_baseline(baseline: Baseline, session_events: list[Event], items: dict
         return baseline  # too little data to learn from; don't count the session
     windows = [ratios[i:i + WINDOW] for i in range(len(ratios) - MIN_WINDOW + 1)]
     medians = [statistics.median(w) for w in windows]
-    cvs = [_robust_cv(w) for w in windows]
+    cvs = [_trimmed_cv(w) for w in windows]
     rate = max(1 / (baseline.n_sessions + 1), BASELINE_MIN_RATE)
 
     def blend(old: float, new: float) -> float:
