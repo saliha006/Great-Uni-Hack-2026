@@ -11,7 +11,7 @@
 | Project | **Attune** (working title) · **Great Uni Hack 2026**, Sat 7 Nov 2026. Build 14:15–17:00, feature freeze 16:30, record + submit 17:00–18:00 (hard deadline 18:00). Tracks / sponsor rules: {{tracks}} (PRD §19 Q1). Team **{{team name}}**; Devpost: Yehor + Saliha |
 | Team | **saliha** (`saliha006`): AI/ML engine + reflection agent, **doc owner** (assumed; confirm), vault owner · **maxime** (`{{github}}`): frontend + voice UI · **yehor** (`{{github}}`): backend + data + LLM/voice services, repo + README + Devpost. Owned paths and **Now**: `progress.md` → 👥 Team |
 | Repo | `https://github.com/saliha006/Great-Uni-Hack-2026` · `main` (code + `progress.md` + `README.md`) · `context` (docs only) · **role branches:** `sali-engine` (saliha), `maxime-frontend` (maxime), `yehor-backend` (yehor). A second agent in a worktree uses `<role-branch>-<task>` and merges back into the role branch |
-| Where docs live | **`context` branch** (docs only, **never merged to `main`**): `CLAUDE.md` = `AGENTS.md`, `docs/PRD.md`, `docs/builders/`, `docs/handoff/` (agent handoff notes). **`main`**: code, `progress.md`, `README.md`: the only markdown on `main` (`.gitignore` blocks every other `*.md` and `docs/`). **Local only, git-ignored:** `Research-Context/`, `.claude/`, `.env*`, `*.db`. Sync and publish are plain git, below |
+| Where docs live | **`context` branch** (docs only, **never merged to `main`**): `CLAUDE.md` = `AGENTS.md`, `docs/PRD.md`, `docs/builders/`, `docs/handoff/` (agent handoff notes), `docs/skills/` (`no-slop`, `debug`). **`main`**: code, `progress.md`, `README.md`: the only markdown on `main` (`.gitignore` blocks every other `*.md` and `docs/`). **Local only, git-ignored:** `Research-Context/`, `.claude/`, `.env*`, `*.db`. Sync and publish are plain git, below |
 | Secrets | `.env` at the repo root on each machine, git-ignored: `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `FIRECRAWL_API_KEY` (names per PRD §12). Never print, `cat` or paste a key: not in chat, docs, commits, logs or frontend code. Keys are shared person to person, never through git. Spend is tracked: §5 spend rules |
 | Vault | `C:\Users\Salih\OneDrive\Documents\Sali's vault\Great-Uni-Hack-2026` (**saliha only**: `Great-Uni-Hack-2026 — Hub` = status + ▶ START HERE, `Great-Uni-Hack-2026 — Log` = ADRs, Unconfirmed, ▶ RESUME HERE). No vault (everyone else) → save notes to your memory; send decisions to the doc owner as a `decision` entry + 📨 row |
 | PRD | `docs/PRD.md`: §0 NOW (decisions in force, pending, active tasks) at the top, then the spec |
@@ -26,7 +26,7 @@
 | Deploy | Local for the demo; deploy only if spare time (PRD §12). Platform rules: none |
 | Verbosity | **Level 0** (§3) |
 
-**Skills** (`.claude/skills/`, local only, if installed; load when the trigger fires): `no-slop` after every code change, before testing, and before every commit/push/merge (nothing reaches `main` without it) · `debug` every time you hit an issue: an error, a failing or flaky test, odd output, a stuck moment. No guess-and-retry outside it. This file wins over a skill; never edit a skill. `no-slop` fixes only your own diff in your owned paths and reports the rest.
+**Skills** (shared on `context` in `docs/skills/`; after each sync copy them to where Claude loads them: `mkdir -p .claude/skills && cp -r docs/skills/* .claude/skills/`; Codex reads `docs/skills/<name>/SKILL.md` directly; load when the trigger fires): `no-slop` after every code change, before testing, and before every commit/push/merge (nothing reaches `main` without it) · `debug` every time you hit an issue: an error, a failing or flaky test, odd output, a stuck moment. No guess-and-retry outside it. This file wins over a skill; never edit a skill. `no-slop` fixes only your own diff in your owned paths and reports the rest.
 
 ### 🔑 Triggers
 **"Fetch the context"** (*"let's start"*). Read first, code second:
@@ -63,7 +63,7 @@ Shared docs = everything on `context`: `CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `
 1. Sync first (above). Edited `CLAUDE.md` or `AGENTS.md` → `cp` it over the other.
 2. `export GIT_INDEX_FILE=.git/context-index && git read-tree origin/context && git add -f CLAUDE.md AGENTS.md docs && git diff --cached --stat origin/context`. Check the diff, and for secrets. A removed doc: `git rm --cached <path>` in the same index.
 3. `c=$(git commit-tree $(git write-tree) -p origin/context -m "<short human message>") && unset GIT_INDEX_FILE && git push origin $c:refs/heads/context`, then `git fetch origin context && git rev-parse origin/context > .git/context-synced`. Rejected → sync, merge the two versions by hand, repeat; never `force`.
-Research, the event doc, skills and `.env` never go to `context`. Context docs never go to `main` or a role branch: never `git add -f` there, never copy them into a code commit, never merge `context` anywhere.
+Research, the event doc, `.claude/` and `.env` never go to `context`; shared skills go in `docs/skills/`. Context docs never go to `main` or a role branch: never `git add -f` there, never copy them into a code commit, never merge `context` anywhere.
 
 | Change | Who publishes | Gate |
 |---|---|---|
