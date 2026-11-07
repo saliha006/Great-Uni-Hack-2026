@@ -38,6 +38,8 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 15:30 | @saliha | @yehor | 📨 waiting on | Backend is wiring your engine now. Please: (1) keep LLM prompts free of dates/ids so cached narration hits; (2) confirm `agent.reflect` falls back to its template when `llm.complete_json` returns `{}` (my `for_engine()` does that on any failure); (3) Ada's seed that reaches PLATEAU on advance-days (I'll use `make_persona('Ada', 7)` unless you say otherwise); (4) freeze prompts at 16:30 so I can warm the cache once | 2026-11-07 15:30 |
+| 2026-11-07 15:30 | @saliha | @maxym | 📨 waiting on | Contract notes for the frontend: MCQ `answer` = the option text; `finish` never fails (no transcript = 0 coverage); `/voice/signed-url` is minted on the Start click and returns `502 {detail:"voice_unavailable"}` → switch to typed Feynman (one explanation turn); `context.key_points` is a string list, join it for `dynamicVariables`. Also: push your Vite scaffold so the Insights page (my path) can go in, and say who installs `recharts` | 2026-11-07 15:30 |
 | 2026-11-07 15:15 | @yehor | @saliha | ⚠️ conflict | On `main`: **`app/db.py`** (13 §10 tables as `*Row` classes, `init_db()`, `get_session()`; SQLite default, `DATABASE_URL` overrides; `users.id` is the `X-User-Id` string; extra cols `users.profiles_json`, `sessions.minutes_to_first_drift`) and **`app/ingest.py`** (`extract_text(pdf_bytes)` raises `ValueError` on scanned PDFs → offer paste; `chunk_material(text)` → ≥3 `ChunkDraft`). Engine is complete: `agent.reflect`, `predict.predict_readiness`, `simulate.make_persona("Ada"|"Ben", seed)` + `simulate.trial_sessions(...)` for `/dev/advance-days`. `reflect` returns `id=0`: assign the stored id | 2026-11-07 15:15 |
 | 2026-11-07 15:10 | @yehor | @all | ⚠️ conflict | **Supersedes the 14:50 Supabase/handoff row:** DB stays **SQLite** for the demo (PRD §12; Supabase is P2, later just a `DATABASE_URL`). **Y-D stays with Yehor** (Codex finishing `db.py`; `ingest.py` done). @saliha: no backend handoff needed; you consume `app/db.py` + `app/ingest.py` | 2026-11-07 15:10 |
 | 2026-11-07 15:06 | @yehor | @saliha | ⚠️ conflict | `attention` is real (`1938d25`). For `POST events`: pass **all** the session's events so far (not just the new batch) to `score_attention`; keep `SessionCtx.drifting_windows` = consecutive DRIFTING readings (reset on any other state) and `minutes_since_intervention`. At session end call `attention.minutes_to_first_drift(events, items, baseline)` and store it (I'm adding `sessions.minutes_to_first_drift` in `db.py`); `focus_window` reads it from `SessionSummary` | 2026-11-07 15:06 |
@@ -83,6 +85,18 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 15:30 — decision — Backend design locked after a design review — @saliha
+- **Where:** `context` (brief, PRD §0) · merged to `main`: yes (`progress.md`)
+- **Did:** Five-agent review (design, research, two critics, refine). Build in demo-beat order on a committed question bank
+  for the demo subject; live LLM only for grading + reflection narration; fixtures/templates are the fallback; PDF, Firecrawl
+  and Lovable cut. No §11 contract change. Adds the `openai` SDK (pinned) as a backend dependency.
+- **Touched:** `docs/builders/SALIHA_BUILDER.md`, PRD §0
+- **Brief task:** S-L → cut · S1 → paste only
+- **⚠️ Conflicts:** @maxym: see the 15:30 contract-notes row · @yehor: see the 15:30 row (prompts, `{}` fallback, Ada seed)
+- **📨 Needs:** @maxym: frontend scaffold on `main` for the Insights page
+- **Agreed by:** @saliha
+- **Status:** open
 
 ### 2026-11-07 15:15 — feat — Engine complete (Y3, Y4) and DB + ingestion on main (Y-D) — @yehor
 - **Where:** `yehor-ml-data` (+ Codex `yehor-ml-data-yd` @ `6f8aa65`) · merged to `main`: yes
