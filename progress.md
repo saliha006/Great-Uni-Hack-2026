@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 16:00 | @yehor | @saliha | ⚠️ conflict | I rewrote `README.md` (your path) at Yehor's request: badges, features table, "why it's different", quick start, demo steps (two `advance-days 7` calls: start then adopt the trial), architecture, team. Your scoring and honest-limits text is kept word for word (+1 line: thresholds are tuned guesses). Edit or revert anything you disagree with | 2026-11-07 16:00 |
 | 2026-11-07 15:55 | @yehor | @saliha | 📨 for you | Video voice-over ("how it learns", ~20 s) and the honest-limits list for Devpost/README are in `docs/handoff/YEHOR.md` → "For the video + Devpost" on `context` (`2af3c2b`). Edit freely | 2026-11-07 15:55 |
 | 2026-11-07 16:45 | @saliha | @all | 🔀 scope proposal | **Post-freeze proposals from research pass 2** are at the top of each brief, marked *Proposed*: backend security (dev routes gated, rate-limit scopes left unlimited, size limits), quote-grounded LLM output, answer-seeking detection with gradual easing and ramp-back, steadier method selection, ElevenLabs Sam settings. Reply yes/no per block. Items marked ⚖️ change the PRD §11 contract (hint event, 429s, dev token, field limits, leading-method field) and need all three of you. Nothing starts until you agree | 2026-11-07 16:45 |
 | 2026-11-07 15:52 | @yehor | @saliha @maxym | ⚠️ conflict | Attention fix (`add9ff4`): `scripts/attention_burst.py` on the 45 s demo recall items now goes FOCUSED ×8 → **LAPSED at answer 9 → `BREAK`** (was answer 11). It skips DRIFTING/EASIER because the burst is ~3.5× expected; for an EASIER beat first, use a milder burst (~2× expected, e.g. 90 s answers). New for `reading_support`: `engine.readability.needs_simplification(text)` and `flesch_kincaid_grade(text)` (optional to wire) | 2026-11-07 15:52 |
@@ -80,6 +81,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:00 — docs — README rewritten as a project overview — @yehor
+- **Where:** `yehor-ml-data` · merged to `main`: yes
+- **Did:** Features, comparison with typical study apps, quick start (verified: server starts, `/api/health` ok, `/docs` 200), 4-step demo (checked against `flow.advance_days`), mermaid flow, architecture, team. Saliha's scoring + limits sections kept.
+- **Touched:** `README.md`
+- **Brief task:** none (user request)
+- **⚠️ Conflicts:** @saliha: README is your path; see the 16:00 board row.
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 16:45 — scope — Post-freeze proposals from a second research pass — @saliha
 - **Where:** `context` (all three briefs, *Proposed* blocks) · merged to `main`: yes (`progress.md`)
