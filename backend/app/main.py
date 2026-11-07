@@ -267,10 +267,21 @@ def create_app(mode: str = "real", env: str = "dev") -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
+        # CORS_ORIGINS adds exact origins, e.g. the hosted frontend talking to a backend on the presenter's laptop.
+        allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()],
         allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Registered after CORS so it wraps the preflight CORS answers: Chrome asks before a public site (the hosted
+    # frontend) may call localhost, and only proceeds when the backend opts in with this header.
+    @app.middleware("http")
+    async def private_network(request: Request, call_next):
+        response = await call_next(request)
+        if request.headers.get("access-control-request-private-network") == "true":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+        return response
     if hosts := os.getenv("ALLOWED_HOSTS"):
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=[h.strip() for h in hosts.split(",")])
     if mode == "fixtures":

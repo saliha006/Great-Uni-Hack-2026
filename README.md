@@ -119,6 +119,18 @@ flowchart LR
 </details>
 
 <details>
+<summary><b>Hosting: frontend on Vercel, backend on your laptop</b></summary>
+
+The backend keeps its data in SQLite and some demo state in memory, so it is not serverless-ready; it runs locally.
+`vercel.json` deploys only the frontend.
+- **Public link, no backend:** leave `VITE_API_URL` unset in Vercel. The app runs on its built-in demo data.
+- **Presenting with the real backend:** set `VITE_API_URL=http://localhost:8000` in Vercel and redeploy, put the Vercel
+  URL in `CORS_ORIGINS` in your local `.env`, start the backend, and open the Vercel link **on the same laptop**.
+  Chrome may ask to allow local network access; allow it. Other people's browsers can't reach your laptop.
+
+</details>
+
+<details>
 <summary><b>Security settings</b></summary>
 
 All optional; with none set the API behaves exactly as above. See `.env.example`.
