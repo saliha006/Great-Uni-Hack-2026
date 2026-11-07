@@ -38,7 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
-| 2026-11-07 15:30 | @saliha | @yehor | 📨 waiting on | Backend is wiring your engine now. Please: (1) keep LLM prompts free of dates/ids so cached narration hits; (2) confirm `agent.reflect` falls back to its template when `llm.complete_json` returns `{}` (my `for_engine()` does that on any failure); (3) Ada's seed that reaches PLATEAU on advance-days (I'll use `make_persona('Ada', 7)` unless you say otherwise); (4) freeze prompts at 16:30 so I can warm the cache once | 2026-11-07 15:30 |
+| 2026-11-07 15:30 | @yehor | @saliha | ⚠️ conflict | For S4 (`dc7d0d9`): build `SubjectState.method_stats` with `engine.methodfit.stat_view(method, stats)` (mean + 90% interval); after seeding Ada set `method_stats` from `engine.methodfit.stats_from_history(sessions)` so stats match the rows; pin the demo epoch **after 2026-11-06 18:00** (Ada's last seeded session). Optional: `[tool.ruff] src = ["."]` in `backend/pyproject.toml` so ruff groups imports the same from any folder | 2026-11-07 15:30 |
 | 2026-11-07 15:30 | @saliha | @maxym | 📨 waiting on | Contract notes for the frontend: MCQ `answer` = the option text; `finish` never fails (no transcript = 0 coverage); `/voice/signed-url` is minted on the Start click and returns `502 {detail:"voice_unavailable"}` → switch to typed Feynman (one explanation turn); `context.key_points` is a string list, join it for `dynamicVariables`. Also: push your Vite scaffold so the Insights page (my path) can go in, and say who installs `recharts` | 2026-11-07 15:30 |
 | 2026-11-07 15:10 | @yehor | @all | ⚠️ conflict | **Supersedes the 14:50 Supabase/handoff row:** DB stays **SQLite** for the demo (PRD §12; Supabase is P2, later just a `DATABASE_URL`). **Y-D stays with Yehor** (Codex finishing `db.py`; `ingest.py` done). @saliha: no backend handoff needed; you consume `app/db.py` + `app/ingest.py` | 2026-11-07 15:10 |
 | 2026-11-07 14:40 | @saliha | @yehor @maxym | ⚠️ conflict | **Roles swapped:** Saliha = backend (`sali-backend`), Yehor = AI/ML + data (`yehor-ml-data`), Maxym = frontend (`maxym-frontend`). Briefs and PRD updated on `context`; re-sync. @yehor: start Y0 `engine/types.py` (Saliha's stub API waits on it). Both: send @saliha your GitHub handle | 2026-11-07 14:40 |
@@ -77,6 +77,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 15:30 — fix — Engine quality pass, credible intervals, answers to Saliha's 15:30 asks — @yehor
+- **Where:** `yehor-ml-data` · merged to `main`: yes
+- **Did:** `no-slop` skill over all engine code (one posterior-mean/prior helper instead of 3 copies, one retention rule, no shallow wrappers, precise types, superseded stub tests dropped). `HIGH` confidence now needs non-overlapping 90% intervals (PRD §8.2); new `stat_view`, `stats_from_history`. Answers to @saliha 15:30: (1) narration prompt carries only diagnosis, decision, method and evidence numbers, no dates/ids; (2) `{}` from `complete_json` → template, covered by a test; (3) seeds 0–4 **and 7** all pass the Ada story, so `flow.py`'s seed 1 is fine; (4) prompts frozen from 16:30. Installed the new `openai` dep. 178 tests pass.
+- **Touched:** `backend/engine/**`, `backend/tests/engine/**`
+- **Brief task:** Y5 → 🟡 part
+- **⚠️ Conflicts:** @saliha: see the 15:30 board row (stat_view, stats_from_history, demo epoch).
+- **📨 Needs:** none
+- **Status:** open (Saliha's 15:30 ask to @yehor resolved by @yehor 2026-11-07 15:30; row removed)
 
 ### 2026-11-07 16:25 — feat — README for the real API and an attention burst script (S6) — @saliha
 - **Where:** `sali-backend` @ `18d914d` · merged to `main`: yes
