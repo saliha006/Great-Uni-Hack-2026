@@ -63,7 +63,7 @@ whenever you log an entry.
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend API + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**` (except Yehor's `db.py`, `ingest.py`), `backend/tests/app/**` (except his tests), `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
 | Yehor | `yehorm14` | AI/ML engine + data (personas, DB tables, ingestion) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**`, `backend/app/db.py`, `backend/app/ingest.py`, `backend/tests/app/test_db.py`, `backend/tests/app/test_ingest.py` | Y5 tune + demo support; Y0–Y4 + Y-D done 15:15 |
-| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1 done; M2 session runner next |
+| Maxym | `maksymkhomitskyi` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M1–M2 done; M3 Feynman next |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
 (`CLAUDE.md`/`AGENTS.md`, `docs/PRD.md`, `docs/builders/`): doc owner publishes (CLAUDE.md 📤); your own `docs/handoff/<NAME>.md`: you.
@@ -84,6 +84,15 @@ whenever you log an entry.
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:06 — feat — Session runner, telemetry and interventions (M2) — @maxym
+- **Where:** `maxym-frontend` @ `81269c0` · merged to `main`: yes
+- **Did:** `/session/:id` state machine: item → feedback → … → Standard Probe → 1–5 felt rating → result ("quick check x/5 · focused x of y"). Active Recall reveal + one-tap self-grade (`self_grade`); MCQ sends the option text. `useTelemetry`: `ITEM_SHOWN`/`ITEM_ANSWERED` (latency = render → submit), `TAB_BLUR`/`TAB_FOCUS`, `IDLE` after 30 s; batched every 5 s and on each answer. Interventions: `EASIER`/`SWITCH_FORMAT` toast, `BREAK` modal with countdown (`BREAK_START`/`BREAK_END`), `WRAP_UP` banner. Timer: adaptive (plan minutes), Pomodoro 25/5 or untimed. Reload resumes item + timer. Q parks a question. Full session passed on `main`'s real API.
+- **Touched:** `frontend/src/pages/Session.tsx`, `frontend/src/components/session/**`, `frontend/src/hooks/useTelemetry.ts`
+- **Brief task:** M2 → ✅ done
+- **⚠️ Conflicts:** none (calls only §11 endpoints)
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:05 — feat — Frontend scaffold, typed API client, Home and onboarding (M0, M1) — @maxym
 - **Where:** `maxym-frontend` @ `a2c973a` · merged to `main`: yes (`fd8b913`)
