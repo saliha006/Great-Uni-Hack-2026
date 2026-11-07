@@ -13,12 +13,27 @@ RISING_MIN = 0.05  # a rise smaller than this over 3 sessions is noise, not degr
 FLAT_SLOPE, DECLINING_SLOPE = 0.02, -0.04
 MASTERED_MEAN = 0.85
 TRIAL_MIN_DELTA, TRIAL_MIN_N = 0.05, 2
+CUSUM_SLACK = 0.025  # TUNE
+CUSUM_THRESHOLD = 0.15  # TUNE
 
 
 def theil_sen_slope(values: list[float]) -> float:
     """Median of pairwise slopes per session; robust to one bad session, unlike least squares."""
     slopes = [(values[j] - values[i]) / (j - i) for i, j in combinations(range(len(values)), 2)]
     return statistics.median(slopes) if slopes else 0.0
+
+
+def sudden_drop(values: list[float]) -> bool:
+    """One-sided CUSUM of the last 3 scores below the earlier mean: catches a collapse before the slope does."""
+    if len(values) < 4:
+        return False
+    ref = statistics.mean(values[:-3])
+    cumulative = 0.0
+    for x in values[-3:]:
+        cumulative = max(0.0, cumulative + (ref - x - CUSUM_SLACK))
+        if cumulative >= CUSUM_THRESHOLD:
+            return True
+    return False
 
 
 def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
@@ -42,6 +57,7 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
     on_method = [s.probe_score for s in window if s.method == plan.method]
     probes = on_method if len(on_method) >= MIN_SESSIONS else [s.probe_score for s in window]
     slope = theil_sen_slope(probes)
+    drop = sudden_drop(probes)
     mean_probe = statistics.mean(probes)
     flat, declining = abs(slope) < FLAT_SLOPE, slope < DECLINING_SLOPE
 
@@ -51,6 +67,7 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
         "method": plan.method,
         "mean_probe": round(mean_probe, 3),
         "slope_per_session": round(slope, 3),
+        "sudden_drop": drop,
         "sessions_last_7d": sessions_7d,
         "mean_completion": round(mean_completion, 2),
         "median_gap_days": median_gap,
@@ -66,7 +83,7 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
         name = "LOW_ENGAGEMENT"
     elif not attention_ok:
         name = "FATIGUE"
-    elif flat or declining:
+    elif flat or declining or drop:
         name = "PLATEAU"
     else:
         name = "ON_TRACK"

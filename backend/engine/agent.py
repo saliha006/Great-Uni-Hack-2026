@@ -71,7 +71,8 @@ def template(found: Diagnosis, decision: Decision, plan: Plan) -> str:
                           f"Let's restart gently with {decision.session_minutes}-minute sessions on {method}.",
         "FATIGUE": f"Over {days} days your focus slipped to about {focus}% while scores held, which looks like "
                    f"tiredness, not the method. Sessions drop to {decision.session_minutes} minutes; {method} stays.",
-        "PLATEAU": f"Your focus was steady (about {focus}%) but {method} scores stayed flat for {days} days. "
+        "PLATEAU": f"Your focus was steady (about {focus}%) but {method} scores "
+                   f"{'dropped suddenly' if ev['sudden_drop'] else f'stayed flat for {days} days'}. "
                    f"Let's try {METHOD_LABELS[decision.method or plan.method]} for {decision.trial_days} days and compare.",
         "ON_TRACK": f"Your {method} scores are moving the right way over {days} days, so the plan stays.",
     }
