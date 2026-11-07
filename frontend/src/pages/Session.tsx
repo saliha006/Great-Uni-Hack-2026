@@ -34,8 +34,8 @@ export function SessionPage() {
       <PageShell where="Session">
         <Card className="max-w-lg">
           <h1 className="text-2xl font-extrabold">This session isn't open here.</h1>
-          <p className="mt-2 text-muted">It may have finished already or been started on another device. Start a fresh one from Home.</p>
-          <ButtonLink to="/" className="mt-4 inline-block" variant="primary">Go to Home</ButtonLink>
+          <p className="mt-2 text-muted">It may have finished already or been started on another device. Choose a subject to start again.</p>
+          <ButtonLink to="/study" className="mt-4 inline-block" variant="primary">Choose a subject</ButtonLink>
         </Card>
       </PageShell>
     )
@@ -187,14 +187,12 @@ function Runner() {
       where={`${subjectName} · ${METHOD_LABEL[session.method]}`}
       status={[
         { label: 'Step', value: stepLabel },
-        { label: 'Answered', value: done },
-        { label: 'Mode', value: session.mode === 'SAMPLER' ? 'Calibration' : session.mode === 'TRIAL' ? 'Trial' : 'Adaptive' },
       ]}
-      next={phase === 'result' ? 'Home' : phase === 'probe' ? 'Your result' : 'Quick check after the questions'}
+      next={phase === 'result' ? 'Dashboard' : phase === 'probe' ? 'Your result' : undefined}
     >
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <p className="text-sm text-muted">{session.reason}</p>
+          {phase !== 'result' && <p className="text-sm text-muted">{session.reason}</p>}
           {phase !== 'result' && (
             <div className="ml-auto flex gap-2">
               {phase === 'item' && <Button size="sm" variant="ghost" onClick={toProbe}>Finish with the quick check</Button>}

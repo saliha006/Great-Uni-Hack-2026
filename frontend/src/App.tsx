@@ -25,7 +25,7 @@ export function App() {
         element={
           <PageShell where="Page not found">
             <h1 className="text-3xl font-extrabold">That page doesn't exist.</h1>
-            <Link to="/" className="mt-4 inline-block font-semibold underline">Go to Home</Link>
+            <Link to="/" className="mt-4 inline-block font-semibold underline">Go to dashboard</Link>
           </PageShell>
         }
       />

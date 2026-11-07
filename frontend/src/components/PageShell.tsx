@@ -9,7 +9,6 @@ const links = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/study', label: 'Study' },
   { to: '/questions', label: 'Questions' },
-  { to: '/dev', label: 'Dev' },
 ]
 
 export function PageShell({
@@ -60,23 +59,38 @@ export function PageShell({
                   Demo data
                 </span>
               )}
-              <label className="flex items-center gap-1.5 text-sm text-muted">
-                <span className="sr-only sm:not-sr-only">Theme</span>
-                <select
-                  value={theme}
-                  onChange={(e) => setLocal({ theme: e.target.value as 'system' | 'light' | 'dark' })}
-                  className="rounded-(--radius-ctl) border border-line bg-surface px-2 py-1 text-ink"
-                >
-                  <option value="system">System</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </label>
+              <details className="relative" onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.currentTarget.open = false
+                  e.currentTarget.querySelector('summary')?.focus()
+                }
+              }}>
+                <summary className="cursor-pointer rounded-(--radius-ctl) px-3 py-2 text-sm font-semibold">Display</summary>
+                <div className="absolute right-0 top-full z-20 mt-2 w-60 space-y-4 rounded-(--radius-card) border border-line bg-surface p-4 shadow-lg">
+                  <label className="flex items-center justify-between gap-2 text-sm">
+                    <span>Theme</span>
+                    <select
+                      value={theme}
+                      onChange={(e) => setLocal({ theme: e.target.value as 'system' | 'light' | 'dark' })}
+                      className="rounded-(--radius-ctl) border border-line bg-surface px-2 py-1 text-ink"
+                    >
+                      <option value="system">System</option>
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center justify-between gap-2 text-sm">
+                    Moving cursor
+                    <input type="checkbox" checked={cursorDot} onChange={(e) => setLocal({ cursorDot: e.target.checked })} className="size-5" />
+                  </label>
+                  <NavLink to="/dev" className="block border-t border-line pt-3 text-sm text-muted underline">Demo tools</NavLink>
+                </div>
+              </details>
             </div>
           </nav>
         </header>
       )}
-      {pathname !== '/' && <StatusStrip where={where} items={status} next={next} />}
+      {(focus || pathname === '/dev') && <StatusStrip where={where} items={status} next={next} />}
       <main id="main" className={`relative z-0 mx-auto w-full max-w-6xl flex-1 px-4 ${pathname === '/' ? 'py-3' : 'py-6 sm:py-8'}`}>
         {children}
       </main>

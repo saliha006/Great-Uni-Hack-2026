@@ -1,30 +1,25 @@
-// GitHub-style activity map for one semester: month labels on top, Mon/Wed/Fri on the left, one
-// square per day from start to end, Less/More legend underneath. Empty days keep a visible outline.
-// Keyboard: Tab into the grid, then arrow keys move day by day (up/down) or week by week (left/right).
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { SHADE_CLASS, shadeFor, type DaySummary } from '../lib/activity'
 
 const keyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const label = (d: DaySummary) =>
   `${new Date(`${d.date}T12:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}: ${d.sessions} sessions, ${d.tasks} tasks`
-const WEEKDAY_LABELS: Record<number, string> = { 1: 'Mon', 3: 'Wed', 5: 'Fri' } // rows are Sunday-first, like GitHub
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export function ContributionGrid({ days, start, end, today }: { days: Map<string, DaySummary>; start: Date; end: Date; today: Date }) {
-  const { cells, weeks, months } = useMemo(() => {
+  const cells = useMemo(() => {
     const first = new Date(start)
-    first.setDate(first.getDate() - first.getDay()) // columns are Sunday-first weeks
+    first.setDate(first.getDate() - first.getDay())
     const weekCount = Math.ceil((Math.round((end.getTime() - first.getTime()) / 86_400_000) + 1) / 7)
     const out: (DaySummary | null)[] = []
-    const monthLabels: { week: number; name: string }[] = []
     for (let i = 0; i < weekCount * 7; i++) {
       const d = new Date(first)
       d.setDate(first.getDate() + i)
       const inRange = d >= start && d <= end
       const k = keyOf(d)
       out.push(inRange ? (days.get(k) ?? { date: k, sessions: 0, tasks: 0, labels: [] }) : null)
-      if (inRange && d.getDate() === 1) monthLabels.push({ week: Math.floor(i / 7), name: d.toLocaleDateString(undefined, { month: 'short' }) })
     }
-    return { cells: out, weeks: weekCount, months: monthLabels }
+    return out
   }, [days, start, end])
 
   const todayKey = keyOf(today)
@@ -40,25 +35,18 @@ export function ContributionGrid({ days, start, end, today }: { days: Map<string
     refs.current[i]?.focus()
   }
   const onKey = (e: KeyboardEvent) => {
-    const step = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 }[e.key]
+    const step = { ArrowUp: -7, ArrowDown: 7, ArrowLeft: -1, ArrowRight: 1 }[e.key]
     if (step !== undefined) {
       e.preventDefault()
       move(active + step)
     }
   }
 
-  // One grid for labels and squares so the weekday labels line up with their rows at any card width.
-  // The weekday labels have zero height, otherwise their text would stretch those rows and distort the squares.
-  const layout = { gridTemplateColumns: `2rem repeat(${weeks}, minmax(0, 1fr))` }
-
   return (
-    <div className="flex flex-1 flex-col justify-center gap-2">
-      <div role="grid" aria-label="Study activity by day" onKeyDown={onKey} className="grid gap-1" style={layout}>
-        {months.map((m) => (
-          <span key={m.week} aria-hidden className="overflow-visible whitespace-nowrap text-xs text-muted" style={{ gridRow: 1, gridColumn: m.week + 2 }}>{m.name}</span>
-        ))}
-        {Object.entries(WEEKDAY_LABELS).map(([row, name]) => (
-          <span key={name} aria-hidden className="flex h-0 items-center text-xs text-muted" style={{ gridRow: Number(row) + 2, gridColumn: 1 }}>{name}</span>
+    <div className="mx-auto flex w-full max-w-56 flex-1 flex-col justify-center gap-2">
+      <div role="grid" aria-label="Study activity by day" onKeyDown={onKey} className="grid grid-cols-7 gap-1">
+        {WEEKDAY_LABELS.map((name) => (
+          <span key={name} aria-hidden className="text-center text-[10px] text-muted">{name}</span>
         ))}
         {cells.map((c, i) =>
           c === null ? null : (
@@ -70,8 +58,9 @@ export function ContributionGrid({ days, start, end, today }: { days: Map<string
               onFocus={() => setActive(i)}
               aria-label={label(c)}
               title={label(c)}
-              style={{ gridRow: (i % 7) + 2, gridColumn: Math.floor(i / 7) + 2 }}
-              className={`aspect-square w-full rounded-[3px] border ${SHADE_CLASS[shadeFor(c)]}`}
+              aria-current={c.date === todayKey ? 'date' : undefined}
+              style={{ gridRow: Math.floor(i / 7) + 2, gridColumn: (i % 7) + 1 }}
+              className={`aspect-square w-full rounded-[3px] border ${SHADE_CLASS[shadeFor(c)]} ${c.date === todayKey ? 'ring-1 ring-accent ring-offset-1 ring-offset-bg' : ''}`}
             />
           ),
         )}

@@ -13,23 +13,19 @@ export function Questions() {
   const shown = show === 'open' ? open : resolved
 
   return (
-    <PageShell
-      where="Questions"
-      status={[{ label: 'Open', value: open.length }, { label: 'Answered', value: resolved.length }]}
-      next={open.length ? 'Answer one, or take it to your lecturer' : 'Capture one in a session with Q'}
-    >
-      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Things you didn't get</h1>
-      <p className="mt-1 text-muted">Park confusing bits here during lectures or sessions. Come back when you have the answer.</p>
+    <PageShell where="Questions">
+      <h1 className="text-2xl font-extrabold tracking-tight">Your questions</h1>
+      <p className="mt-1 text-muted">Save a question now. Come back to it when you're ready.</p>
 
       <form
-        className="mt-6 flex max-w-2xl gap-2"
+        className="mt-6 flex max-w-2xl flex-wrap gap-2"
         onSubmit={(e) => {
           e.preventDefault()
           if (draft.trim()) { addQuestion(draft.trim()); setDraft('') }
         }}
       >
-        <label htmlFor="new-q" className="sr-only">New question</label>
-        <input id="new-q" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Add a question from a lecture…" className="min-h-11 flex-1 rounded-(--radius-ctl) border border-line bg-surface px-3" />
+        <label htmlFor="new-q" className="w-full text-sm font-semibold">What would you like to understand?</label>
+        <input id="new-q" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write your question…" className="min-h-11 min-w-0 flex-1 rounded-(--radius-ctl) border border-line bg-surface px-3" />
         <Button variant="primary" type="submit" disabled={!draft.trim()}>Add</Button>
       </form>
 
@@ -82,7 +78,7 @@ function QuestionRow({ q }: { q: Question }) {
         ) : (
           <div className="mt-3 flex gap-2">
             <Button size="sm" onClick={() => setEditing(true)}>Add the answer</Button>
-            <Button size="sm" variant="ghost" onClick={resolve}>Got it, no note</Button>
+            <Button size="sm" variant="ghost" onClick={resolve}>Mark answered</Button>
           </div>
         )}
       </Card>
