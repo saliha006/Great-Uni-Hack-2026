@@ -36,6 +36,14 @@ git worktree add ../attune-api -b sali-backend-api   # Stream B (Codex): stub, C
 
 ## ▶ Current tasks (in order)
 
+**▶ Proposed 2026-11-07 16:45 (after the freeze: needs the team's yes on the 16:45 🔀 row; ⚖️ = PRD §11 contract change, all three agree + "Contract changes" entry).** Evidence: research doc Pass 2 (`Research-Context/GreatUniHack-2026-research.md`, local to Saliha).
+LLM rule (Saliha): the LLM only summarises, explains, generates or grades from given text, and every claim carries a verbatim quote of its source (the passage or the student's words).
+- **P1 Secure the backend (~60 min):** dev routes only when `ATTUNE_ENV=dev` + `X-Dev-Token` ⚖️ · bind 127.0.0.1, TrustedHost, no `/docs` in prod · `limits.py` with per-IP/per-user/per-endpoint scopes, every limit unlimited via `RL_*` env (429 ⚖️; slowapi vs hand-rolled = your call) · `max_length`/size limits in schemas ⚖️ · security headers, `no-store`, log redaction · persist LLM usage with `user_id` (needs Yehor's `llm_usage` column).
+- **P2 Grounded LLM (~70 min):** models + per-job `reasoning_effort` + caps (generate ≥4000, grade ≥1000 tokens) · required verbatim `quote` per generated item/key/summary sentence, checked in Python, ungrounded items dropped · Feynman quote must be a substring of the student's text · deterministic MCQ key checks · `NOT_IN_PASSAGE` escape.
+- **P3 Adaptive serving (~45 min):** hint/reveal event ⚖️ · serve upcoming items re-ranked by Yehor's difficulty offset with `adapted` + reason ⚖️ · surface the "leading method" status ⚖️.
+- **Post-hackathon:** real auth (all three) · body-size middleware, Redis limiter · lockfile, pip-audit, gitleaks · provider budget caps, cache/transcript retention · transcript fetch from ElevenLabs · double grading with confidence ⚖️ · key verifier · Responses API · delayed re-probe (DB + endpoint).
+
+
 **▶ Updated 2026-11-07 15:30: final design after the design review (all recommendations accepted by Saliha)**
 Build in demo-beat order; fixtures/templates stay the safe default; live LLM only for short-answer grading, Feynman grading and reflection narration. Detail: `Research-Context/design-review/04-final.md` (local).
 1. **S0 harden:** catch-all JSON 500 inside CORS, localhost origin regex, run with `--env-file ../.env`; `/voice/signed-url` real (8 s timeout, `502 voice_unavailable`, minted on Start, key never in the browser).
