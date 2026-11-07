@@ -19,3 +19,12 @@ push your branch, never merge; Claude merges and writes `progress.md`.
 ## Gotchas
 - Python: `GUH_2026/backend/.venv/bin/python` (3.11). Lint **from the repo root**: `uvx ruff check backend --exclude backend/.venv` (run from `backend/` it groups imports differently).
 - No AI trailers on commits. Profiles are need-based (`short_blocks`, `reading_support`, `dyslexia_ui`), never diagnoses.
+
+## For the video + Devpost (Y5)
+**How it learns (voice-over, ~20 s):** Attune starts from what learning science already knows (practice testing beats rereading), then tries three methods on your own notes and keeps a running score of which one teaches you most per minute. While you study, it compares your answer timing with your own normal pace, so it can make a question easier or suggest a break before you burn out. When progress stalls, it works out whether you're tired, away, or the method has stopped working, and runs a one-week experiment with the next-best method to check.
+
+**Honest limits:**
+- The multi-week history is seeded: Ada and Ben are simulated students, and every seeded row is labelled Demo data.
+- Attention is read from answer-timing variability against the user's own baseline. That's a proxy from lab studies, not validated for study apps. Attune is attention-aware, not a medical tool: it doesn't detect or diagnose ADHD.
+- Thresholds are starting guesses tuned on the simulated students; readiness isn't validated against real exam results.
+- Methods are compared on an immediate 5-item probe (delayed retention is roadmap), and 3 calibration sessions are a noisy start.
