@@ -38,6 +38,7 @@ Everything still waiting on someone. Look for your name, or `@all`, under **To**
 
 | Since | From | To | Kind | What, and what to do | Entry |
 |---|---|---|---|---|---|
+| 2026-11-07 14:40 | @yehor | @saliha | ⚠️ conflict | Engine Y0 + Y0b on `main` (`5f85968`): `from engine.types import ...` and every §11 engine function is callable. Real so far: `session_reward`, `update_stats`, `confidence`. Placeholders: attention → FOCUSED/NONE, diagnose → ON_TRACK, reflect → templated, `choose_plan` → round-robin. Added `Event.score` (fill from the graded response; §8.3 error streak needs it) and `SubjectCtx.now` (engine never reads the clock; pass the dev-shifted now) | 2026-11-07 14:40 |
 | 2026-11-07 14:38 | @yehor | @saliha | ⚠️ conflict | I pushed a fixture stub API to `main` at 14:35 (`backend/app/**`: all 16 §11 groups + `/api/health`, 25 tests) before I saw the role swap. It's your path now: keep it as your S0 or replace it. Run: `cd backend && uv venv --python 3.11 .venv && uv pip install -r requirements.txt && .venv/bin/uvicorn app.main:app --port 8000`. I also re-created branch `yehor-backend` by pushing; safe to delete | 2026-11-07 14:38 |
 | 2026-11-07 14:40 | @saliha | @yehor @maxym | ⚠️ conflict | **Roles swapped:** Saliha = backend (`sali-backend`), Yehor = AI/ML + data (`yehor-ml-data`), Maxym = frontend (`maxym-frontend`). Briefs and PRD updated on `context`; re-sync. @yehor: start Y0 `engine/types.py` (Saliha's stub API waits on it). Both: send @saliha your GitHub handle | 2026-11-07 14:40 |
 | 2026-11-07 14:25 | @saliha | @all | ⚠️ conflict | **How docs work now:** every `.md` except `progress.md` and `README.md` lives on the `context` branch, never `main`. Clone, then `git fetch origin context && git archive origin/context \| tar -x && git rev-parse origin/context > .git/context-synced`. Your agent re-syncs per CLAUDE.md 🔄. Work on your role branch: `sali-backend` / `maxym-frontend` / `yehor-ml-data`. Keys: get the `.env` from @saliha directly, never via git or chat | 2026-11-07 14:25 |
@@ -53,7 +54,7 @@ whenever you log an entry.
 | Who | GitHub | Role | Branch | Owns (paths) | Now |
 |---|---|---|---|---|---|
 | Saliha | `saliha006` | Backend + DB + LLM/voice services; repo, README, Devpost; doc owner (assumed) | `sali-backend` | `backend/app/**`, `backend/tests/app/**`, `scripts/**`, `.env.example`, `README.md`, `frontend/src/pages/Insights.tsx`, `frontend/src/components/insights/**` | S0: stub API by 14:40 + collaborators |
-| Yehor | `yehorm14` | AI/ML engine + data (personas) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**` | Y0: `engine/types.py` (in progress 14:38) |
+| Yehor | `yehorm14` | AI/ML engine + data (personas) + reflection agent | `yehor-ml-data` | `backend/engine/**`, `backend/tests/engine/**` | Y1: `methodfit.py` (Y0 + Y0b done 14:39) |
 | Maxym | `{{github}}` | Frontend + voice UI | `maxym-frontend` | `frontend/**` (except Yehor's Insights files) | M0: Vite app + ElevenLabs agent |
 
 **Shared** (anyone may edit; flag it in ⚠️ Conflicts): `progress.md` (on `main`). Plan docs on the `context` branch
@@ -70,11 +71,20 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
-- **`main` (2026-11-07 14:40):** `.gitignore`, `progress.md`, `README.md` only; `context` holds the docs; role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` cut from `main` · **14:35: fixture stub API on `main`** (`backend/app`, 25 tests pass) · stub API: up (fixtures) · ElevenLabs key verified by the CLI, agent not created · deploy: local only (PRD §12)
+- **`main` (2026-11-07 14:40):** `.gitignore`, `progress.md`, `README.md` only; `context` holds the docs; role branches `sali-backend`, `maxym-frontend`, `yehor-ml-data` cut from `main` · **14:35: fixture stub API on `main`** (`backend/app`, 25 tests pass) · stub API: up (fixtures) · **14:39: engine types + stubs on `main`** (38 tests pass) · ElevenLabs key verified by the CLI, agent not created · deploy: local only (PRD §12)
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 14:40 — feat — Engine types and correctly shaped stubs (Y0, Y0b) — @yehor
+- **Where:** `yehor-ml-data` @ `5f85968` · merged to `main`: yes
+- **Did:** `engine/types.py` mirrors the §11 models plus internals and the `LLM` protocol. Every engine function in §11 exists and returns typed data. Reward (§8.2) and the Beta update are real already. 38 tests pass (app + engine).
+- **Touched:** `backend/engine/**`, `backend/tests/engine/**`
+- **Brief task:** Y0 → ✅ done · Y0b → ✅ done
+- **⚠️ Conflicts:** @saliha: two engine-internal fields you fill: `Event.score` (graded response score) and `SubjectCtx.now` (dev-shifted clock). Your `app/schemas.py` duplicates the §11 models in `engine/types.py`; importing from the engine would make it one source (your call).
+- **📨 Needs:** none
+- **Status:** open
 
 ### 2026-11-07 14:38 — feat — Fixture stub API on `main` (built before the role swap) — @yehor
 - **Where:** `yehor-backend` @ `7794f3b` · merged to `main`: yes (`928b8c4`)
