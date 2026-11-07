@@ -82,13 +82,40 @@ whenever you log an entry.
 5. Read your brief's `▶ Current tasks`, then the 📌 Open board above.
 
 ## 📊 Latest (volatile facts live only here)
-- **frontend (2026-11-07 16:43):** `main` @ `2dd4095`: dashboard at `/`, Study at `/study`, Insights page wired; semester grid on the dashboard
+- **frontend (2026-11-07 16:56):** `main` @ `40f8f22`: dashboard at `/`, Study at `/study`, Insights page wired; semester grid on the dashboard as a GitHub-style grid, hours heatmap and glass cards
 - **frontend (2026-11-07 16:09):** on `main` @ `7093149`: M1–M4 + Feynman typed fallback; run `cd frontend && npm i && npm run dev` (mock API) or `VITE_API_URL=http://127.0.0.1:8000 npm run dev` (real API, CORS allows :5173). `npm run build` = typecheck + contract check vs `schema.d.ts`. Live voice waits on the ElevenLabs agent
 - **`main` (2026-11-07 16:25):** real backend (all §11 routes on SQLite + engine), 174 tests pass, `LLM_MODE=cache` default; OPENAI_MODEL_FAST/SMART still unset (live grading falls back to word overlap); Insights page waits on the frontend scaffold
 
 ---
 
 ## Log (newest first)
+
+### 2026-11-07 16:56 — feat — Frosted-glass cards and soft backdrop on the dashboard — @maxym
+- **Where:** `maxym-frontend` @ `40f8f22` · merged to `main`: yes
+- **Did:** `Card` takes `glass`: translucent, blurred, more rounded; opacity chosen so muted text stays above 4.5:1. The dashboard has a misty backdrop built from the theme colours; the nav band is transparent and the page content has its own stacking context. Other pages keep flat cards. @saliha: `Card` is unchanged unless you pass `glass`, so Insights looks the same.
+- **Touched:** `frontend/src/components/ui.tsx`, `frontend/src/components/PageShell.tsx`, `frontend/src/pages/Dashboard.tsx`
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
+
+### 2026-11-07 16:55 — feat — Last-7-days hours heatmap on the dashboard — @maxym
+- **Where:** `maxym-frontend` @ `f2b2c4b` · merged to `main`: yes
+- **Did:** Rows are days, columns are hours of the day, shaded by estimated focus minutes, with total, peak hour and daily average on top. Replaces the bar chart and its reflection note. A session counts in the hour it started; on the real API minutes are the same 25 min guess per session as the focus metric (labelled "Est.").
+- **Touched:** `frontend/src/components/HoursHeatmap.tsx`, `frontend/src/pages/Dashboard.tsx`
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
+
+### 2026-11-07 16:54 — feat — Semester grid in the GitHub layout — @maxym
+- **Where:** `maxym-frontend` @ `0005424` · merged to `main`: yes
+- **Did:** Month labels on top, Mon/Wed/Fri down the side and a Less/More legend, all on one CSS grid so labels line up at any width; empty days stay outlined. Shade classes moved to `lib/activity.ts` (`SHADE_CLASS`) for reuse.
+- **Touched:** `frontend/src/components/ContributionGrid.tsx`, `frontend/src/lib/activity.ts`
+- **Brief task:** M5 → 🟡 part (polish)
+- **⚠️ Conflicts:** none
+- **📨 Needs:** none
+- **Status:** —
 
 ### 2026-11-07 16:46 — feat — Dashboard effort grid covers the whole semester — @maxym
 - **Where:** `maxym-frontend` @ `2dd4095` · merged to `main`: yes
