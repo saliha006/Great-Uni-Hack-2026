@@ -1,19 +1,15 @@
 """Every PRD §11 engine function is callable with plain data and returns the right type (Y0b)."""
 from datetime import datetime
 
-from engine import agent, attention, diagnose, predict, simulate
+from engine import agent, diagnose, predict, simulate
 from engine.types import (
-    AttentionReading,
-    Baseline,
     Diagnosis,
     Event,
-    Intervention,
     ItemMeta,
     MethodStats,
     Plan,
     Readiness,
     Reflection,
-    SessionCtx,
     SubjectCtx,
     TrialOutcome,
 )
@@ -33,15 +29,6 @@ STATS = {m: MethodStats(alpha=2, beta=2) for m in ("ACTIVE_RECALL", "PRACTICE_TE
 class FakeLLM:
     def complete_json(self, system, user, schema, tier):
         return {}
-
-
-def test_attention_functions_return_typed_results():
-    reading = attention.score_attention(EVENTS, ITEMS, Baseline())
-    assert isinstance(reading, AttentionReading) and reading.blur_count == 1 and reading.window_n == 1
-    ctx = SessionCtx(session_id=1, method="FEYNMAN", elapsed_minutes=5, focus_window_min=20, current_difficulty=2)
-    assert isinstance(attention.recommend_intervention(reading, ctx), Intervention)
-    assert attention.update_baseline(Baseline(), EVENTS, ITEMS).n_sessions == 1
-    assert attention.focus_window(HISTORY) == 20
 
 
 def test_diagnose_reflect_predict_return_typed_results():

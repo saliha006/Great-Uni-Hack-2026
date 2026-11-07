@@ -132,6 +132,8 @@ class SessionSummary(BaseModel):
     gap_days_before: float
     hour_of_day: int
     is_seeded: bool = False
+    # From attention.minutes_to_first_drift at session end; None = never drifted (focus_window uses active_minutes).
+    minutes_to_first_drift: float | None = None
 
 
 class SubjectCtx(BaseModel):

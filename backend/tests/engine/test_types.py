@@ -20,6 +20,7 @@ def test_session_summary_fields_match_brief():
     assert set(SessionSummary.model_fields) == {
         "session_id", "ts", "method", "mode", "probe_score", "delayed_score", "active_minutes", "completion",
         "felt_rating", "drift_share", "lapse_share", "gap_days_before", "hour_of_day", "is_seeded",
+        "minutes_to_first_drift",
     }
     SessionSummary(session_id=1, ts=datetime(2026, 11, 7), method="FEYNMAN", mode="SAMPLER", probe_score=0.5,
                    active_minutes=10, completion=1, felt_rating=3, drift_share=0, lapse_share=0,
