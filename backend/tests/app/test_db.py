@@ -38,6 +38,25 @@ def test_init_db_creates_all_tables_and_can_run_twice(db, database):
     }
 
 
+def test_init_db_adds_session_count_to_existing_baseline(db, database):
+    with database.begin() as connection:
+        connection.exec_driver_sql("DROP TABLE attention_baselines")
+        connection.exec_driver_sql(
+            "CREATE TABLE attention_baselines (user_id TEXT PRIMARY KEY, baseline_ratio REAL, "
+            "baseline_ratio_sd REAL, baseline_cv REAL, baseline_cv_sd REAL, focus_window_min INTEGER, "
+            "updated_at DATETIME)"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO attention_baselines VALUES ('demo', 1.25, 0.15, 0.1, 0.1, 15, '2026-11-07 15:00:00')"
+        )
+    db.init_db(database)
+    db.init_db(database)
+    with Session(database) as session:
+        stored = session.get(db.AttentionBaselineRow, "demo")
+        assert stored.n_sessions == 0
+        assert stored.baseline_ratio == 1.25
+
+
 def test_seeded_session_and_profiles_survive_round_trip(db, database):
     now = datetime(2026, 11, 7, 15)
     with Session(database) as session:

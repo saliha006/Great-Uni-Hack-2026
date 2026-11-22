@@ -53,7 +53,7 @@ def decide(found: Diagnosis, plan: Plan, stats: dict[Method, MethodStats]) -> De
     if found.name == "FATIGUE":
         return Decision(action="SHORTEN_SESSIONS",
                         session_minutes=max(MIN_SESSION_MINUTES, round(plan.session_minutes * 0.75)))
-    if found.name == "PLATEAU":
+    if found.name == "PLATEAU" and plan.mode != "TRIAL":
         return Decision(action="TRIAL_METHOD", method=_second_best(stats, found.evidence["method"]), trial_days=TRIAL_DAYS)
     return Decision(action="KEEP")
 
@@ -64,6 +64,8 @@ def template(found: Diagnosis, decision: Decision, plan: Plan) -> str:
         return "Not enough sessions yet to spot a pattern, so the plan stays as it is for now."
     days, method = ev["days"], METHOD_LABELS[ev["method"]]
     focus = round(100 * (1 - ev["median_not_focused"]))
+    if found.name == "PLATEAU" and plan.mode == "TRIAL":
+        return f"The {METHOD_LABELS[plan.method]} trial is still running. We will compare scores when it ends."
     texts = {
         "MASTERED": f"Your {method} scores have held at {ev['mean_probe']:.0%} over {days} days. "
                     "That's mastery, so the next sessions get harder.",

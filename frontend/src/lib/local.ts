@@ -1,7 +1,7 @@
 // Frontend-only state (not in PRD §11): frog choice, open questions, activity log, settings,
-// resume point. Lives in this browser's localStorage and the UI says so.
+// resume point. Uses the current workspace's browser storage.
 import { useRef, useSyncExternalStore } from 'react'
-import type { Item, Session } from '../api/types'
+import type { Item, ProbeBody, Session } from '../api/types'
 import { LOCAL_STORAGE_KEY, workspaceStorage } from './workspace'
 
 export type TimerMode = 'ADAPTIVE' | 'POMODORO' | 'UNTIMED'
@@ -22,6 +22,13 @@ export interface ActivityEntry {
   label: string
 }
 
+export interface QuickCheckDraft {
+  phase: 'draft'
+  items: Item[]
+  answers: Record<number, { answer: string; latency_ms: number }>
+  felt: ProbeBody['felt_rating'] | null
+}
+
 // §11 has no GET /sessions/{id}, so the session object itself is kept here for reload/resume.
 export interface Resume {
   session: Session
@@ -30,6 +37,7 @@ export interface Resume {
   savedAt: string
   currentItem?: Item // so a reload shows the same question instead of skipping it
   elapsedSec?: number // so the timer continues after a reload
+  quickCheck?: { phase: 'preparing' } | QuickCheckDraft
 }
 
 export interface LocalState {
