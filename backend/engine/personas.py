@@ -44,14 +44,14 @@ def period_days(rng: random.Random) -> int:
 
 
 def period(key: str, rng: random.Random, start: datetime, days: int, method: Method, minutes: int, index: int,
-           first_id: int) -> list[SessionSummary]:
+           first_id: int, *, day_offset: int = 0) -> list[SessionSummary]:
     """One session a day for `days` days on `method`, shaped by the persona and how many recalibrations came before."""
     out = []
     for d in range(days):
         jitter = rng.uniform(-NOISE, NOISE)
         if key == "ada":
             if method == "FEYNMAN":
-                probe, drift, hour = 0.76 + 0.025 * d, 0.1, 18  # the trial pays off
+                probe, drift, hour = 0.76 + 0.025 * (day_offset + d), 0.1, 18  # the trial pays off
             elif index == 0:
                 probe, drift, hour = min(0.74, 0.6 + 0.025 * d), 0.12, 18  # rising on Practice Test
             elif index == 1:

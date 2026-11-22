@@ -1,10 +1,12 @@
+from datetime import timedelta
+
 import pytest
 from app import db, flow
 from app.llm import LLMService
 from app.main import create_app
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlmodel import create_engine
+from sqlmodel import Session, create_engine, select
 
 
 @pytest.fixture
@@ -155,6 +157,92 @@ def test_advance_continues_the_same_student(client):
     out = client.post("/api/dev/advance-days", json={"days": 8}).json()
     assert len(out["reflections"]) == 1
     assert len(client.get(f"/api/subjects/{sid}/reflections").json()) == len(refs) + 1
+
+
+def test_readme_ada_trial_is_adopted(client):
+    assert client.post("/api/dev/reset").status_code == 200
+    seed = client.post("/api/dev/seed").json()
+    sid = seed["subject_ids"][0]
+    state_url = f"/api/subjects/{sid}/state"
+    assert seed["persona"] == "ada"
+    assert client.get(state_url).json()["plan"]["method"] == "PRACTICE_TEST"
+    refs = client.get(f"/api/subjects/{sid}/reflections").json()
+    assert refs[0]["diagnosis"] == "FATIGUE"
+    assert refs[0]["decision"]["action"] == "SHORTEN_SESSIONS"
+
+    def advance():
+        result = client.post("/api/dev/advance-days", json={"days": 7})
+        assert result.status_code == 200
+        return result.json()["reflections"][0]
+
+    started = advance()
+    assert started["diagnosis"] == "PLATEAU"
+    assert started["decision"]["method"] == "FEYNMAN"
+    assert started["evidence"]["trial_previous_method"] == "PRACTICE_TEST"
+    assert client.get(state_url).json()["plan"]["mode"] == "TRIAL"
+
+    completed = advance()
+    assert completed["evidence"]["trial_outcome"] == "adopted"
+    assert completed["evidence"]["trial_delta"] >= 0.05
+    assert completed["evidence"]["trial_sessions"] == 7
+    plan = client.get(state_url).json()["plan"]
+    assert (plan["method"], plan["mode"], plan["trial_until"]) == ("FEYNMAN", "ADAPTIVE", None)
+    timeline = client.get(f"/api/subjects/{sid}/insights").json()["timeline"]
+    ends = [entry for entry in timeline if entry["kind"] == "TRIAL_END"]
+    assert len(ends) == 1 and "Keeping Feynman" in ends[0]["label"]
+    upcoming = client.post("/api/sessions", json={"subject_id": sid}).json()
+    assert (upcoming["method"], upcoming["mode"]) == ("FEYNMAN", "ADAPTIVE")
+
+
+@pytest.mark.parametrize(("scores", "expected", "method"), [
+    ([0.65, 0.65], "adopted", "FEYNMAN"),
+    ([0.64, 0.64], "reverted", "PRACTICE_TEST"),
+    ([0.9], "insufficient_data", "PRACTICE_TEST"),
+    ([], "insufficient_data", "PRACTICE_TEST"),
+])
+def test_live_trial_expiry_uses_only_this_trial_and_its_comparator(client, scores, expected, method):
+    sid = _subject_with_demo_material(client)
+    start = flow.clock.now()
+    with Session(db.engine) as ses:
+        subject = ses.get(db.SubjectRow, sid)
+        subject.phase = "ADAPTIVE"
+        plan = ses.get(db.PlanRow, sid)
+        plan.method, plan.mode = "PRACTICE_TEST", "ADAPTIVE"
+        chunk_id = ses.exec(select(db.ChunkRow.id).where(db.ChunkRow.subject_id == sid)).first()
+
+        def add(session, day, method, mode, score):
+            session.add(db.SessionRow(subject_id=sid, chunk_id=chunk_id, method=method, mode=mode,
+                                  planned_minutes=20, started_at=start + timedelta(days=day), active_minutes=18,
+                                  completion=0.9, probe_score=score))
+
+        stats = ses.get(db.MethodStatRow, (sid, "FEYNMAN"))
+        stats.alpha, stats.beta = 4, 1
+        for day in range(-6, 0):
+            add(ses, day, "PRACTICE_TEST", "ADAPTIVE", 0.6)
+        add(ses, -7, "FEYNMAN", "TRIAL", 0.99)
+        ses.commit()
+
+    started = client.post("/api/agent/reflect", json={"subject_id": sid, "trigger": "MANUAL"}).json()
+    assert started["decision"]["method"] == "FEYNMAN"
+
+    with Session(db.engine) as ses:
+        # A method override between trial scores must not change the baseline.
+        add(ses, -0.5, "ACTIVE_RECALL", "ADAPTIVE", 0.95)
+        add(ses, 7, "FEYNMAN", "TRIAL", 0.99)
+        for day, score in enumerate(scores, 1):
+            add(ses, day, "FEYNMAN", "TRIAL", score)
+        ses.commit()
+
+    flow.clock.advance(7)
+    result = client.post("/api/sessions", json={"subject_id": sid}).json()
+    assert (result["method"], result["mode"]) == (method, "ADAPTIVE")
+    assert client.get(f"/api/subjects/{sid}/state").json()["plan"]["trial_until"] is None
+    client.get(f"/api/subjects/{sid}/state")
+    refs = client.get(f"/api/subjects/{sid}/reflections").json()
+    ends = [ref for ref in refs if "trial_outcome" in ref["evidence"]]
+    assert len(ends) == 1
+    assert ends[0]["evidence"]["trial_outcome"] == expected
+    assert ends[0]["evidence"]["trial_sessions"] == len(scores)
 
 
 def test_unknown_persona_is_rejected(client):
