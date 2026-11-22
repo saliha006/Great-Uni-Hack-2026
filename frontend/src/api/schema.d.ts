@@ -437,6 +437,8 @@ export interface components {
         FeynmanBody: {
             /** Turns */
             turns: components["schemas"]["FeynmanTurn"][];
+            /** Latency Ms */
+            latency_ms?: number | null;
         };
         /** FeynmanResult */
         FeynmanResult: {

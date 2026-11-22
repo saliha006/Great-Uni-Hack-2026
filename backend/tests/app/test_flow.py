@@ -82,15 +82,42 @@ def test_mcq_accepts_option_text_or_letter():
     assert not flow.mcq_correct("B", "O(1)", opts)
 
 
-def test_feynman_keyword_fallback_scores_covered_points(client):
+@pytest.mark.parametrize(("latency", "agent_turn", "expected_minutes"), [
+    (None, True, 0.0),  # Older clients posted only transcript turns.
+    (84_000, False, 1.4),  # Typed explanations are a single user turn.
+    (126_000, True, 2.1),
+    (3_600_000, True, 12.0),  # Three times the four-minute brief.
+])
+def test_feynman_transcript_scores_coverage_and_records_study_time(client, latency, agent_turn, expected_minutes):
     sid = _subject_with_demo_material(client)
     sess = client.post("/api/sessions", json={"subject_id": sid, "method": "FEYNMAN"}).json()
     chunk = flow.BANK["chunks"][sess["chunk_id"] - 1]  # chunk ids follow bank order in a fresh DB
-    turns = [{"role": "user", "ts": "2026-11-07T15:00:00Z", "text": chunk["key_points"][0]},
-             {"role": "agent", "ts": "2026-11-07T15:00:05Z", "text": "Why can't it be avoided?"}]
-    r = client.post(f"/api/sessions/{sess['id']}/feynman-transcript", json={"turns": turns}).json()
-    assert 0 < r["score"] < 1
-    assert r["gaps"] and "covered" in r["feedback"]
+    turns = [{"role": "user", "ts": "2026-11-07T15:00:00Z", "text": chunk["key_points"][0]}]
+    if agent_turn:
+        turns.append({"role": "agent", "ts": "2026-11-07T15:00:05Z", "text": "Why can't it be avoided?"})
+    payload = {"turns": turns}
+    if latency is not None:
+        payload["latency_ms"] = latency
+    session_path = f"/api/sessions/{sess['id']}"
+    for invalid_latency in (-1, 3_600_001):
+        assert client.post(f"{session_path}/feynman-transcript",
+                           json={**payload, "latency_ms": invalid_latency}).status_code == 422
+    r = client.post(f"{session_path}/feynman-transcript", json=payload)
+    assert r.status_code == 200
+    result = r.json()
+    assert 0 < result["score"] < 1
+    assert result["gaps"] and "covered" in result["feedback"]
+
+    probe_items = client.post(f"{session_path}/finish").json()["probe_items"]
+    answers = [{"item_id": p["id"], "answer": (p["options"] or ["x"])[0], "latency_ms": 5000}
+               for p in probe_items]
+    r = client.post(f"{session_path}/probe", json={"answers": answers, "felt_rating": 4})
+    assert r.status_code == 200
+    result = r.json()
+    assert result["active_minutes"] == expected_minutes
+    assert result["efficiency"] == pytest.approx(
+        result["probe_score"] / max(expected_minutes, 1), abs=0.001
+    )
 
 
 def test_attention_burst_triggers_an_intervention(client):

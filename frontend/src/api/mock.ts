@@ -2,7 +2,7 @@
 // Every threshold here is a mock heuristic (TUNE), not Yehor's engine and not research-derived.
 import { BANKS, bankFromMaterial, type Bank, type BankItem } from './content'
 import type {
-  AdvanceDaysResult, AnswerBody, AnswerResult, EventsResult, FeynmanResult, FeynmanTurn, Insights, Item,
+  AdvanceDaysResult, AnswerBody, AnswerResult, EventsResult, FeynmanBody, FeynmanResult, Insights, Item,
   Method, MethodStatView, NextItem, Plan, ProbeBody, Readiness, Reflection, Session, SessionEvent,
   SessionResult, SignedUrl, Subject, SubjectKind, SubjectState, SubjectSummary,
 } from './types'
@@ -29,7 +29,7 @@ interface SessionRec {
   session: Session; queue: number[]; served: number; difficultyCap: number
   latencies: { item_id: number; ratio: number; ts: number }[]; events: SessionEvent[]
   scores: number[]; lastIntervention: number; drifts: number; breaks: number; started: number
-  probeIds: number[]; feynman?: FeynmanResult
+  probeIds: number[]; feynman?: FeynmanResult; feynmanActiveMinutes?: number
 }
 interface DB {
   nextId: number; offsetDays: number; subjects: SubjectRec[]
@@ -266,7 +266,7 @@ export const mock = {
     const bank = subj(s.session.subject_id).bank
     return { signed_url: '', context: { topic: bank.topic, key_points: bank.key_points, first_message: `Hi! I've never learned this. Can you teach me about ${bank.topic}?` } }
   },
-  async feynmanTranscript(sessionId: number, body: { turns: FeynmanTurn[] }): Promise<FeynmanResult> {
+  async feynmanTranscript(sessionId: number, body: FeynmanBody): Promise<FeynmanResult> {
     await wait(500)
     const s = sess(sessionId)
     const bank = subj(s.session.subject_id).bank
@@ -275,6 +275,11 @@ export const mock = {
     const covered = bank.key_points.filter((kp) => hit(kp) >= 2)
     const gaps = bank.key_points.filter((kp) => !covered.includes(kp))
     const score = +(covered.length / bank.key_points.length).toFixed(2)
+    const brief = db.items[s.queue[0]]?.item
+    if (brief?.kind === 'FEYNMAN_BRIEF' && body.latency_ms != null) {
+      const capped = Math.min(body.latency_ms, 3_000 * brief.expected_seconds)
+      s.feynmanActiveMinutes = +(capped / 60_000).toFixed(2)
+    }
     s.feynman = {
       score, covered, gaps,
       feedback: gaps.length ? `Clear on ${covered.length} of ${bank.key_points.length} ideas. Next time, cover: ${gaps[0].toLowerCase()}.` : 'You covered every key idea.',
@@ -296,8 +301,8 @@ export const mock = {
     const s = sess(sessionId)
     const rec = subj(s.session.subject_id)
     const probe = mean(body.answers.map((a) => grade(db.items[a.item_id]?.bank ?? { item: { kind: 'SHORT_ANSWER', prompt: '', difficulty: 1, expected_seconds: 1 }, answer: '', keywords: [] }, a.answer)))
-    const active = Math.max(1, (Date.now() - s.started) / 60_000)
-    const efficiency = probe / active
+    const active = s.feynmanActiveMinutes ?? Math.max(1, (Date.now() - s.started) / 60_000)
+    const efficiency = probe / Math.max(1, active)
     const reward = 0.6 * probe + 0.25 * Math.min(1, efficiency * 4) + 0.15 * ((body.felt_rating - 1) / 4)
     const st = rec.stats[s.session.method]
     if (st) { st.alpha += reward; st.beta += 1 - reward; st.n++ }
@@ -313,7 +318,7 @@ export const mock = {
     }
     rec.plan = choosePlan(rec)
     save()
-    return { probe_score: +probe.toFixed(2), active_minutes: +active.toFixed(1), efficiency: +efficiency.toFixed(3), reward: +reward.toFixed(2), subject_state: state(rec), reflection: null }
+    return { probe_score: +probe.toFixed(2), active_minutes: s.feynmanActiveMinutes ?? +active.toFixed(1), efficiency: +efficiency.toFixed(3), reward: +reward.toFixed(2), subject_state: state(rec), reflection: null }
   },
   async insights(subjectId: number): Promise<Insights> {
     await wait(80)

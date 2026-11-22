@@ -70,6 +70,7 @@ export interface AttentionReading { state: AttentionStateName; latency_cv: numbe
 export interface Intervention { type: InterventionType; message: string; break_seconds?: number | null; new_difficulty?: number | null }
 export interface EventsResult { attention: AttentionReading; intervention: Intervention }
 export interface FeynmanTurn { role: 'user' | 'agent'; text: string; ts: string }
+export interface FeynmanBody { turns: FeynmanTurn[]; latency_ms?: number | null }
 export interface FeynmanResult { score: number; covered: string[]; gaps: string[]; feedback: string }
 export interface Decision { action: 'KEEP' | 'TRIAL_METHOD' | 'SHORTEN_SESSIONS' | 'EASE_IN' | 'RAISE_DIFFICULTY'; method?: Method | null; trial_days?: number | null; session_minutes?: number | null }
 export interface Reflection { id: number; ts: string; trigger: 'WEEKLY' | 'PLATEAU' | 'MANUAL'; diagnosis: DiagnosisName; evidence: Record<string, unknown>; decision: Decision; explanation: string }

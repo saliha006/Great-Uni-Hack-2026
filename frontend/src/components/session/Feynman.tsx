@@ -6,6 +6,8 @@ import type { EventType, FeynmanResult, FeynmanTurn, Item, SessionEvent, VoiceCo
 import { Button, Card, ErrorBox } from '../ui'
 import { VoiceOrb, type OrbState } from '../VoiceOrb'
 
+const MAX_LATENCY_MS = 3_600_000
+
 type Emit = (type: EventType, extra?: Partial<SessionEvent>) => void
 
 export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; item: Item; emit: Emit; onDone: (r: FeynmanResult) => void }) {
@@ -15,6 +17,8 @@ export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; 
   const [turns, setTurns] = useState<FeynmanTurn[]>([])
   const [grading, setGrading] = useState(false)
   const [error, setError] = useState<unknown>(null)
+  const [openedAt] = useState(() => performance.now())
+  const submittedLatency = useRef<number | null>(null)
   const [result, setResult] = useState<FeynmanResult | null>(null)
 
   // The signed URL is fetched as the screen opens (it stays valid for minutes), so one tap on the orb can start
@@ -38,10 +42,11 @@ export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; 
   }
 
   const finish = async () => {
+    submittedLatency.current ??= Math.min(MAX_LATENCY_MS, Math.round(performance.now() - openedAt))
     setGrading(true)
     setError(null)
     try {
-      const r = await api.feynmanTranscript(sessionId, turns)
+      const r = await api.feynmanTranscript(sessionId, { turns, latency_ms: submittedLatency.current })
       setResult(r)
     } catch (e) {
       setError(e)

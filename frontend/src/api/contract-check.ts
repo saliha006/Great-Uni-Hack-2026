@@ -21,6 +21,7 @@ export const contractChecks = {
   Intervention: [(x: S['Intervention']): T.Intervention => x, (x: T.Intervention): S['Intervention'] => x],
   EventsResult: [(x: S['EventsResult']): T.EventsResult => x, (x: T.EventsResult): S['EventsResult'] => x],
   FeynmanTurn: [(x: S['FeynmanTurn']): T.FeynmanTurn => x, (x: T.FeynmanTurn): S['FeynmanTurn'] => x],
+  FeynmanBody: [(x: S['FeynmanBody']): T.FeynmanBody => x, (x: T.FeynmanBody): S['FeynmanBody'] => x],
   FeynmanResult: [(x: S['FeynmanResult']): T.FeynmanResult => x, (x: T.FeynmanResult): S['FeynmanResult'] => x],
   Decision: [(x: S['Decision']): T.Decision => x, (x: T.Decision): S['Decision'] => x],
   Reflection: [(x: S['Reflection']): T.Reflection => x, (x: T.Reflection): S['Reflection'] => x],
