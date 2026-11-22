@@ -133,6 +133,24 @@ def test_attention_burst_triggers_an_intervention(client):
     assert reading["attention"]["state"] in ("DRIFTING", "LAPSED")
 
 
+def test_attention_baseline_learns_across_two_completed_sessions(client):
+    sid = _subject_with_demo_material(client)
+    for count, ratio in enumerate((1, 2), start=1):
+        study = client.post("/api/sessions", json={"subject_id": sid, "method": "ACTIVE_RECALL"}).json()
+        path = f"/api/sessions/{study['id']}"
+        item = client.get(f"{path}/next-item").json()
+        events = [{"type": "ITEM_ANSWERED", "ts": f"2026-11-07T15:{i:02d}:00Z",
+                   "item_id": item["id"], "latency_ms": item["expected_seconds"] * 1000 * ratio}
+                  for i in range(flow.attention.MIN_WINDOW)]
+        assert client.post(f"{path}/events", json={"events": events}).status_code == 200
+        assert client.post(f"{path}/finish").status_code == 200
+        assert client.post(f"{path}/probe", json={"answers": [], "felt_rating": 4}).status_code == 200
+        with Session(db.engine) as session:
+            stored = session.get(db.AttentionBaselineRow, flow.DEMO_USER)
+            assert stored.n_sessions == count
+            assert stored.baseline_ratio == pytest.approx(1 if count == 1 else 1.5)
+
+
 def test_voice_without_keys_is_502_voice_unavailable(client):
     sid = _subject_with_demo_material(client)
     sess = client.post("/api/sessions", json={"subject_id": sid}).json()
