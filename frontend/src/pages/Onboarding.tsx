@@ -134,9 +134,10 @@ export function Onboarding() {
               {words} words{words > 0 && words < MIN_WORDS ? ` · aim for ${MIN_WORDS} for three practice sessions` : ''}
             </span>
             <label className="ml-auto cursor-pointer font-semibold underline">
-              Upload a .txt file
-              <input type="file" accept=".txt,.md,text/plain,application/pdf" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />
+              {usingMock ? 'Upload a text file' : 'Upload a text file or PDF'}
+              <input type="file" accept={usingMock ? '.txt,.md,text/plain' : '.txt,.md,text/plain,application/pdf'} className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />
             </label>
+            {usingMock && <p className="w-full text-muted">PDF upload needs the Attune backend. You can paste the text here.</p>}
             {pdfNote && <p role="status" className="mt-2 text-sm font-semibold">{pdfNote}</p>}
           </div>
           {material.isError && <div className="mt-3"><ErrorBox error={material.error} /></div>}

@@ -1,4 +1,5 @@
 import { Link, Route, Routes } from 'react-router-dom'
+import { presenterToolsEnabled } from './api/client'
 import { Home } from './pages/Home'
 import { Onboarding } from './pages/Onboarding'
 import { SessionPage } from './pages/Session'
@@ -24,7 +25,7 @@ export function App() {
       <Route path="/insights/:subjectId" element={<Insights />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/questions" element={<Questions />} />
-      <Route path="/dev" element={<Dev />} />
+      {presenterToolsEnabled && <Route path="/dev" element={<Dev />} />}
       <Route path="/tools" element={<Tools />} />
       <Route
         path="*"

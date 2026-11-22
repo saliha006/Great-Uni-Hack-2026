@@ -57,7 +57,7 @@ export function Dev() {
   const err = seed.error ?? advance.error ?? reflect.error ?? reset.error
 
   return (
-    <PageShell where="Dev panel" status={[{ label: 'API', value: usingMock ? 'mock (in browser)' : 'live backend' }, { label: 'Clock', value: new Date(clockNow()).toLocaleDateString() }]}>
+    <PageShell where="Dev panel" status={[{ label: 'API', value: usingMock ? 'mock (in browser)' : 'backend' }, { label: 'Clock', value: new Date(clockNow()).toLocaleDateString() }]}>
       <h1 className="text-3xl font-extrabold">Dev panel</h1>
       <p className="mt-1 text-muted">For the demo. Seeded history is labelled "Demo data" everywhere it appears.</p>
       {err && <div className="mt-4"><ErrorBox error={err} /></div>}

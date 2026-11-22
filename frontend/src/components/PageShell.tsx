@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { hasSeededData } from '../api/client'
+import { hasSeededData, presenterToolsEnabled, usingMock } from '../api/client'
 import { setLocal, useLocal } from '../lib/local'
 import { isDemoWorkspace, openTour } from '../lib/workspace'
 import { CursorDot } from './CursorDot'
@@ -56,6 +56,7 @@ export function PageShell({
               </NavLink>
             ))}
             <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted">{usingMock ? 'Browser demo' : 'Backend mode'}</span>
               {!isDemoWorkspace && (
                 <button onClick={openTour} className="rounded-full border border-ink px-3 py-1 text-sm font-semibold hover:bg-sunken">Guided demo</button>
               )}
@@ -88,14 +89,16 @@ export function PageShell({
                     Moving cursor
                     <input type="checkbox" checked={cursorDot} onChange={(e) => setLocal({ cursorDot: e.target.checked })} className="size-5" />
                   </label>
-                  <NavLink to="/dev" className="block border-t border-line pt-3 text-sm text-muted underline">Demo tools</NavLink>
+                  {presenterToolsEnabled && (
+                    <NavLink to="/dev" className="block border-t border-line pt-3 text-sm text-muted underline">Demo tools</NavLink>
+                  )}
                 </div>
               </details>
             </div>
           </nav>
         </header>
       )}
-      {(focus || pathname === '/dev') && <StatusStrip where={where} items={status} next={next} />}
+      {(focus || (presenterToolsEnabled && pathname === '/dev')) && <StatusStrip where={where} items={status} next={next} />}
       <main id="main" className={`relative z-0 mx-auto w-full max-w-6xl flex-1 px-4 ${pathname === '/' ? 'py-3' : 'py-6 sm:py-8'}`}>
         {children}
       </main>

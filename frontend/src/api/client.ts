@@ -11,7 +11,8 @@ import type {
 const RAW_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 // "/" means the API is on this same origin (Vercel routes /api to the backend), so it still counts as real.
 export const usingMock = isDemoWorkspace || RAW_BASE.trim() === ''
-const BASE = RAW_BASE.replace(/\/$/, '')
+export const presenterToolsEnabled = !isDemoWorkspace && import.meta.env.VITE_PRESENTER_TOOLS === 'true'
+const BASE = RAW_BASE.trim().replace(/\/$/, '')
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
