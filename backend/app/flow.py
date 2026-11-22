@@ -652,7 +652,7 @@ def feynman_transcript(ses: Session, session_id: int, body: s.FeynmanBody) -> s.
     brief = next(iter(_items(ses, session_id, "MAIN")), None)
     if brief is not None and brief.kind == "FEYNMAN_BRIEF":
         ses.add(db.ResponseRow(item_id=brief.id, session_id=session_id, answer=text, score=score,
-                               latency_ms=0, ts=clock.now()))
+                               latency_ms=body.latency_ms or 0, ts=clock.now()))
         ses.commit()
     return s.FeynmanResult(score=round(score, 3), covered=[key_points[i] for i in sorted(covered)], gaps=gaps,
                            feedback=" ".join(parts))

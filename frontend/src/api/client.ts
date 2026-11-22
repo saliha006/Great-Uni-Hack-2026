@@ -2,7 +2,7 @@
 import { mock, mockClock, mockHasSeeded } from './mock'
 import { getLocal } from '../lib/local'
 import type {
-  AdvanceDaysResult, AnswerBody, AnswerResult, AskResult, Persona, StudyKind, StudySet, EventsResult, FeynmanResult, FeynmanTurn, Insights, Item,
+  AdvanceDaysResult, AnswerBody, AnswerResult, AskResult, Persona, StudyKind, StudySet, EventsResult, FeynmanBody, FeynmanResult, Insights, Item,
   Method, NextItem, ProbeBody, Reflection, Session, SessionEvent, SessionResult, SignedUrl, Subject,
   SubjectKind, SubjectState, SubjectSummary,
 } from './types'
@@ -61,8 +61,8 @@ export const api = {
   events: (sid: number, events: SessionEvent[]) =>
     usingMock ? viaMock(() => mock.events(sid, { events })) : post<EventsResult>(`/sessions/${sid}/events`, { events }),
   signedUrl: (sid: number) => (usingMock ? viaMock(() => mock.signedUrl(sid)) : http<SignedUrl>(`/voice/signed-url?session_id=${sid}`)),
-  feynmanTranscript: (sid: number, turns: FeynmanTurn[]) =>
-    usingMock ? viaMock(() => mock.feynmanTranscript(sid, { turns })) : post<FeynmanResult>(`/sessions/${sid}/feynman-transcript`, { turns }),
+  feynmanTranscript: (sid: number, body: FeynmanBody) =>
+    usingMock ? viaMock(() => mock.feynmanTranscript(sid, body)) : post<FeynmanResult>(`/sessions/${sid}/feynman-transcript`, body),
   finish: (sid: number) => (usingMock ? viaMock(() => mock.finish(sid)) : post<{ probe_items: Item[] }>(`/sessions/${sid}/finish`)),
   probe: (sid: number, b: ProbeBody) => (usingMock ? viaMock(() => mock.probe(sid, b)) : post<SessionResult>(`/sessions/${sid}/probe`, b)),
   insights: (id: number) => (usingMock ? viaMock(() => mock.insights(id)) : http<Insights>(`/subjects/${id}/insights`)),

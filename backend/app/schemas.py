@@ -186,6 +186,7 @@ class FeynmanTurn(BaseModel):
 
 class FeynmanBody(BaseModel):
     turns: list[FeynmanTurn] = Field(max_length=200)
+    latency_ms: int | None = Field(default=None, ge=0, le=LATENCY_MAX_MS)
 
 
 class FeynmanResult(BaseModel):
