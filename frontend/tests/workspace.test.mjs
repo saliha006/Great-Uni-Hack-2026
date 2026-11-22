@@ -110,6 +110,17 @@ test('the demo can finish and replay without changing saved study data or contac
   const replaySession = await replay.api.createSession({ subject_id: ada.subject_ids[0], method: 'PRACTICE_TEST' })
   assert.deepEqual(await replay.api.nextItem(replaySession.id), first)
 
+  const completed = (await replay.api.devAdvanceDays(7)).reflections[0]
+  assert.equal(completed.evidence.trial_outcome, 'adopted')
+  assert.equal(completed.evidence.trial_previous_method, 'PRACTICE_TEST')
+  assert.equal(completed.evidence.trial_delta, 0.094)
+  assert.equal(completed.evidence.trial_sessions, 7)
+  const finalPlan = (await replay.api.subjectState(ada.subject_ids[0])).plan
+  assert.deepEqual([finalPlan.method, finalPlan.mode, finalPlan.trial_until], ['FEYNMAN', 'ADAPTIVE', null])
+  const finalAda = await replay.api.insights(ada.subject_ids[0])
+  assert.equal(finalAda.timeline.filter(({ kind }) => kind === 'TRIAL_END').length, 1)
+  assert.equal(globalThis.fetch.mock.callCount(), 0)
+
   replay.leaveTour()
   assert.equal(href, 'https://attune.test/study?from=dashboard#saved')
   const restored = await load()

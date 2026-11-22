@@ -14,7 +14,7 @@
 [![CI](https://github.com/saliha006/Great-Uni-Hack-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/saliha006/Great-Uni-Hack-2026/actions/workflows/ci.yml)
 
 [Features](#features) · [Why it's different](#why-its-different) · [Quick start](#quick-start) ·
-[Demo](#demo-in-two-minutes) · [How it works](#how-it-works) · [Limits](#honest-limits) · [Team](#team)
+[Demo](https://great-uni-hack-2026.vercel.app/demo) · [How it works](#how-it-works) · [Limits](#honest-limits) · [Team](#team)
 
 </div>
 
@@ -126,8 +126,17 @@ needs ElevenLabs credentials.
 
 ## Demo in two minutes
 
-Choose **Guided demo** in the app to explore Ada’s sample workspace. The guided demo runs in its own browser
-workspace, and **Leave demo** or **Finish** returns you to your study workspace.
+[Open the Ada browser demo](https://great-uni-hack-2026.vercel.app/demo). Choose **Load Ada**, compare Active Recall,
+Practice Test and Feynman in Insights, then advance twice to see the plateau reflection and the recorded outcome of
+her seven-day Feynman trial. The trial result shows a gain of 9.4 percentage points in the seeded history.
+
+![Ada’s seeded Insights showing method fit, Quick Check scores, and the Feynman trial reflection](assets/demo/ada-insights.png)
+
+[Watch the walkthrough (WebM)](assets/demo/ada-walkthrough.webm)
+
+The browser demo runs in an isolated tab without sign-in, a provider account, or your own notes. Practice Test and
+typed Feynman are interactive. The live backend supplies note-grounded tutor chat, generated study tools and voice.
+**Leave demo** or **Finish** returns you to your study workspace.
 
 To try the backend walkthrough, start a separate backend with `DATABASE_URL` set to a new SQLite file that
 contains no study data. All history generated below is **seeded demo data** for a simulated student, Ada.
@@ -137,6 +146,8 @@ contains no study data. All history generated below is **seeded demo data** for 
    shortened and the method kept; in week 3 she plateaued on Practice Test, so Attune starts a 7-day Feynman trial.
 3. `POST /api/dev/advance-days {"days": 7}` again: the trial finishes with higher scores than Practice Test, and Attune keeps Feynman.
 4. `python scripts/attention_burst.py`: steady answers, then an erratic burst, and Attune suggests a break.
+
+From `backend/`, run `.venv/bin/python ../scripts/export_ada_demo.py` to refresh the browser demo from the backend scenario.
 
 ## How it works
 
