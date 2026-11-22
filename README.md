@@ -97,7 +97,7 @@ Uvicorn command with `--env-file ../.env` in place of the `LLM_MODE=fixtures` pr
 | `LLM_MODE` | `cache` (default) · `live` · `fixtures` | `cache` calls OpenAI only on a cache miss. `fixtures` runs the full backend with deterministic AI responses |
 | `DATABASE_URL` | default `sqlite:///./attune.db` | Point at another database without code changes |
 
-Run `LLM_MODE=fixtures .venv/bin/python -m pytest -q` in `backend/` and `npm run build` in `frontend/` to run the checks locally.
+Run `LLM_MODE=fixtures .venv/bin/python -m pytest -q` in `backend/`. Run `npm test` and `npm run build` in `frontend/`.
 
 ## Demo in two minutes
 

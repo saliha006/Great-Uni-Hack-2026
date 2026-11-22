@@ -1,5 +1,5 @@
 // Frontend-only state (not in PRD §11): frog choice, open questions, activity log, settings,
-// resume point. Lives in this browser's localStorage and the UI says so.
+// resume point. Uses the current workspace's browser storage.
 import { useRef, useSyncExternalStore } from 'react'
 import type { Item, ProbeBody, Session } from '../api/types'
 import { LOCAL_STORAGE_KEY, workspaceStorage } from './workspace'

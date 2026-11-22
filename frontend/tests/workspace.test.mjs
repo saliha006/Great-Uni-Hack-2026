@@ -60,7 +60,14 @@ test('the demo can finish and replay without changing saved study data or contac
   await study.api.addMaterial(subject.id, { text: 'saved material '.repeat(30) })
   const session = await study.api.createSession({ subject_id: subject.id, method: 'PRACTICE_TEST' })
   const item = await study.api.nextItem(session.id)
-  const resume = { session, subjectName: subject.name, itemsDone: 0, currentItem: item, savedAt: 'saved' }
+  const probeItems = (await study.api.finish(session.id)).probe_items
+  const resume = {
+    session, subjectName: subject.name, itemsDone: 0, currentItem: item, savedAt: 'saved',
+    quickCheck: {
+      phase: 'draft', items: probeItems, felt: 4,
+      answers: { [probeItems[0].id]: { answer: 'A saved answer', latency_ms: 1500 } },
+    },
+  }
   study.setLocal({ resume })
   const plan = await study.api.subjectState(subject.id)
   const original = [local.getItem(study.MOCK_STORAGE_KEY), local.getItem(study.LOCAL_STORAGE_KEY)]
@@ -95,7 +102,7 @@ test('the demo can finish and replay without changing saved study data or contac
   const restored = await load()
   assert.deepEqual(restored.getLocal().resume, resume)
   assert.deepEqual(await restored.api.subjectState(subject.id), plan)
-  assert.ok((await restored.api.finish(session.id)).probe_items.length > 0)
+  assert.deepEqual((await restored.api.finish(session.id)).probe_items, probeItems)
   const live = await load('https://backend.test')
   assert.equal((await live.api.listSubjects())[0].subject.name, 'Live Study')
   assert.equal(globalThis.fetch.mock.callCount(), 1)
