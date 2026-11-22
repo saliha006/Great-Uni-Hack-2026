@@ -1,6 +1,7 @@
-// One typed client for PRD §11. VITE_API_URL set → real FastAPI; empty → in-browser mock.
+// The guided demo always uses fixtures. The study workspace uses FastAPI when VITE_API_URL is set.
 import { mock, mockClock, mockHasSeeded } from './mock'
 import { getLocal } from '../lib/local'
+import { isDemoWorkspace } from '../lib/workspace'
 import type {
   AdvanceDaysResult, AnswerBody, AnswerResult, AskResult, Persona, StudyKind, StudySet, EventsResult, FeynmanBody, FeynmanResult, Insights, Item,
   Method, NextItem, ProbeBody, Reflection, Session, SessionEvent, SessionResult, SignedUrl, Subject,
@@ -9,7 +10,7 @@ import type {
 
 const RAW_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 // "/" means the API is on this same origin (Vercel routes /api to the backend), so it still counts as real.
-export const usingMock = RAW_BASE.trim() === ''
+export const usingMock = isDemoWorkspace || RAW_BASE.trim() === ''
 const BASE = RAW_BASE.replace(/\/$/, '')
 
 export class ApiError extends Error {

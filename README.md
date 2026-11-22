@@ -97,13 +97,17 @@ Uvicorn command with `--env-file ../.env` in place of the `LLM_MODE=fixtures` pr
 | `LLM_MODE` | `cache` (default) · `live` · `fixtures` | `cache` calls OpenAI only on a cache miss. `fixtures` runs the full backend with deterministic AI responses |
 | `DATABASE_URL` | default `sqlite:///./attune.db` | Point at another database without code changes |
 
-Run `LLM_MODE=fixtures .venv/bin/python -m pytest -q` in `backend/` and `npm run build` in `frontend/` to run the checks locally.
+Run `LLM_MODE=fixtures .venv/bin/python -m pytest -q` in `backend/`. Run `npm test` and `npm run build` in `frontend/`.
 
 ## Demo in two minutes
 
-All history below is **seeded demo data** for a simulated student, Ada. The app labels it as demo data.
+Choose **Guided demo** in the app to explore Ada’s sample workspace. The guided demo runs in its own browser
+workspace, and **Leave demo** or **Finish** returns you to your study workspace.
 
-1. `POST /api/dev/reset`, then `POST /api/dev/seed`: loads Ada's calibration and fatigue weeks.
+To try the backend walkthrough, start a separate backend with `DATABASE_URL` set to a new SQLite file that
+contains no study data. All history generated below is **seeded demo data** for a simulated student, Ada.
+
+1. `POST /api/dev/seed`: loads Ada's calibration and fatigue weeks.
 2. `POST /api/dev/advance-days {"days": 7}`: the weekly reflection runs. Ada was tired in week 2, so her sessions were
    shortened and the method kept; in week 3 she plateaued on Practice Test, so Attune starts a 7-day Feynman trial.
 3. `POST /api/dev/advance-days {"days": 7}` again: the trial finishes with higher scores than Practice Test, and Attune keeps Feynman.

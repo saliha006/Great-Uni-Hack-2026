@@ -1,8 +1,8 @@
 import { useEffect, type ReactNode } from 'react'
-import { openTour } from './Tour'
 import { NavLink, useLocation } from 'react-router-dom'
 import { hasSeededData } from '../api/client'
 import { setLocal, useLocal } from '../lib/local'
+import { isDemoWorkspace, openTour } from '../lib/workspace'
 import { CursorDot } from './CursorDot'
 import { StatusStrip, type StatusItem } from './StatusStrip'
 
@@ -56,7 +56,9 @@ export function PageShell({
               </NavLink>
             ))}
             <div className="ml-auto flex items-center gap-2">
-              <button onClick={openTour} className="rounded-full border border-ink px-3 py-1 text-sm font-semibold hover:bg-sunken">Guided demo</button>
+              {!isDemoWorkspace && (
+                <button onClick={openTour} className="rounded-full border border-ink px-3 py-1 text-sm font-semibold hover:bg-sunken">Guided demo</button>
+              )}
               {hasSeededData() && (
                 <span className="rounded-full border border-ink px-2 py-0.5 text-xs font-bold uppercase" title="Multi-week history is seeded for the demo">
                   Demo data

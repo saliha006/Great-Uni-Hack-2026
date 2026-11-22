@@ -10,11 +10,12 @@ import { Dashboard } from './pages/Dashboard'
 import { PageShell } from './components/PageShell'
 import { Tour } from './components/Tour'
 import { Tools } from './pages/Tools'
+import { isDemoWorkspace } from './lib/workspace'
 
 export function App() {
   return (
     <>
-    <Tour />
+    {isDemoWorkspace && <Tour />}
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/study" element={<Home />} />
