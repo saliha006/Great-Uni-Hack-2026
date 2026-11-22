@@ -4,7 +4,7 @@ from app.llm import LLMService
 from app.main import create_app
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, create_engine, select
 
 
 @pytest.fixture
@@ -82,15 +82,42 @@ def test_mcq_accepts_option_text_or_letter():
     assert not flow.mcq_correct("B", "O(1)", opts)
 
 
-def test_feynman_keyword_fallback_scores_covered_points(client):
+@pytest.mark.parametrize(("latency", "agent_turn", "expected_minutes"), [
+    (None, True, 0.0),  # Older clients posted only transcript turns.
+    (84_000, False, 1.4),  # Typed explanations are a single user turn.
+    (126_000, True, 2.1),
+    (3_600_000, True, 12.0),  # Three times the four-minute brief.
+])
+def test_feynman_transcript_scores_coverage_and_records_study_time(client, latency, agent_turn, expected_minutes):
     sid = _subject_with_demo_material(client)
     sess = client.post("/api/sessions", json={"subject_id": sid, "method": "FEYNMAN"}).json()
     chunk = flow.BANK["chunks"][sess["chunk_id"] - 1]  # chunk ids follow bank order in a fresh DB
-    turns = [{"role": "user", "ts": "2026-11-07T15:00:00Z", "text": chunk["key_points"][0]},
-             {"role": "agent", "ts": "2026-11-07T15:00:05Z", "text": "Why can't it be avoided?"}]
-    r = client.post(f"/api/sessions/{sess['id']}/feynman-transcript", json={"turns": turns}).json()
-    assert 0 < r["score"] < 1
-    assert r["gaps"] and "covered" in r["feedback"]
+    turns = [{"role": "user", "ts": "2026-11-07T15:00:00Z", "text": chunk["key_points"][0]}]
+    if agent_turn:
+        turns.append({"role": "agent", "ts": "2026-11-07T15:00:05Z", "text": "Why can't it be avoided?"})
+    payload = {"turns": turns}
+    if latency is not None:
+        payload["latency_ms"] = latency
+    session_path = f"/api/sessions/{sess['id']}"
+    for invalid_latency in (-1, 3_600_001):
+        assert client.post(f"{session_path}/feynman-transcript",
+                           json={**payload, "latency_ms": invalid_latency}).status_code == 422
+    r = client.post(f"{session_path}/feynman-transcript", json=payload)
+    assert r.status_code == 200
+    result = r.json()
+    assert 0 < result["score"] < 1
+    assert result["gaps"] and "covered" in result["feedback"]
+
+    probe_items = client.post(f"{session_path}/finish").json()["probe_items"]
+    answers = [{"item_id": p["id"], "answer": (p["options"] or ["x"])[0], "latency_ms": 5000}
+               for p in probe_items]
+    r = client.post(f"{session_path}/probe", json={"answers": answers, "felt_rating": 4})
+    assert r.status_code == 200
+    result = r.json()
+    assert result["active_minutes"] == expected_minutes
+    assert result["efficiency"] == pytest.approx(
+        result["probe_score"] / max(expected_minutes, 1), abs=0.001
+    )
 
 
 def test_attention_burst_triggers_an_intervention(client):
@@ -222,6 +249,50 @@ def test_bank_keeps_only_items_quoted_from_the_passage():
 def test_bank_falls_back_to_the_passage_when_the_llm_is_down(client):
     bank = flow.chunk_bank(PASSAGE + " Deletion uses tombstones so lookups keep probing past removed entries.")
     assert bank["key_points"] and bank["probe_short"]
+
+
+@pytest.mark.parametrize("line_separated", [False, True])
+def test_short_facts_support_practice_and_a_prepared_probe(client, monkeypatch, line_separated):
+    notes = ("Atoms contain protons. Electrons surround nuclei. Neutrons lack charge. "
+             "Protons repel protons. Atoms form molecules. Covalent bonds share electrons. "
+             "Ionic bonds involve attraction. Metals conduct electricity. Water dissolves salts. "
+             "Temperature affects reactions. Catalysts speed reactions. Acids donate protons. "
+             "Bases accept protons. Indicators change colour. Crystals have ordered structures. "
+             "Gases expand freely. Liquids flow readily. Solids retain shape.")
+    if line_separated:
+        notes = notes.rstrip(".").replace(". ", "\n")
+    sid = client.post("/api/subjects", json={"name": "Chemistry", "kind": "KNOWLEDGE"}).json()["id"]
+    assert client.post(f"/api/subjects/{sid}/material", json={"text": notes}).status_code == 200
+    response = client.post("/api/sessions", json={"subject_id": sid, "method": "PRACTICE_TEST"})
+    assert response.status_code == 200
+    path = f"/api/sessions/{response.json()['id']}"
+    item = client.get(f"{path}/next-item").json()
+    assert item["kind"] == "SHORT_ANSWER"
+    assert client.post(f"{path}/probe", json={"answers": [], "felt_rating": 4}).status_code == 409
+
+    def unavailable(_):
+        pytest.fail("finish should use the probe prepared at session creation")
+
+    monkeypatch.setattr(flow, "chunk_bank", unavailable)
+    probe = client.post(f"{path}/finish").json()["probe_items"]
+    assert len({q["prompt"] for q in probe}) == 5
+    assert item["prompt"] not in {q["prompt"] for q in probe}
+    assert client.post(f"{path}/finish").json()["probe_items"] == probe
+    complete = client.post(f"{path}/probe", json={"answers": [], "felt_rating": 4})
+    assert complete.status_code == 200
+    assert complete.json()["probe_score"] == 0
+
+
+def test_insufficient_facts_reject_session_without_writing_rows(client):
+    sid = client.post("/api/subjects", json={"name": "Chemistry", "kind": "KNOWLEDGE"}).json()["id"]
+    assert client.post(f"/api/subjects/{sid}/material",
+                       json={"text": "Atoms contain protons. " * 20}).status_code == 200
+    response = client.post("/api/sessions", json={"subject_id": sid, "method": "PRACTICE_TEST"})
+    assert response.status_code == 422
+    assert "more distinct facts" in response.json()["detail"]
+    with Session(db.engine) as session:
+        assert session.exec(select(db.SessionRow)).all() == []
+        assert session.exec(select(db.ItemRow)).all() == []
 
 
 def test_pdf_material_is_read_with_ingest(client, monkeypatch):

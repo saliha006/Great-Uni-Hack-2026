@@ -118,13 +118,36 @@ def _sentences(text: str) -> list[str]:
 
 
 def _heuristic_bank(text: str) -> dict:
-    """Recall and short-answer items built from the passage's own sentences; used when the LLM is unavailable."""
-    sents = _sentences(text)
-    picked = sorted(sorted(sents, key=len, reverse=True)[:5], key=sents.index)
-    qa = [{"prompt": f"In your own words, explain: {p}", "answer": p} for p in picked]
-    shorts = [dict(q, rubric="Full credit if the main idea of the answer is present.") for q in qa]
-    return {"key_points": picked[:4], "recall": qa[:3], "mcq": [], "short": shorts[:2],
-            "probe_mcq": [], "probe_short": shorts[:5]}
+    """Build distinct fill-in-the-blank prompts from terms stated in the passage."""
+    facts = list(dict.fromkeys(
+        part.strip() for part in re.split(r"(?<=[.!?;])\s+|\n+", text)
+        if len(part.split()) >= 3 and _words(part)
+    ))
+    candidates = []
+    for fact in facts:
+        terms = list(re.finditer(r"[a-zA-Z0-9]+", fact))
+        words = [term.group().lower() for term in terms]
+        candidates.append([
+            {"prompt": f"Complete the statement: {fact[:term.start()]}____{fact[term.end():]}",
+             "answer": term.group(), "rubric": "Credit the missing term or an equivalent term."}
+            for term in sorted(terms, key=lambda term: -len(term.group()))
+            if term.group().lower() in _words(term.group()) and words.count(term.group().lower()) == 1
+        ])
+    questions = []
+    seen_answers = set()
+    # Cover different facts before returning to a fact for another term.
+    for round_index in range(max(map(len, candidates), default=0)):
+        for row in candidates:
+            if round_index < len(row):
+                question = row[round_index]
+                answer = _norm(question["answer"])
+                if answer not in seen_answers:
+                    questions.append(question)
+                    seen_answers.add(answer)
+        if len(questions) >= 7:
+            break
+    return {"key_points": facts[:4], "recall": questions[:2], "mcq": [], "short": questions[:2],
+            "probe_mcq": [], "probe_short": questions[2:7]}
 
 
 def _valid_mcq(q: dict) -> bool:
@@ -146,10 +169,23 @@ def ground_bank(raw: dict, text: str) -> dict:
         "probe_short": grounded(raw.get("probe_short", [])),
     }
     fallback = _heuristic_bank(text)
-    for part, need in (("key_points", 3), ("recall", 2), ("probe_short", 5 - min(3, len(bank["probe_mcq"])))):
+    for part, need in (("key_points", 3), ("recall", 2), ("short", max(0, 2 - len(bank["mcq"])))):
         if len(bank[part]) < need:
-            log.info("bank %s had %d grounded items; topping up from the passage", part, len(bank[part]))
             bank[part] += [x for x in fallback[part] if x not in bank[part]][:need - len(bank[part])]
+
+    prompts = {_norm(q["prompt"]) for part in ("recall", "mcq", "short") for q in bank[part]}
+    for part, candidates, limit in (
+        ("probe_mcq", bank["probe_mcq"], 3),
+        ("probe_short", bank["probe_short"] + fallback["probe_short"], 5),
+    ):
+        bank[part] = []
+        for q in candidates:
+            prompt = _norm(q["prompt"])
+            if prompt and prompt not in prompts:
+                bank[part].append(q)
+                prompts.add(prompt)
+                if len(bank[part]) == limit:
+                    break
     return bank
 
 
@@ -450,6 +486,14 @@ def _main_items(method: str, bank: dict, chunk: db.ChunkRow, subject_name: str) 
             for q in bank["recall"]]
 
 
+def _probe_items(bank: dict) -> list[dict]:
+    mcqs = bank["probe_mcq"][:3]
+    return ([{"kind": "MCQ", "prompt": q["prompt"], "options_json": json.dumps(q["options"]),
+              "answer_key": q["answer"], "difficulty": 2, "expected_seconds": 30} for q in mcqs]
+            + [{"kind": "SHORT_ANSWER", "prompt": q["prompt"], "answer_key": q["answer"], "rubric": q["rubric"],
+                "difficulty": 3, "expected_seconds": 60} for q in bank["probe_short"][:5 - len(mcqs)]])
+
+
 def create_session(ses: Session, body: s.SessionCreate) -> s.Session:
     subject = _get(ses, db.SubjectRow, body.subject_id, "subject")
     chunks = _chunks(ses, subject.id)
@@ -460,15 +504,33 @@ def create_session(ses: Session, body: s.SessionCreate) -> s.Session:
     mode = plan.mode if method == plan.method else "ADAPTIVE"
     used = [r.chunk_id for r in ses.exec(select(db.SessionRow).where(db.SessionRow.subject_id == subject.id)).all()]
     if mode == "SAMPLER":
-        chunk = chunks[sum(1 for r in _completed(ses, subject.id) if r.mode == "SAMPLER") % len(chunks)]
+        offset = sum(1 for r in _completed(ses, subject.id) if r.mode == "SAMPLER") % len(chunks)
+        chunks = chunks[offset:] + chunks[:offset]
     else:
-        chunk = min(chunks, key=lambda c: (used.count(c.id), c.idx))
+        chunks.sort(key=lambda c: (used.count(c.id), c.idx))
+
+    for chunk in chunks:
+        bank = chunk_bank(chunk.text)
+        main_items = _main_items(method, bank, chunk, subject.name)
+        probe_items = _probe_items(bank)
+        if main_items and bank["key_points"] and len(probe_items) == 5:
+            break
+    else:
+        raise HTTPException(422, "Add study material with more distinct facts or definitions to build a five-question probe.")
+
+    if not json.loads(chunk.key_points_json):
+        chunk.key_points_json = json.dumps(bank["key_points"])
+        ses.add(chunk)
+        main_items = _main_items(method, bank, chunk, subject.name)
+
     row = db.SessionRow(subject_id=subject.id, chunk_id=chunk.id, method=method, mode=mode,
                         planned_minutes=plan.session_minutes, started_at=clock.now())
     ses.add(row)
     ses.flush()
-    for spec in _main_items(method, chunk_bank(chunk.text), chunk, subject.name):
+    for spec in main_items:
         ses.add(db.ItemRow(session_id=row.id, phase="MAIN", **spec))
+    for spec in probe_items:
+        ses.add(db.ItemRow(session_id=row.id, phase="PENDING_PROBE", **spec))
     ses.commit()
     return s.Session(id=row.id, subject_id=subject.id, method=method, mode=mode, planned_minutes=row.planned_minutes,
                      chunk_id=chunk.id, reason=plan.reason)
@@ -515,6 +577,8 @@ def _session_item(ses: Session, session_id: int, item_id: int) -> db.ItemRow:
 def answer(ses: Session, session_id: int, body: s.AnswerBody) -> s.AnswerResult:
     from app import guard
     item = _session_item(ses, session_id, body.item_id)
+    if item.phase in {"PENDING_PROBE", "PROBE"}:
+        raise HTTPException(409, "submit probe answers together through the probe endpoint")
     if body.guided and item.phase == "MAIN" and item.kind != "FEYNMAN_BRIEF":
         guided = guard.answer(ses, session_id, item, body)
         if guided is not None:
@@ -652,7 +716,7 @@ def feynman_transcript(ses: Session, session_id: int, body: s.FeynmanBody) -> s.
     brief = next(iter(_items(ses, session_id, "MAIN")), None)
     if brief is not None and brief.kind == "FEYNMAN_BRIEF":
         ses.add(db.ResponseRow(item_id=brief.id, session_id=session_id, answer=text, score=score,
-                               latency_ms=0, ts=clock.now()))
+                               latency_ms=body.latency_ms or 0, ts=clock.now()))
         ses.commit()
     return s.FeynmanResult(score=round(score, 3), covered=[key_points[i] for i in sorted(covered)], gaps=gaps,
                            feedback=" ".join(parts))
@@ -662,17 +726,19 @@ def feynman_transcript(ses: Session, session_id: int, body: s.FeynmanBody) -> s.
 
 def finish(ses: Session, session_id: int) -> s.FinishResult:
     row = _get(ses, db.SessionRow, session_id, "session")
-    existing = _items(ses, session_id, "PROBE")
-    if existing:
-        return s.FinishResult(probe_items=[_item_view(i) for i in existing])
-    bank = chunk_bank(ses.get(db.ChunkRow, row.chunk_id).text)
-    for q in bank["probe_mcq"][:3]:
-        ses.add(db.ItemRow(session_id=session_id, kind="MCQ", phase="PROBE", prompt=q["prompt"],
-                           options_json=json.dumps(q["options"]), answer_key=q["answer"], difficulty=2,
-                           expected_seconds=30))
-    for q in bank["probe_short"][:5 - min(3, len(bank["probe_mcq"]))]:
-        ses.add(db.ItemRow(session_id=session_id, kind="SHORT_ANSWER", phase="PROBE", prompt=q["prompt"],
-                           answer_key=q["answer"], rubric=q["rubric"], difficulty=3, expected_seconds=60))
+    probes = ses.exec(select(db.ItemRow).where(db.ItemRow.session_id == session_id,
+                      db.ItemRow.phase.in_(("PENDING_PROBE", "PROBE"))).order_by(db.ItemRow.id)).all()
+    if probes and probes[0].phase == "PROBE":
+        return s.FinishResult(probe_items=[_item_view(i) for i in probes])
+    if probes:
+        for item in probes:
+            item.phase = "PROBE"
+            ses.add(item)
+    else:
+        # Sessions created before probe preflight may still need their probe generated here.
+        bank = chunk_bank(ses.get(db.ChunkRow, row.chunk_id).text)
+        for spec in _probe_items(bank):
+            ses.add(db.ItemRow(session_id=session_id, phase="PROBE", **spec))
     main = _items(ses, session_id, "MAIN")
     answered = _responses(ses, session_id)
     capped = [min(r.latency_ms, LATENCY_CAP * 1000 * i.expected_seconds) for i in main if (r := answered.get(i.id))]
