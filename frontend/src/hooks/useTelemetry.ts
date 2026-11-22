@@ -1,7 +1,7 @@
 // Telemetry contract (brief): latency_ms = item render → submit; ts = ISO UTC; item_id on item
 // events; IDLE after 30 s with no input. Batched to POST /events every ~5 s and on each answer.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api } from '../api/client'
+import { api, presenterToolsEnabled } from '../api/client'
 import type { AttentionReading, EventType, Intervention, SessionEvent } from '../api/types'
 import { getLocal } from '../lib/local'
 
@@ -52,7 +52,7 @@ export function useTelemetry(sessionId: number, onIntervention: (i: Intervention
   // Returns the latency to send with the answer, so /answer and /events agree.
   const itemAnswered = useCallback((itemId: number) => {
     const raw = Date.now() - (shownAt.current.get(itemId) ?? Date.now())
-    const latency_ms = getLocal().simulateDrift ? Math.round(raw * 4 + 90_000) : raw
+    const latency_ms = presenterToolsEnabled && getLocal().simulateDrift ? Math.round(raw * 4 + 90_000) : raw
     emit('ITEM_ANSWERED', { item_id: itemId, latency_ms })
     void flush()
     return latency_ms

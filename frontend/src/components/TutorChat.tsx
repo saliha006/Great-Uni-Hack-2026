@@ -1,6 +1,6 @@
 // "Ask your notes": a tutor that answers only with quotes from the student's own notes.
 import { useState } from 'react'
-import { api } from '../api/client'
+import { api, usingMock } from '../api/client'
 import type { AskResult } from '../api/types'
 import { QuizCard } from './QuizCard'
 import { Button } from './ui'
@@ -26,6 +26,8 @@ export function TutorChat({ subjectId, sessionId }: { subjectId: number; session
       setBusy(false)
     }
   }
+
+  if (usingMock) return <p className="mt-4 text-sm text-muted">Ask your notes is available with the Attune backend.</p>
 
   if (!open) {
     return (

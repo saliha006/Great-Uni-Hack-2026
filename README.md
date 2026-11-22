@@ -99,6 +99,31 @@ Uvicorn command with `--env-file ../.env` in place of the `LLM_MODE=fixtures` pr
 
 Run `LLM_MODE=fixtures .venv/bin/python -m pytest -q` in `backend/`. Run `npm test` and `npm run build` in `frontend/`.
 
+### Presenter controls
+
+The ordinary browser demo and the full local app both start with presenter tools off. Set
+`VITE_PRESENTER_TOOLS=true` in the frontend environment and restart Vite or rebuild to enable the
+`/dev` page and demo controls. To use presenter tools with a backend, start it in development mode
+(`ATTUNE_ENV=dev`) so it serves the demo endpoints. Keep the frontend switch off for ordinary use.
+The guided demo at `/demo` uses browser fixtures and disables presenter tools in every configuration.
+
+Browser mode supports core study sessions with text notes and typed Feynman explanations. PDF upload,
+Ask your notes and generated quizzes, flashcards and practice papers need the backend. Feynman voice also
+needs ElevenLabs credentials.
+
+<details>
+<summary>Mode verification matrix</summary>
+
+| Frontend `VITE_API_URL` | `VITE_PRESENTER_TOOLS` | Ordinary flow | Presenter controls |
+|---|---|---|---|
+| Empty | Off | Create a subject and start a session with text notes. `/tools` explains the backend requirement. | Direct navigation to `/dev` shows Page not found. |
+| Local API URL | Off | Create a subject and start a session. The notes form accepts PDFs and `/tools` offers generated sets. | Direct navigation to `/dev` shows Page not found. |
+| Empty | On | The same browser-only study capabilities apply. | `/dev` manages browser demo data. |
+| Local API URL | On | The same backend study capabilities apply. | `/dev` manages backend demo data when `ATTUNE_ENV=dev`. |
+| Either | Either | `/demo` uses browser fixtures. | `/demo/dev` shows Page not found. |
+
+</details>
+
 ## Demo in two minutes
 
 Choose **Guided demo** in the app to explore Ada’s sample workspace. The guided demo runs in its own browser

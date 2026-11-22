@@ -41,18 +41,29 @@ test('the demo can finish and replay without changing saved study data or contac
   })
 
   // A navigation unloads the browser modules. A fresh Vite module runner reproduces that here.
-  async function load(apiUrl = '') {
+  async function load(apiUrl = '', presenterTools = '') {
     await server?.close()
     server = await createServer({
       configFile: false, envDir: false,
-      define: { 'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl) },
+      define: {
+        'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
+        'import.meta.env.VITE_PRESENTER_TOOLS': JSON.stringify(presenterTools),
+      },
       server: { middlewareMode: true, ws: false, watch: null },
       optimizeDeps: { noDiscovery: true, include: [] },
     })
     const workspace = await server.ssrLoadModule('/src/lib/workspace.ts')
-    const { api } = await server.ssrLoadModule('/src/api/client.ts')
+    const { api, presenterToolsEnabled, usingMock } = await server.ssrLoadModule('/src/api/client.ts')
     const { getLocal, setLocal } = await server.ssrLoadModule('/src/lib/local.ts')
-    return { ...workspace, api, getLocal, setLocal }
+    return { ...workspace, api, getLocal, setLocal, presenterToolsEnabled, usingMock }
+  }
+
+  for (const apiUrl of ['', 'https://backend.test']) {
+    for (const presenterTools of ['false', 'true']) {
+      const mode = await load(apiUrl, presenterTools)
+      assert.equal(mode.usingMock, apiUrl === '')
+      assert.equal(mode.presenterToolsEnabled, presenterTools === 'true')
+    }
   }
 
   const study = await load()
@@ -74,7 +85,9 @@ test('the demo can finish and replay without changing saved study data or contac
 
   study.openTour()
   assert.equal(new URL(href).pathname, '/demo')
-  const demo = await load('https://backend.test')
+  const demo = await load('https://backend.test', 'true')
+  assert.equal(demo.usingMock, true)
+  assert.equal(demo.presenterToolsEnabled, false)
   const ada = await demo.api.devSeed('ada')
   assert.equal(demo.getLocal().resume, null)
   const seeded = await demo.api.insights(ada.subject_ids[0])
