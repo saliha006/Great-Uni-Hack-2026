@@ -166,6 +166,9 @@ class LLMService:
             return json.loads(path.read_text(encoding="utf-8"))
         except (FileNotFoundError, json.JSONDecodeError):
             return None
+        except OSError as exc:
+            log.warning("could not read LLM cache: %s", exc)
+            return None
 
     def _write(self, key: str, data: dict) -> None:
         try:
