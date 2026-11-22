@@ -4,7 +4,7 @@ from app.llm import LLMService
 from app.main import create_app
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlmodel import create_engine
+from sqlmodel import Session, create_engine, select
 
 
 @pytest.fixture
@@ -231,6 +231,50 @@ def test_bank_keeps_only_items_quoted_from_the_passage():
 def test_bank_falls_back_to_the_passage_when_the_llm_is_down(client):
     bank = flow.chunk_bank(PASSAGE + " Deletion uses tombstones so lookups keep probing past removed entries.")
     assert bank["key_points"] and bank["probe_short"]
+
+
+@pytest.mark.parametrize("line_separated", [False, True])
+def test_short_facts_support_practice_and_a_prepared_probe(client, monkeypatch, line_separated):
+    notes = ("Atoms contain protons. Electrons surround nuclei. Neutrons lack charge. "
+             "Protons repel protons. Atoms form molecules. Covalent bonds share electrons. "
+             "Ionic bonds involve attraction. Metals conduct electricity. Water dissolves salts. "
+             "Temperature affects reactions. Catalysts speed reactions. Acids donate protons. "
+             "Bases accept protons. Indicators change colour. Crystals have ordered structures. "
+             "Gases expand freely. Liquids flow readily. Solids retain shape.")
+    if line_separated:
+        notes = notes.rstrip(".").replace(". ", "\n")
+    sid = client.post("/api/subjects", json={"name": "Chemistry", "kind": "KNOWLEDGE"}).json()["id"]
+    assert client.post(f"/api/subjects/{sid}/material", json={"text": notes}).status_code == 200
+    response = client.post("/api/sessions", json={"subject_id": sid, "method": "PRACTICE_TEST"})
+    assert response.status_code == 200
+    path = f"/api/sessions/{response.json()['id']}"
+    item = client.get(f"{path}/next-item").json()
+    assert item["kind"] == "SHORT_ANSWER"
+    assert client.post(f"{path}/probe", json={"answers": [], "felt_rating": 4}).status_code == 409
+
+    def unavailable(_):
+        pytest.fail("finish should use the probe prepared at session creation")
+
+    monkeypatch.setattr(flow, "chunk_bank", unavailable)
+    probe = client.post(f"{path}/finish").json()["probe_items"]
+    assert len({q["prompt"] for q in probe}) == 5
+    assert item["prompt"] not in {q["prompt"] for q in probe}
+    assert client.post(f"{path}/finish").json()["probe_items"] == probe
+    complete = client.post(f"{path}/probe", json={"answers": [], "felt_rating": 4})
+    assert complete.status_code == 200
+    assert complete.json()["probe_score"] == 0
+
+
+def test_insufficient_facts_reject_session_without_writing_rows(client):
+    sid = client.post("/api/subjects", json={"name": "Chemistry", "kind": "KNOWLEDGE"}).json()["id"]
+    assert client.post(f"/api/subjects/{sid}/material",
+                       json={"text": "Atoms contain protons. " * 20}).status_code == 200
+    response = client.post("/api/sessions", json={"subject_id": sid, "method": "PRACTICE_TEST"})
+    assert response.status_code == 422
+    assert "more distinct facts" in response.json()["detail"]
+    with Session(db.engine) as session:
+        assert session.exec(select(db.SessionRow)).all() == []
+        assert session.exec(select(db.ItemRow)).all() == []
 
 
 def test_pdf_material_is_read_with_ingest(client, monkeypatch):

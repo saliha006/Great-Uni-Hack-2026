@@ -67,11 +67,12 @@ def chunk_material(text: str) -> list[ChunkDraft]:
     if len(chunks) < MIN_CHUNKS:
         count = min(MIN_CHUNKS, len(words))
         size, remainder = divmod(len(words), count)
+        word_spans = list(re.finditer(r"\S+", text))
         chunks = []
         start = 0
         for idx in range(count):
             end = start + size + (idx < remainder)
-            chunks.append(" ".join(words[start:end]))
+            chunks.append(text[word_spans[start].start():word_spans[end - 1].end()])
             start = end
 
     return [ChunkDraft(idx=idx, text=chunk, difficulty_est=_difficulty(chunk))
