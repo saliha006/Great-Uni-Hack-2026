@@ -1,10 +1,10 @@
 """Why progress stalled: tired vs absent vs plateau vs mastered (PRD §8.4). All thresholds are TUNE."""
 import statistics
 from collections import Counter
-from datetime import timedelta
+from datetime import datetime, timedelta
 from itertools import combinations
 
-from engine.types import Diagnosis, Plan, SessionSummary, TrialOutcome
+from engine.types import Diagnosis, Method, Plan, SessionSummary, TrialOutcome
 
 WINDOW = 6
 MIN_SESSIONS, MIN_DAYS = 3, 3
@@ -94,15 +94,19 @@ def diagnose(history: list[SessionSummary], plan: Plan) -> Diagnosis:
     return Diagnosis(name=name, evidence=evidence)
 
 
-def evaluate_trial(history: list[SessionSummary], trial: Plan) -> TrialOutcome:
-    """Trial sessions vs the same number of sessions just before the trial started (PRD §8.4)."""
+def evaluate_trial(history: list[SessionSummary], trial: Plan, *, started_at: datetime | None = None,
+                   previous_method: Method | None = None) -> TrialOutcome:
+    """Compare the current trial with up to the same number of recent sessions on the previous method."""
     history = sorted(history, key=lambda s: s.ts)
-    trial_idx = [i for i, s in enumerate(history) if s.mode == "TRIAL" and s.method == trial.method]
-    if not trial_idx:
+    during = [s for s in history if s.mode == "TRIAL" and s.method == trial.method
+              and (started_at is None or s.ts >= started_at)]
+    if not during:
         return TrialOutcome(adopt=False, delta=0.0, n=0)
-    before = history[max(0, trial_idx[0] - len(trial_idx)):trial_idx[0]]
-    if not before:
-        return TrialOutcome(adopt=False, delta=0.0, n=len(trial_idx))
-    delta = statistics.mean(history[i].probe_score for i in trial_idx) - statistics.mean(s.probe_score for s in before)
-    n = len(trial_idx)
-    return TrialOutcome(adopt=delta >= TRIAL_MIN_DELTA and n >= TRIAL_MIN_N, delta=round(delta, 3), n=n)
+    start = started_at or during[0].ts
+    before = [s for s in history if s.ts < start and s.mode != "TRIAL"
+              and (previous_method is None or s.method == previous_method)][-len(during):]
+    delta = statistics.mean(s.probe_score for s in during) - statistics.mean(s.probe_score for s in before) if before else 0.0
+    enough = min(len(before), len(during)) >= TRIAL_MIN_N
+    # Allow for floating-point error when the difference is exactly at the threshold.
+    adopt = enough and round(delta, 12) >= TRIAL_MIN_DELTA
+    return TrialOutcome(adopt=adopt, delta=round(delta, 3), n=len(during), baseline_n=len(before))

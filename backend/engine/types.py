@@ -178,6 +178,7 @@ class TrialOutcome(BaseModel):
     adopt: bool
     delta: float
     n: int
+    baseline_n: int = 0
 
 
 class LLM(Protocol):

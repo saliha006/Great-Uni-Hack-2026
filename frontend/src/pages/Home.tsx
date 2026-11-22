@@ -71,7 +71,7 @@ export function Home() {
           <div>
             <p className="text-sm text-muted">Continue where you stopped</p>
             <p className="text-lg font-bold">
-              {resume.subjectName} · {METHOD_LABEL[resume.session.method]} · {resume.itemsDone} done
+              {resume.subjectName} · {METHOD_LABEL[resume.session.method]} · {resume.quickCheck ? 'Quick check' : `${resume.itemsDone} done`}
             </p>
           </div>
           <div className="ml-auto flex gap-2">

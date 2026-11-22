@@ -1,6 +1,7 @@
 // Standard Probe: same 5-item check for every method, then "how did that feel?" (PRD §6 F4).
-import { useRef, useState } from 'react'
-import type { Item, ProbeBody } from '../../api/types'
+import { useRef } from 'react'
+import type { ProbeBody } from '../../api/types'
+import type { QuickCheckDraft } from '../../lib/local'
 import { Button, ErrorBox } from '../ui'
 
 const FEELINGS: { v: ProbeBody['felt_rating']; face: string; label: string }[] = [
@@ -11,17 +12,26 @@ const FEELINGS: { v: ProbeBody['felt_rating']; face: string; label: string }[] =
   { v: 5, face: '😄', label: 'Great' },
 ]
 
-export function Probe({ items, onSubmit, busy, error }: { items: Item[]; onSubmit: (b: ProbeBody) => void; busy: boolean; error: unknown }) {
-  const started = useRef(Date.now())
-  const [answers, setAnswers] = useState<Record<number, { answer: string; at: number }>>({})
-  const [felt, setFelt] = useState<ProbeBody['felt_rating'] | null>(null)
-  const set = (id: number, answer: string) => setAnswers((a) => ({ ...a, [id]: { answer, at: Date.now() } }))
+export function Probe({ draft, onChange, onSubmit, busy, error }: {
+  draft: QuickCheckDraft
+  onChange: (draft: QuickCheckDraft) => void
+  onSubmit: (body: ProbeBody) => void
+  busy: boolean
+  error: unknown
+}) {
+  const { items, answers, felt } = draft
+  const started = useRef(performance.now())
+  const latency = () => Math.min(3_600_000, Math.round(performance.now() - started.current))
+  const set = (id: number, answer: string) => onChange({
+    ...draft,
+    answers: { ...answers, [id]: { answer, latency_ms: latency() } },
+  })
   const answered = items.filter((i) => answers[i.id]?.answer.trim()).length
 
   const submit = () => {
-    if (!felt) return
+    if (!felt || busy) return
     onSubmit({
-      answers: items.map((i) => ({ item_id: i.id, answer: answers[i.id]?.answer ?? '', latency_ms: (answers[i.id]?.at ?? Date.now()) - started.current })),
+      answers: items.map((i) => ({ item_id: i.id, answer: answers[i.id]?.answer ?? '', latency_ms: answers[i.id]?.latency_ms ?? latency() })),
       felt_rating: felt,
     })
   }
@@ -63,7 +73,7 @@ export function Probe({ items, onSubmit, busy, error }: { items: Item[]; onSubmi
           {FEELINGS.map((f) => (
             <button
               key={f.v}
-              onClick={() => setFelt(f.v)}
+              onClick={() => onChange({ ...draft, felt: f.v })}
               aria-pressed={felt === f.v}
               className={`flex min-w-20 flex-col items-center rounded-(--radius-ctl) border px-3 py-2 ${felt === f.v ? 'border-ink bg-sunken' : 'border-line bg-surface hover:bg-sunken'}`}
             >

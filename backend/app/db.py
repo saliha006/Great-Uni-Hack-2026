@@ -2,7 +2,7 @@ import os
 from collections.abc import Iterator
 from datetime import datetime
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, inspect
 from sqlalchemy.engine import make_url
 from sqlmodel import Field, Session, SQLModel, create_engine
 
@@ -127,6 +127,7 @@ class AttentionBaselineRow(SQLModel, table=True):
     baseline_cv: float
     baseline_cv_sd: float
     focus_window_min: int
+    n_sessions: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
     updated_at: datetime
 
 
@@ -167,6 +168,12 @@ class LLMUsageRow(SQLModel, table=True):
 def init_db(bind: Engine = engine) -> None:
     with bind.begin() as connection:
         SQLModel.metadata.create_all(connection)
+        columns = inspect(connection).get_columns("attention_baselines")
+        if not any(column["name"] == "n_sessions" for column in columns):
+            guard = "IF NOT EXISTS " if connection.dialect.name == "postgresql" else ""
+            connection.exec_driver_sql(
+                f"ALTER TABLE attention_baselines ADD COLUMN {guard}n_sessions INTEGER NOT NULL DEFAULT 0"
+            )
 
 
 def get_session() -> Iterator[Session]:

@@ -16,7 +16,7 @@ import { Result } from '../components/session/Result'
 import { TutorChat } from '../components/TutorChat'
 import { Button, ButtonLink, Card, ErrorBox, Spinner } from '../components/ui'
 import { useTelemetry } from '../hooks/useTelemetry'
-import { getLocal, logActivity, setLocal, todayKey, useLocal } from '../lib/local'
+import { getLocal, logActivity, setLocal, todayKey, useLocal, type Resume } from '../lib/local'
 import { useStartSession } from '../lib/useStartSession'
 
 type Phase = 'loading' | 'item' | 'finishing' | 'probe' | 'result'
@@ -51,10 +51,12 @@ function Runner() {
   const navigate = useNavigate()
   const again = useStartSession()
 
-  const [phase, setPhase] = useState<Phase>('loading')
+  const quickCheck = useLocal((s) => s.resume?.session.id === session.id ? s.resume.quickCheck : undefined)
+  const [phase, setPhase] = useState<Phase>(() =>
+    resume.quickCheck?.phase === 'draft' ? 'probe' : resume.quickCheck ? 'finishing' : 'loading',
+  )
   const [item, setItem] = useState<Item | null>(resume.currentItem ?? null)
   const [done, setDone] = useState(resume.itemsDone)
-  const [probeItems, setProbeItems] = useState<Item[]>([])
   const [result, setResult] = useState<SessionResult | null>(null)
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
@@ -68,11 +70,18 @@ function Runner() {
     else if (i.type === 'WRAP_UP') setWrapUp(i.message)
     else setToast(i.message)
   }, [])
-  const tel = useTelemetry(session.id, onIntervention, brk !== null || phase === 'result')
+  const studying = phase === 'loading' || phase === 'item'
+  const tel = useTelemetry(session.id, onIntervention, brk !== null || !studying)
+  const { flush } = tel
+  const save = useCallback((patch: Partial<Pick<Resume, 'itemsDone' | 'currentItem' | 'elapsedSec' | 'quickCheck'>>) => {
+    setLocal((s) => s.resume?.session.id === session.id
+      ? { resume: { ...s.resume, ...patch, savedAt: new Date().toISOString() } }
+      : {})
+  }, [session.id])
 
   const timer = useSessionTimer(
     session.planned_minutes,
-    brk !== null || phase === 'probe' || phase === 'result',
+    brk !== null || !studying,
     useCallback(() => {
       const mins = getLocal().pomodoroBreak
       setBrk({ seconds: mins * 60, message: `Pomodoro done. ${mins} minutes off.` })
@@ -83,7 +92,7 @@ function Runner() {
 
   useEffect(() => {
     if (timer.elapsedSec % 5 === 0) save({ elapsedSec: timer.elapsedSec })
-  }, [timer.elapsedSec]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [save, timer.elapsedSec])
 
   useEffect(() => {
     if (!toast) return
@@ -99,27 +108,31 @@ function Runner() {
     prevBrk.current = brk !== null
   }, [brk, tel])
 
-  const save = (patch: { itemsDone?: number; currentItem?: Item; elapsedSec?: number }) =>
-    setLocal((s) => (s.resume ? { resume: { ...s.resume, ...patch, savedAt: new Date().toISOString() } } : {}))
-
+  const preparing = useRef(false)
   const toProbe = useCallback(async () => {
+    if (preparing.current) return
+    preparing.current = true
+    save({ quickCheck: { phase: 'preparing' }, currentItem: undefined })
     setPhase('finishing')
     setWrapUp(null)
+    setError(null)
     try {
-      await tel.flush()
-      const r = await api.finish(session.id)
-      setProbeItems(r.probe_items)
+      await flush()
+      const { probe_items: items } = await api.finish(session.id)
+      save({ quickCheck: { phase: 'draft', items, answers: {}, felt: null } })
       setPhase('probe')
     } catch (e) {
       setError(e)
-      setPhase('item')
+    } finally {
+      preparing.current = false
     }
-  }, [session.id, tel])
+  }, [flush, save, session.id])
 
   const next = useCallback(async () => {
     setError(null)
     try {
       const n = await api.nextItem(session.id)
+      if (getLocal().resume?.quickCheck) return
       if (isDone(n)) {
         save({ currentItem: undefined })
         await toProbe()
@@ -131,14 +144,16 @@ function Runner() {
     } catch (e) {
       setError(e)
     }
-  }, [session.id, toProbe])
+  }, [save, session.id, toProbe])
 
   // next-item advances the server's queue, so it must run once even under StrictMode's double mount.
   const fetchedFirst = useRef(false)
   useEffect(() => {
     if (fetchedFirst.current) return
     fetchedFirst.current = true
-    if (item) setPhase('item')
+    if (resume.quickCheck?.phase === 'draft') return
+    if (resume.quickCheck?.phase === 'preparing') void toProbe()
+    else if (item) setPhase('item')
     else void next()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -170,7 +185,7 @@ function Runner() {
       if (isFrog && !s.activity.some((a) => a.date === todayKey() && a.kind === 'FROG')) {
         logActivity('FROG', `Ate the frog: ${subjectName}`)
       }
-      setLocal({ resume: null })
+      setLocal((current) => current.resume?.session.id === session.id ? { resume: null } : {})
       void qc.invalidateQueries()
     } catch (e) {
       setError(e)
@@ -180,7 +195,7 @@ function Runner() {
   }
 
   const stepLabel =
-    phase === 'probe' ? 'Quick check' : phase === 'result' ? 'Done' : item?.kind === 'FEYNMAN_BRIEF' ? 'Teaching Sam' : `Question ${done + 1}`
+    (phase === 'probe' || phase === 'finishing') ? 'Quick check' : phase === 'result' ? 'Done' : item?.kind === 'FEYNMAN_BRIEF' ? 'Teaching Sam' : `Question ${done + 1}`
 
   return (
     <PageShell
@@ -213,9 +228,13 @@ function Runner() {
             <Button size="sm" variant="primary" className="ml-auto" onClick={toProbe}>Go to the quick check</Button>
           </div>
         )}
-        {error !== null && <div className="mb-4"><ErrorBox error={error} onRetry={phase === 'probe' ? undefined : () => void next()} /></div>}
+        {error !== null && phase !== 'probe' && (
+          <div className="mb-4"><ErrorBox error={error} onRetry={phase === 'finishing' ? toProbe : next} /></div>
+        )}
 
-        {(phase === 'loading' || phase === 'finishing') && <Spinner label={phase === 'loading' ? 'Getting your first question' : 'Preparing the quick check'} />}
+        {error === null && (phase === 'loading' || phase === 'finishing') && (
+          <Spinner label={phase === 'loading' ? 'Getting your first question' : 'Preparing the quick check'} />
+        )}
 
         {phase === 'item' && item && (
           item.kind === 'FEYNMAN_BRIEF'
@@ -223,7 +242,10 @@ function Runner() {
             : <ItemView key={item.id} sessionId={session.id} item={item} itemShown={tel.itemShown} itemAnswered={tel.itemAnswered} onNext={afterItem} />
         )}
 
-        {phase === 'probe' && <Probe items={probeItems} onSubmit={submitProbe} busy={busy} error={error} />}
+        {phase === 'probe' && quickCheck?.phase === 'draft' && (
+          <Probe draft={quickCheck} onChange={(draft) => save({ quickCheck: draft })}
+            onSubmit={submitProbe} busy={busy} error={error} />
+        )}
 
         {phase === 'result' && result && (
           <Result result={result} focusedMin={focusedMin} subjectName={subjectName} onAgain={() => again.mutate({ subjectId: session.subject_id, subjectName })} />

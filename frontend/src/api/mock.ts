@@ -292,9 +292,11 @@ export const mock = {
   async finish(sessionId: number): Promise<{ probe_items: Item[] }> {
     await wait()
     const s = sess(sessionId)
-    const bank = subj(s.session.subject_id).bank
-    s.probeIds = bank.probe.map((b) => makeItem(sessionId, b, 'PROBE'))
-    save()
+    if (!s.probeIds.length) {
+      const bank = subj(s.session.subject_id).bank
+      s.probeIds = bank.probe.map((b) => makeItem(sessionId, b, 'PROBE'))
+      save()
+    }
     return { probe_items: s.probeIds.map((i) => clone(db.items[i].item)) }
   },
   async probe(sessionId: number, body: ProbeBody): Promise<SessionResult> {

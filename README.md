@@ -11,7 +11,7 @@
 ![SQLite](https://img.shields.io/badge/SQLite-local-003B57?logo=sqlite&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-grading%20%26%20narration-412991?logo=openai&logoColor=white)
 ![ElevenLabs](https://img.shields.io/badge/ElevenLabs-voice%20agent-000000)
-![Tests](https://img.shields.io/badge/tests-200%2B%20passing-brightgreen)
+[![CI](https://github.com/saliha006/Great-Uni-Hack-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/saliha006/Great-Uni-Hack-2026/actions/workflows/ci.yml)
 
 [Features](#features) · [Why it's different](#why-its-different) · [Quick start](#quick-start) ·
 [Demo](#demo-in-two-minutes) · [How it works](#how-it-works) · [Limits](#honest-limits) · [Team](#team)
@@ -52,34 +52,52 @@ minute, and adapts each session to your attention.** When progress stops improvi
 
 ## Quick start
 
-**Requirements:** Python 3.11 and [uv](https://docs.astral.sh/uv/).
+### Browser-only demo
+
+Install [Node.js](https://nodejs.org/) 22.22 or later in the 22.x series, or Node.js 24 or newer. The browser demo uses a built-in mock API and needs no provider credentials.
 
 ```bash
-git clone https://github.com/saliha006/Great-Uni-Hack-2026.git && cd Great-Uni-Hack-2026
-cp .env.example .env                       # fill in keys (from the team, never committed)
+git clone https://github.com/saliha006/Great-Uni-Hack-2026.git
+cd Great-Uni-Hack-2026/frontend
+npm ci
+npm run dev
+```
+
+Open [Attune at 127.0.0.1:5173](http://127.0.0.1:5173).
+
+### Full local app
+
+Install Python 3.11 and [uv](https://docs.astral.sh/uv/) alongside Node.js. From the repository root, start the API with
+fixture AI responses and the local SQLite database. Feynman uses the typed explanation flow without ElevenLabs credentials.
+
+```bash
 cd backend
-uv venv --python 3.11 .venv && uv pip install -r requirements.txt
-.venv/bin/uvicorn app.main:app --port 8000 --env-file ../.env   # Windows: .venv/Scripts/uvicorn
+uv venv --python 3.11
+uv pip install -r requirements.txt
+LLM_MODE=fixtures .venv/bin/python -m uvicorn app.main:app --port 8000
 ```
 
-The API runs at `http://localhost:8000/api`, with interactive docs at `http://localhost:8000/docs`.
-
-**Frontend** (needs Node 18+), in a second terminal:
+In a second terminal, from the repository root, connect the frontend to the API.
 
 ```bash
-cd frontend && cp .env.example .env && npm install && npm run dev   # http://127.0.0.1:5173
+cd frontend
+npm ci
+VITE_API_URL=http://localhost:8000 npm run dev
 ```
 
-Set `VITE_API_URL=http://localhost:8000` in `frontend/.env` to use the backend; left empty, the frontend runs on a
-built-in mock API with demo data.
+Open [Attune](http://127.0.0.1:5173) and see the [interactive API docs](http://localhost:8000/docs). On Windows, use
+`.venv/Scripts/python.exe` and set the environment variables in your shell before running each command.
+
+For live AI or voice, copy the root `.env.example` to `.env`, add the relevant provider credentials and run the same
+Uvicorn command with `--env-file ../.env` in place of the `LLM_MODE=fixtures` prefix.
 
 | Setting | Values | Use |
 |---|---|---|
-| `API_MODE` | `real` (default) · `fixtures` | `fixtures` serves canned responses for frontend work |
-| `LLM_MODE` | `cache` (default) · `live` · `fixtures` | `cache` calls OpenAI only on a cache miss; `fixtures` never calls it |
-| `DATABASE_URL` | default `sqlite:///./attune.db` | point at another database without code changes |
+| `API_MODE` | `real` (default) · `fixtures` | `fixtures` serves canned API responses for frontend work |
+| `LLM_MODE` | `cache` (default) · `live` · `fixtures` | `cache` calls OpenAI only on a cache miss. `fixtures` runs the full backend with deterministic AI responses |
+| `DATABASE_URL` | default `sqlite:///./attune.db` | Point at another database without code changes |
 
-**Tests:** `.venv/bin/python -m pytest tests -q` (run from `backend/`).
+Run `LLM_MODE=fixtures .venv/bin/python -m pytest -q` in `backend/` and `npm run build` in `frontend/` to run the checks locally.
 
 ## Demo in two minutes
 
@@ -89,7 +107,7 @@ workspace, and **Leave demo** or **Finish** returns you to your study workspace.
 To try the backend walkthrough, start a separate backend with `DATABASE_URL` set to a new SQLite file that
 contains no study data. All history generated below is **seeded demo data** for a simulated student, Ada.
 
-1. `POST /api/dev/seed`: loads Ada's three weeks of study history.
+1. `POST /api/dev/seed`: loads Ada's calibration and fatigue weeks.
 2. `POST /api/dev/advance-days {"days": 7}`: the weekly reflection runs. Ada was tired in week 2, so her sessions were
    shortened and the method kept; in week 3 she plateaued on Practice Test, so Attune starts a 7-day Feynman trial.
 3. `POST /api/dev/advance-days {"days": 7}` again: the trial finishes with higher scores than Practice Test, and Attune keeps Feynman.
