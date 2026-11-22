@@ -565,7 +565,7 @@ def _baseline(ses: Session) -> t.Baseline:
         return t.Baseline()
     return t.Baseline(baseline_ratio=row.baseline_ratio, baseline_ratio_sd=row.baseline_ratio_sd,
                       baseline_cv=row.baseline_cv, baseline_cv_sd=row.baseline_cv_sd,
-                      focus_window_min=row.focus_window_min)
+                      focus_window_min=row.focus_window_min, n_sessions=row.n_sessions)
 
 
 CALM = s.EventsResult(attention=s.AttentionReading(state="FOCUSED", latency_cv=None, latency_ratio=None, idle_count=0,
@@ -785,8 +785,8 @@ def probe(ses: Session, session_id: int, body: s.ProbeBody) -> s.SessionResult:
     _save_stats(ses, subject.id, stats)
     new_base = attention.update_baseline(baseline, events_, metas)
     base_row = ses.get(db.AttentionBaselineRow, DEMO_USER) or db.AttentionBaselineRow(
-        user_id=DEMO_USER, updated_at=clock.now(), **new_base.model_dump(exclude={"n_sessions"}))
-    for k, v in new_base.model_dump(exclude={"n_sessions"}).items():
+        user_id=DEMO_USER, updated_at=clock.now(), **new_base.model_dump())
+    for k, v in new_base.model_dump().items():
         setattr(base_row, k, v)
     base_row.updated_at = clock.now()
     ses.add(base_row)
