@@ -7,13 +7,14 @@ import type {
   SessionResult, SignedUrl, Subject, SubjectKind, SubjectState, SubjectSummary,
 } from './types'
 import { METHOD_LABEL } from './types'
+import { isDemoWorkspace, MOCK_STORAGE_KEY, workspaceStorage } from '../lib/workspace'
 
-const KEY = 'attune:mock:v1'
 const LIVE: Method[] = ['ACTIVE_RECALL', 'PRACTICE_TEST', 'FEYNMAN']
 const PRIOR: Record<string, [number, number]> = {
   ACTIVE_RECALL: [2.4, 1.6], PRACTICE_TEST: [2.4, 1.6], FEYNMAN: [2.1, 1.9],
 }
 const DAY = 86_400_000
+const DEMO_EPOCH = Date.UTC(2026, 10, 7, 18)
 
 interface HistoryRow {
   session_id: number; ts: string; method: Method; probe_score: number; active_minutes: number
@@ -41,17 +42,17 @@ let db: DB = load()
 
 function load(): DB {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = workspaceStorage().getItem(MOCK_STORAGE_KEY)
     return raw ? (JSON.parse(raw) as DB) : empty()
   } catch {
     return empty()
   }
 }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(db)) } catch { /* storage full or blocked: keep in memory */ }
+  try { workspaceStorage().setItem(MOCK_STORAGE_KEY, JSON.stringify(db)) } catch { /* storage full or blocked: keep in memory */ }
 }
 const id = () => db.nextId++
-const now = () => Date.now() + db.offsetDays * DAY
+const now = () => (isDemoWorkspace ? DEMO_EPOCH : Date.now()) + db.offsetDays * DAY
 const iso = (t = now()) => new Date(t).toISOString()
 const wait = (ms = 120) => new Promise((r) => setTimeout(r, ms))
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T
@@ -179,7 +180,7 @@ export const mock = {
     const pool = plan.method === 'PRACTICE_TEST' ? rec.bank.practice : rec.bank.recall
     const picked = plan.method === 'FEYNMAN'
       ? [{ item: { kind: 'FEYNMAN_BRIEF' as const, prompt: `Teach Sam about ${rec.bank.topic}. Explain it as if they have never heard of it.`, difficulty: 2 as const, expected_seconds: 180 }, answer: '', keywords: [] }]
-      : [...pool].sort(() => Math.random() - 0.5).slice(0, 6)
+      : (isDemoWorkspace ? pool : [...pool].sort(() => Math.random() - 0.5)).slice(0, 6)
     const session: Session = { id: sid, subject_id: rec.subject.id, method: plan.method, mode: plan.mode, planned_minutes: plan.session_minutes, chunk_id: 1, reason: plan.reason }
     db.sessions[sid] = {
       session, queue: picked.map((b) => makeItem(sid, b, 'MAIN')), served: 0, difficultyCap: 5,
@@ -291,9 +292,11 @@ export const mock = {
   async finish(sessionId: number): Promise<{ probe_items: Item[] }> {
     await wait()
     const s = sess(sessionId)
-    const bank = subj(s.session.subject_id).bank
-    s.probeIds = bank.probe.map((b) => makeItem(sessionId, b, 'PROBE'))
-    save()
+    if (!s.probeIds.length) {
+      const bank = subj(s.session.subject_id).bank
+      s.probeIds = bank.probe.map((b) => makeItem(sessionId, b, 'PROBE'))
+      save()
+    }
     return { probe_items: s.probeIds.map((i) => clone(db.items[i].item)) }
   },
   async probe(sessionId: number, body: ProbeBody): Promise<SessionResult> {

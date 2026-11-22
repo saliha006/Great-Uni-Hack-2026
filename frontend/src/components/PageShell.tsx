@@ -1,8 +1,8 @@
 import { useEffect, type ReactNode } from 'react'
-import { openTour } from './Tour'
 import { NavLink, useLocation } from 'react-router-dom'
 import { hasSeededData, presenterToolsEnabled, usingMock } from '../api/client'
 import { setLocal, useLocal } from '../lib/local'
+import { isDemoWorkspace, openTour } from '../lib/workspace'
 import { CursorDot } from './CursorDot'
 import { StatusStrip, type StatusItem } from './StatusStrip'
 
@@ -57,7 +57,7 @@ export function PageShell({
             ))}
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs text-muted">{usingMock ? 'Browser demo' : 'Backend mode'}</span>
-              {presenterToolsEnabled && (
+              {!isDemoWorkspace && (
                 <button onClick={openTour} className="rounded-full border border-ink px-3 py-1 text-sm font-semibold hover:bg-sunken">Guided demo</button>
               )}
               {hasSeededData() && (

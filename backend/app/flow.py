@@ -452,6 +452,10 @@ def subject_state(ses: Session, subject_id: int) -> s.SubjectState:
     subject = _get(ses, db.SubjectRow, subject_id, "subject")
     rows = _completed(ses, subject_id)
     history = _history(rows)
+    plan = _plan(ses, subject_id)
+    if _resolve_trial(ses, subject_id, plan, history, clock.now()):
+        ses.commit()
+        plan = _plan(ses, subject_id)
     stats = _stats(ses, subject_id)
     sampler = {m: s.SamplerEntry(done=False) for m in t.LIVE_METHODS}
     for r in rows:
@@ -461,7 +465,7 @@ def subject_state(ses: Session, subject_id: int) -> s.SubjectState:
     return s.SubjectState(
         subject=_subject_view(subject), sampler=sampler,
         method_stats=[s.MethodStatView(**methodfit.stat_view(m, st).model_dump()) for m, st in stats.items()],
-        plan=s.Plan(**_plan(ses, subject_id).model_dump()),
+        plan=s.Plan(**plan.model_dump()),
         readiness=s.Readiness(**readiness.model_dump()) if readiness else None,
         focus_window_min=attention.focus_window(history), confidence=methodfit.confidence(stats))
 
@@ -500,6 +504,9 @@ def create_session(ses: Session, body: s.SessionCreate) -> s.Session:
     if not chunks:
         raise HTTPException(409, "add material to this subject first")
     plan = _plan(ses, subject.id)
+    if plan.mode == "TRIAL":
+        _resolve_trial(ses, subject.id, plan, _history(_completed(ses, subject.id)), clock.now())
+        plan = _plan(ses, subject.id)
     method = body.method or plan.method
     mode = plan.mode if method == plan.method else "ADAPTIVE"
     used = [r.chunk_id for r in ses.exec(select(db.SessionRow).where(db.SessionRow.subject_id == subject.id)).all()]
@@ -786,8 +793,85 @@ def _decided_plan(ref: t.Reflection, plan: t.Plan, now: datetime) -> t.Plan:
     return plan
 
 
-def _apply_decision(ses: Session, subject: db.SubjectRow, ref: t.Reflection, plan: t.Plan) -> None:
-    _save_plan(ses, subject.id, _decided_plan(ref, plan, clock.now()))
+def _start_or_update_plan(ses: Session, subject_id: int, ref: t.Reflection, plan: t.Plan,
+                          seeded: bool, now: datetime) -> tuple[t.Plan, s.Reflection]:
+    next_plan = _decided_plan(ref, plan, now)
+    if ref.decision.action == "TRIAL_METHOD":
+        ref.evidence["trial_previous_method"] = (
+            plan.method if plan.method != next_plan.method else ref.evidence["method"])
+        ref.evidence["trial_until"] = next_plan.trial_until
+    view = _reflection_view(_store_reflection(ses, subject_id, ref, seeded, ts=now))
+    return next_plan, view
+
+
+def _trial_result(ses: Session, subject_id: int, plan: t.Plan, history: list[t.SessionSummary],
+                  now: datetime, trigger: t.ReflectionTrigger) -> tuple[t.Plan, t.Reflection] | None:
+    if plan.mode != "TRIAL" or not plan.trial_until or now.date().isoformat() < plan.trial_until[:10]:
+        return None
+
+    end = datetime.fromisoformat(plan.trial_until[:10])
+    start = end - timedelta(days=agent.TRIAL_DAYS)
+    previous = None
+    refs = ses.exec(select(db.ReflectionRow).where(db.ReflectionRow.subject_id == subject_id,
+                                                  db.ReflectionRow.ts < end)
+                    .order_by(db.ReflectionRow.ts.desc(), db.ReflectionRow.id.desc())).all()
+    for row in refs:
+        decision, evidence = json.loads(row.decision_json), json.loads(row.evidence_json)
+        if decision.get("action") != "TRIAL_METHOD" or decision.get("method") != plan.method:
+            continue
+        until = evidence.get("trial_until") or (
+            row.ts + timedelta(days=decision.get("trial_days") or agent.TRIAL_DAYS)).date().isoformat()
+        if until == plan.trial_until[:10]:
+            start = row.ts
+            previous = evidence.get("trial_previous_method") or evidence.get("method")
+            break
+
+    if previous not in t.LIVE_METHODS:
+        # Older plans may predate the recorded comparator. Prefer the last regular method.
+        previous = next((h.method for h in reversed(history)
+                         if h.ts < start and h.mode != "TRIAL" and h.method != plan.method), None)
+    comparison = [h for h in history if h.ts < end]
+    outcome = dg.evaluate_trial(comparison, plan, started_at=start, previous_method=previous)
+    tested = t.METHOD_LABELS[plan.method]
+    if outcome.n < dg.TRIAL_MIN_N or outcome.baseline_n < dg.TRIAL_MIN_N:
+        result = "insufficient_data"
+        reason = f"The {tested} trial ended without enough scored sessions for a comparison."
+    elif outcome.adopt:
+        result = "adopted"
+        reason = f"Keeping {tested} after probe scores rose by {outcome.delta * 100:.1f} percentage points."
+    else:
+        result = "reverted"
+        reason = (f"The {tested} trial changed probe scores by {outcome.delta * 100:+.1f} percentage points. "
+                  f"Returning to {t.METHOD_LABELS[previous]}.")
+    chosen = plan.method if outcome.adopt else (previous or plan.method)
+    if result == "insufficient_data" and previous:
+        reason += f" Returning to {t.METHOD_LABELS[previous]}."
+
+    next_plan = t.Plan(method=chosen, mode="ADAPTIVE", session_minutes=plan.session_minutes, reason=reason)
+    found = dg.diagnose(comparison, plan)
+    ref = t.Reflection(id=0, ts=now.isoformat(), trigger=trigger, diagnosis=found.name,
+                       evidence={**found.evidence, "trial_outcome": result, "trial_method": plan.method,
+                                 "trial_previous_method": previous, "trial_delta": outcome.delta,
+                                 "trial_sessions": outcome.n, "trial_baseline_sessions": outcome.baseline_n,
+                                 "trial_until": plan.trial_until},
+                       decision=t.Decision(action="KEEP", method=chosen), explanation=reason)
+    return next_plan, ref
+
+
+def _resolve_trial(ses: Session, subject_id: int, plan: t.Plan, history: list[t.SessionSummary],
+                   now: datetime, trigger: t.ReflectionTrigger = "WEEKLY") -> s.Reflection | None:
+    result = _trial_result(ses, subject_id, plan, history, now, trigger)
+    if result is None:
+        return None
+    next_plan, ref = result
+    # Claim this transition before storing its reflection, including when two requests discover expiry together.
+    claimed = ses.exec(update(db.PlanRow).where(db.PlanRow.subject_id == subject_id, db.PlanRow.mode == "TRIAL",
+                                               db.PlanRow.trial_until == plan.trial_until)
+                       .values(**next_plan.model_dump()))
+    if not claimed.rowcount:
+        return None
+    return _reflection_view(_store_reflection(ses, subject_id, ref, any(h.is_seeded for h in history),
+                                               ts=datetime.fromisoformat(ref.ts)))
 
 
 class _TemplateOnly:
@@ -857,20 +941,21 @@ def probe(ses: Session, session_id: int, body: s.ProbeBody) -> s.SessionResult:
     base_row.updated_at = clock.now()
     ses.add(base_row)
 
-    rows = prior_rows + [row]
+    rows = sorted(prior_rows + [row], key=lambda r: (r.started_at, r.id))
     history = _history(rows)
     if subject.phase == "SAMPLING" and sum(r.mode == "SAMPLER" for r in rows) >= len(t.LIVE_METHODS):
         subject.phase = "ADAPTIVE"
         ses.add(subject)
-    plan = methodfit.choose_plan(_ctx(subject, rows, history, _plan(ses, subject.id), _profiles(ses)), stats, history,
-                                 random.Random())
-    _save_plan(ses, subject.id, plan)
-    reflection = None
-    seeded = any(r.is_seeded for r in rows)
-    if dg.diagnose(history, plan).name == "PLATEAU":
-        ref = agent.reflect(_ctx(subject, rows, history, plan), history, stats, plan, "PLATEAU", _TemplateOnly())
-        _apply_decision(ses, subject, ref, plan)
-        reflection = _reflection_view(_store_reflection(ses, subject.id, ref, seeded))
+    current = _plan(ses, subject.id)
+    now = clock.now()
+    reflection = _resolve_trial(ses, subject.id, current, history, now)
+    if reflection is None:
+        plan = methodfit.choose_plan(_ctx(subject, rows, history, current, _profiles(ses)), stats, history,
+                                     random.Random())
+        if plan.mode != "TRIAL" and dg.diagnose(history, plan).name == "PLATEAU":
+            ref = agent.reflect(_ctx(subject, rows, history, plan), history, stats, plan, "PLATEAU", _TemplateOnly())
+            plan, reflection = _start_or_update_plan(ses, subject.id, ref, current, any(r.is_seeded for r in rows), now)
+        _save_plan(ses, subject.id, plan)
     ses.commit()
     return _session_result(ses, ses.get(db.SessionRow, session_id), reflection)
 
@@ -899,15 +984,14 @@ def insights(ses: Session, subject_id: int) -> s.Insights:
     for ref in refs:
         timeline.append(s.TimelineEntry(ts=ref.ts.isoformat(), kind="RECALIBRATION",
                                         label=_label(f"Reflection: {ref.diagnosis.lower().replace('_', ' ')}", seeded)))
-        decision = json.loads(ref.decision_json)
+        decision, evidence = json.loads(ref.decision_json), json.loads(ref.evidence_json)
         if decision.get("action") == "TRIAL_METHOD" and decision.get("method"):
             name = t.METHOD_LABELS[decision["method"]]
-            end = ref.ts + timedelta(days=decision.get("trial_days") or agent.TRIAL_DAYS)
             timeline.append(s.TimelineEntry(ts=ref.ts.isoformat(), kind="TRIAL_START",
                                             label=_label(f"Trial of {name} started", seeded)))
-            if end <= clock.now():
-                timeline.append(s.TimelineEntry(ts=end.isoformat(), kind="TRIAL_END",
-                                                label=_label(f"Trial of {name} ended", seeded)))
+        if "trial_outcome" in evidence:
+            end = datetime.fromisoformat(evidence["trial_until"][:10])
+            timeline.append(s.TimelineEntry(ts=end.isoformat(), kind="TRIAL_END", label=ref.explanation))
     session_ids = [r.id for r in rows]
     if session_ids:
         for e in ses.exec(select(db.EventRow).where(db.EventRow.type == "BREAK_START",
@@ -934,10 +1018,15 @@ def _reflect(ses: Session, subject: db.SubjectRow, trigger: str) -> s.Reflection
     rows = _completed(ses, subject.id)
     history = _history(rows)
     plan = _plan(ses, subject.id)
+    now = clock.now()
+    outcome = _resolve_trial(ses, subject.id, plan, history, now, trigger)
+    if outcome:
+        return outcome
     stats = _stats(ses, subject.id)
     ref = agent.reflect(_ctx(subject, rows, history, plan), history, stats, plan, trigger, llm.for_engine())
-    _apply_decision(ses, subject, ref, plan)
-    return _reflection_view(_store_reflection(ses, subject.id, ref, any(r.is_seeded for r in rows)))
+    plan, view = _start_or_update_plan(ses, subject.id, ref, plan, any(r.is_seeded for r in rows), now)
+    _save_plan(ses, subject.id, plan)
+    return view
 
 
 def reflect(ses: Session, body: s.ReflectBody) -> s.Reflection:
@@ -962,24 +1051,46 @@ def _add_seeded(ses: Session, subject_id: int, chunks: list[db.ChunkRow], summar
 def _run_period(ses: Session, subject: db.SubjectRow, info: dict, start: datetime, days: int,
                 plan: t.Plan, sampler: bool = False) -> tuple[t.Plan, s.Reflection]:
     """Generate one period of the persona's sessions, then let the engine reflect on them as it would live."""
-    new = personas.period(info["key"], info["rng"], start, days, plan.method, plan.session_minutes, info["index"], 0)
+    chunks = _chunks(ses, subject.id)
+    trial_days, trial_offset = days, 0
+    if plan.mode == "TRIAL" and plan.trial_until:
+        end_date = datetime.fromisoformat(plan.trial_until[:10]).date()
+        trial_days = max(0, min(days, (end_date - start.date()).days))
+        trial_offset = max(0, agent.TRIAL_DAYS - (end_date - start.date()).days)
+    new = personas.period(info["key"], info["rng"], start, trial_days, plan.method, plan.session_minutes,
+                          info["index"], 0, day_offset=trial_offset)
+    if plan.mode == "TRIAL":
+        new = [h.model_copy(update={"mode": "TRIAL"}) for h in new]
     if sampler:
         probes = personas.SAMPLER_PROBES.get(info["key"], {})
         new[:len(t.LIVE_METHODS)] = [h.model_copy(update={"mode": "SAMPLER", "method": m,
                                                           "probe_score": probes.get(m, h.probe_score)})
                                      for h, m in zip(new, t.LIVE_METHODS)]
-    _add_seeded(ses, subject.id, _chunks(ses, subject.id), new)
+    _add_seeded(ses, subject.id, chunks, new)
+    now = (new[-1].ts + timedelta(hours=12)) if new else start
+    if trial_days < days:
+        now = start + timedelta(days=trial_days)
     rows = _completed(ses, subject.id)
     history = _history(rows)
-    stats = methodfit.stats_from_history(history)
-    _save_stats(ses, subject.id, stats)
-    now = new[-1].ts + timedelta(hours=12)
-    ctx = _ctx(subject, rows, history, plan).model_copy(update={"now": now})
-    ref = agent.reflect(ctx, history, stats, plan, "WEEKLY", _TemplateOnly())
-    view = _reflection_view(_store_reflection(ses, subject.id, ref, True, ts=now))
+    outcome = _trial_result(ses, subject.id, plan, history, now, "WEEKLY")
+    if outcome:
+        plan, ref = outcome
+        if trial_days < days:
+            followup = personas.period(info["key"], info["rng"], start + timedelta(days=trial_days),
+                                       days - trial_days, plan.method, plan.session_minutes, info["index"], trial_days)
+            _add_seeded(ses, subject.id, chunks, followup)
+            history = _history(_completed(ses, subject.id))
+        reflected_at = history[-1].ts + timedelta(hours=12)
+        view = _reflection_view(_store_reflection(ses, subject.id, ref, True, ts=reflected_at))
+        _save_stats(ses, subject.id, methodfit.stats_from_history(history))
+    else:
+        stats = methodfit.stats_from_history(history)
+        _save_stats(ses, subject.id, stats)
+        ctx = _ctx(subject, rows, history, plan).model_copy(update={"now": now})
+        ref = agent.reflect(ctx, history, stats, plan, "WEEKLY", _TemplateOnly())
+        plan, view = _start_or_update_plan(ses, subject.id, ref, plan, True, now)
     info["index"] += 1
-    return _decided_plan(ref, plan, now), view
-
+    return plan, view
 
 def seed(ses: Session, persona: str = DEFAULT_PERSONA) -> dict:
     if persona not in personas.PERSONAS:
@@ -1012,10 +1123,16 @@ def advance_days(ses: Session, days: int) -> s.AdvanceDaysResult:
     for subject in ses.exec(select(db.SubjectRow)).all():
         info = _seeded.get(subject.id)
         if info is None:
+            plan = _plan(ses, subject.id)
+            if plan.mode == "TRIAL":
+                outcome = _resolve_trial(ses, subject.id, plan, _history(_completed(ses, subject.id)), clock.now())
+                if outcome:
+                    out.append(outcome)
             continue
         remaining = days
-        while remaining >= personas.MIN_DAYS or (remaining > 0 and not out):
-            n = min(remaining, personas.period_days(info["rng"]))
+        while remaining > 0:
+            period_days = personas.period_days(info["rng"])
+            n = remaining if remaining <= personas.MAX_DAYS else period_days
             last = max(r.started_at for r in _completed(ses, subject.id))
             plan, view = _run_period(ses, subject, info, (last + timedelta(days=1)).replace(hour=18), n,
                                      _plan(ses, subject.id))
