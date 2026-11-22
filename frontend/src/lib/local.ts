@@ -2,6 +2,7 @@
 // resume point. Lives in this browser's localStorage and the UI says so.
 import { useRef, useSyncExternalStore } from 'react'
 import type { Item, Session } from '../api/types'
+import { LOCAL_STORAGE_KEY, workspaceStorage } from './workspace'
 
 export type TimerMode = 'ADAPTIVE' | 'POMODORO' | 'UNTIMED'
 
@@ -49,7 +50,6 @@ export interface LocalState {
   simulateDrift: boolean // dev panel: inflate reported latency so the demo can trigger drift
 }
 
-const KEY = 'attune:local:v1'
 const initial: LocalState = {
   frogSubjectId: null,
   frogDate: null,
@@ -73,7 +73,7 @@ const listeners = new Set<() => void>()
 
 function read(): LocalState {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = workspaceStorage().getItem(LOCAL_STORAGE_KEY)
     return raw ? { ...initial, ...(JSON.parse(raw) as Partial<LocalState>) } : initial
   } catch {
     return initial
@@ -84,7 +84,7 @@ export let lastSaveOk = true
 export function setLocal(patch: Partial<LocalState> | ((s: LocalState) => Partial<LocalState>)) {
   state = { ...state, ...(typeof patch === 'function' ? patch(state) : patch) }
   try {
-    localStorage.setItem(KEY, JSON.stringify(state))
+    workspaceStorage().setItem(LOCAL_STORAGE_KEY, JSON.stringify(state))
     lastSaveOk = true
   } catch {
     lastSaveOk = false // shown in the status strip as "Not saved"
