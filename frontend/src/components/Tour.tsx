@@ -23,65 +23,50 @@ async function openSession(subjectId: number, method: Method): Promise<string> {
   return `/session/${session.id}`
 }
 
+const ADA_INSIGHTS = ({ subjectId }: Ctx) => `/insights/${subjectId}`
+
 const STEPS: Step[] = [
   {
-    title: 'Nobody teaches you how to learn',
-    note: 'At school, revision is planned for you. At uni it isn\'t, and the old way of winging it quietly stops working. Students who did brilliantly at A-level drop off, not because they aren\'t smart, but because nobody showed them how to learn.',
-    enter: async () => '/',
-  },
-  {
-    title: 'Same hours. Very different results.',
-    note: 'Six hours of rereading can teach less than two hours of the right method. Which method is right depends on you and on the subject, so Attune tests methods on you instead of guessing. Let\'s load Ada, a demo student (seeded data, labelled as such).',
+    title: 'Explore Ada’s study plan',
+    note: 'Ada studies Data Structures. Load her sample history to see how Attune compares methods, responds to fatigue, and tests a change in plan.',
     cta: {
       label: 'Load Ada',
-      done: 'Ada is loaded.',
+      done: 'Ada’s calibration and first weekly reflection are ready.',
       run: async () => {
         const r = await api.devSeed('ada')
         setLocal({ seededFlag: true, resume: null })
-        return `/insights/${r.subject_ids[0]}`
+        return ADA_INSIGHTS({ subjectId: r.subject_ids[0] })
       },
     },
   },
   {
-    title: 'Find: the method that works for you',
-    note: 'Ada tried Active Recall, Practice Test and Feynman, each scored on the same 5-question check so the comparison is fair. For this subject, Practice Test teaches her the most per minute. The whiskers show how sure it is so far.',
-    enter: async ({ subjectId }) => `/insights/${subjectId}`,
+    title: 'Compare the three methods',
+    note: 'Ada took the same five-question Quick Check after Active Recall, Practice Test and Feynman. Compare their estimated fit and uncertainty in the methods chart. In her first weekly reflection, Attune shortens sessions while her focus recovers.',
+    enter: async (ctx) => ADA_INSIGHTS(ctx),
   },
   {
-    title: 'Fix: it works out why you stalled',
-    note: 'Tired, away, stuck or already mastered each need a different fix. Ada had a tired spell, so her sessions got shorter. Now skip a week: her focus is fine but scores are flat. That\'s a plateau, not tiredness.',
+    title: 'See why Attune starts a trial',
+    note: 'Skip one week of the sample history. Ada’s scores have levelled off on Practice Test even though her focus recovered. Attune starts a seven-day Feynman trial.',
     cta: {
       label: 'Advance 7 days',
-      done: 'Plateau found: a one-week Feynman trial starts, kept only if scores rise. See the new reflection below.',
-      run: async ({ subjectId }) => {
+      done: 'The latest sample reflection shows why Attune starts the Feynman trial.',
+      run: async (ctx) => {
         await api.devAdvanceDays(7)
-        return `/insights/${subjectId}`
+        return ADA_INSIGHTS(ctx)
       },
     },
   },
   {
-    title: 'Follow your focus, in real time',
-    note: 'Try a practice test with Ada’s sample questions. Attune uses answer timing to help you notice when your focus starts slipping.',
-    enter: ({ subjectId }) => openSession(subjectId, 'PRACTICE_TEST'),
-  },
-  {
-    title: 'Ask your notes',
-    note: 'In a live study session, the tutor answers with quotes from your notes. It can give hints for a question you’re working on or make a quiz for more practice.',
-  },
-  {
-    title: 'Teach it back to Sam',
-    note: 'Type an explanation for Sam, a student learning the topic. In a live session with voice enabled, you can speak your explanation too.',
-    enter: ({ subjectId }) => openSession(subjectId, 'FEYNMAN'),
-  },
-  {
-    title: 'Quizzes, flashcards, practice papers',
-    note: 'In the live workspace, Attune builds these from your notes. Each question shows the passage it came from.',
-    enter: async ({ subjectId }) => `/tools?subject=${subjectId}&kind=paper`,
-  },
-  {
-    title: 'Learn how you learn. And keep checking.',
-    note: 'Rules make every decision from your own data; the AI only explains and marks, and its claims are quote-checked. Attention-aware, not medical: it never diagnoses anything.',
-    enter: async () => '/',
+    title: 'See whether the trial worked',
+    note: 'Compare Ada’s Feynman scores from the trial with her recent Practice Test scores. The plan keeps the trial method when the average score rises by at least five percentage points.',
+    cta: {
+      label: 'Advance 7 more days',
+      done: 'The trial result is in the latest sample reflection.',
+      run: async (ctx) => {
+        await api.devAdvanceDays(7)
+        return ADA_INSIGHTS(ctx)
+      },
+    },
   },
 ]
 
@@ -142,33 +127,43 @@ export function Tour() {
   const step = STEPS[i]
   const cta = step.cta
   const done = progress.completed.includes(i)
+  const completed = i === STEPS.length - 1 && done
   return (
-    <div role="dialog" aria-label="Guided demo" className="fixed bottom-5 left-5 z-50 w-[min(28rem,calc(100vw-2.5rem))] rounded-[22px] border border-ink/15 bg-surface/90 p-5 shadow-2xl backdrop-blur-xl">
-      <div className="flex items-center gap-2 text-xs font-bold uppercase text-muted">
-        <span aria-hidden className="size-2 rounded-full bg-interaction" /> Guided demo · {i + 1} of {STEPS.length}
-        <button type="button" onClick={openTour} className="ml-auto font-semibold normal-case underline">Replay</button>
-        <button type="button" onClick={leaveTour} className="font-semibold normal-case underline">Leave demo</button>
-      </div>
-      <h2 className="mt-2 text-xl font-extrabold leading-tight">{step.title}</h2>
-      <p className="mt-2 leading-relaxed">{step.note}</p>
-      {cta && !done && (
-        <Button variant="primary" className="mt-3" disabled={busy} onClick={() => run(cta.run, i)}>
-          {busy ? 'Working…' : cta.label}
-        </Button>
-      )}
-      {cta && done && <p className="mt-3 rounded-(--radius-ctl) bg-ok-soft px-3 py-2 font-semibold" role="status">{cta.done}</p>}
-      {error && <p className="mt-3 rounded-(--radius-ctl) bg-warn-soft px-3 py-2" role="alert">{error}</p>}
-      <div className="mt-4 flex items-center gap-2">
-        <div className="flex gap-1" aria-hidden>
-          {STEPS.map((_, n) => <span key={n} className={`h-1.5 rounded-full transition-all ${n === i ? 'w-5 bg-ink' : 'w-1.5 bg-line'}`} />)}
+    <aside aria-labelledby="demo-step" className="relative z-20 mx-auto w-full max-w-6xl px-4 pt-4">
+      <div className="rounded-(--radius-card) border border-line bg-surface p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="mr-auto text-sm font-semibold text-muted">Guided demo · Demo data</p>
+          <button type="button" onClick={openTour} className="text-sm font-semibold underline">Replay</button>
+          <button type="button" onClick={leaveTour} className="text-sm font-semibold underline">Leave demo</button>
         </div>
-        <div className="ml-auto flex gap-2">
-          {i > 0 && <Button size="sm" variant="ghost" disabled={busy} onClick={() => go(i - 1)}>Back</Button>}
-          {i < STEPS.length - 1
-            ? <Button size="sm" variant="primary" disabled={busy || (cta !== undefined && !done)} onClick={() => go(i + 1)}>Next</Button>
-            : <Button size="sm" variant="primary" onClick={leaveTour}>Finish</Button>}
+        <h2 id="demo-step" className="mt-2 text-xl font-extrabold" aria-live="polite">{step.title}</h2>
+        <p className="mt-2 max-w-3xl leading-relaxed">{step.note}</p>
+        {i === 0 && (
+          <p className="mt-2 text-sm text-muted">Runs in this browser tab. Tutor chat, generated study tools and voice need the live backend.</p>
+        )}
+        {cta && done && <p className="mt-2 font-semibold text-ok" role="status">{cta.done}</p>}
+        {error && <p className="mt-3 rounded-(--radius-ctl) bg-warn-soft px-3 py-2" role="alert">{error}</p>}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {cta && !done && (
+            <Button variant="primary" disabled={busy} onClick={() => run(cta.run, i)}>
+              {busy ? 'Working…' : cta.label}
+            </Button>
+          )}
+          {completed && (
+            <>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => navigate(ADA_INSIGHTS(ctx))}>Ada’s insights</Button>
+              <Button size="sm" disabled={busy} onClick={() => run(({ subjectId }) => openSession(subjectId, 'PRACTICE_TEST'))}>Try Practice Test</Button>
+              <Button size="sm" disabled={busy} onClick={() => run(({ subjectId }) => openSession(subjectId, 'FEYNMAN'))}>Try typed Feynman</Button>
+            </>
+          )}
+          <div className="ml-auto flex gap-2">
+            {i > 0 && <Button size="sm" variant="ghost" disabled={busy} onClick={() => go(i - 1)}>Back</Button>}
+            {i < STEPS.length - 1
+              ? <Button size="sm" variant="primary" disabled={busy || (cta !== undefined && !done)} onClick={() => go(i + 1)}>Next</Button>
+              : <Button size="sm" variant="primary" disabled={busy || !done} onClick={leaveTour}>Finish</Button>}
+          </div>
         </div>
       </div>
-    </div>
+    </aside>
   )
 }

@@ -1,5 +1,6 @@
 // In-browser stand-in for the FastAPI backend (PRD §11). Same shapes, state in localStorage.
 // Every threshold here is a mock heuristic (TUNE), not Yehor's engine and not research-derived.
+import adaDemo from './ada-demo.json'
 import { BANKS, bankFromMaterial, type Bank, type BankItem } from './content'
 import type {
   AdvanceDaysResult, AnswerBody, AnswerResult, EventsResult, FeynmanBody, FeynmanResult, Insights, Item,
@@ -32,7 +33,18 @@ interface SessionRec {
   scores: number[]; lastIntervention: number; drifts: number; breaks: number; started: number
   probeIds: number[]; feynman?: FeynmanResult; feynmanActiveMinutes?: number
 }
+interface AdaWeek {
+  sessions: Omit<HistoryRow, 'session_id' | 'seeded'>[]
+  sampler: SubjectRec['sampler']
+  plan: Plan
+  stats: SubjectRec['stats']
+  reflections: Reflection[]
+  timeline: Insights['timeline']
+}
+const adaWeeks = adaDemo as AdaWeek[]
+
 interface DB {
+  adaWeek?: number
   nextId: number; offsetDays: number; subjects: SubjectRec[]
   sessions: Record<number, SessionRec>; items: Record<number, ItemRec>
 }
@@ -129,6 +141,21 @@ function newSubject(name: string, kind: SubjectKind, exam_date: string | null | 
   rec.plan = choosePlan(rec)
   db.subjects.push(rec)
   return rec
+}
+
+function loadAdaWeek(rec: SubjectRec, week: number): Reflection[] {
+  const { sessions, sampler, plan, stats, reflections, timeline } = clone(adaWeeks[week])
+  db.adaWeek = week
+  rec.history.push(...sessions.map((row) => ({ ...row, session_id: id(), seeded: true })))
+  rec.sampler = sampler
+  rec.plan = plan
+  rec.stats = stats
+  // Keep visitor activity in the demo tab when the recorded story advances.
+  const live = rec.timeline.filter((entry) => !entry.label.startsWith('[Demo data]'))
+  rec.timeline = [...timeline, ...live].sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts))
+  const added = reflections.map((ref) => ({ ...ref, id: id() }))
+  rec.reflections.push(...added)
+  return added
 }
 
 function makeItem(sessionId: number, b: BankItem, phase: Item['phase']): number {
@@ -350,6 +377,12 @@ export const mock = {
     await wait(300)
     db = empty()
     const ds = newSubject('Data Structures', 'PERFORMANCE', iso(now() + 38 * DAY).slice(0, 10), BANKS['Data Structures'])
+    if (isDemoWorkspace) {
+      ds.subject.phase = 'ADAPTIVE'
+      loadAdaWeek(ds, 0)
+      save()
+      return { subject_ids: [ds.subject.id] }
+    }
     const bio = newSubject('Cell Biology', 'KNOWLEDGE', iso(now() + 33 * DAY).slice(0, 10), BANKS['Cell Biology'])
     // Seeded persona: 3 weeks on Data Structures, scores flatten in week 3 while focus stays good.
     const start = now() - 20 * DAY
@@ -376,6 +409,12 @@ export const mock = {
   async devAdvanceDays(body: { days: number }): Promise<AdvanceDaysResult> {
     await wait(300)
     db.offsetDays += body.days
+    if (isDemoWorkspace && db.adaWeek !== undefined) {
+      const next = db.adaWeek + 1
+      const reflections = next < adaWeeks.length ? loadAdaWeek(db.subjects[0], next) : []
+      save()
+      return { advanced_to: iso(), reflections: clone(reflections) }
+    }
     const reflections = body.days >= 7 ? db.subjects.filter((r) => r.history.length >= 3).map((r) => reflectOn(r, 'WEEKLY')) : []
     save()
     return { advanced_to: iso(), reflections: clone(reflections) }

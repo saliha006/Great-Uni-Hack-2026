@@ -7,6 +7,7 @@ import { AttentionBySession, MethodFitChart, ScoreOverTime, Timeline } from '../
 import { PageShell } from '../components/PageShell'
 import { ReflectionCard } from '../components/ReflectionCard'
 import { Card, Chip, ErrorBox, Meter, Spinner } from '../components/ui'
+import { isDemoWorkspace } from '../lib/workspace'
 
 const DEMO_LABEL = '[Demo data]'
 const CONFIDENCE_TEXT = { EARLY: 'Early read', MODERATE: 'Moderate confidence', HIGH: 'High confidence' } as const
@@ -22,6 +23,9 @@ export function Insights() {
   // Seeded history is labelled by the backend; any labelled entry means the charts include demo data.
   const seeded = !!ins?.timeline.some((e) => e.label.startsWith(DEMO_LABEL))
     || !!reflections.data?.some((r) => r.explanation.startsWith(DEMO_LABEL))
+
+  const latestDemoReflection = isDemoWorkspace ? reflections.data?.[0] : undefined
+  const pastReflections = latestDemoReflection ? reflections.data?.slice(1) : reflections.data
 
   return (
     <PageShell where="Insights">
@@ -45,12 +49,22 @@ export function Insights() {
               </div>
               <p className="mt-1 text-sm text-muted">Longer bars mean a better fit. Thin lines show uncertainty.</p>
               <MethodFitChart stats={st.method_stats} />
+              <ul className="sr-only" aria-label="Method fit estimates">
+                {st.method_stats.map((stat) => (
+                  <li key={stat.method}>{METHOD_LABEL[stat.method]} · {Math.round(stat.mean_reward * 100)}% estimated fit · {stat.n} sessions</li>
+                ))}
+              </ul>
             </Card>
             <Card>
               <h2 className="text-lg font-bold">Check-in scores</h2>
               <p className="mt-1 text-sm text-muted">Same 5-question check after every session.</p>
               <ScoreOverTime series={ins.method_series} />
             </Card>
+            {latestDemoReflection && (
+              <section aria-label="Latest sample reflection" className="lg:col-span-2">
+                <ReflectionCard reflection={latestDemoReflection} subjectName={st.subject.name} />
+              </section>
+            )}
             <Card>
               <h2 className="text-lg font-bold">Focus by session</h2>
               <p className="mt-1 text-sm text-muted">From your answer timing compared with your own usual pace.</p>
@@ -83,9 +97,9 @@ export function Insights() {
             </Card>
             <div className="space-y-4 lg:col-span-2">
               <h2 className="text-lg font-bold">Reflections</h2>
-              {reflections.data?.length
-                ? reflections.data.map((r) => <ReflectionCard key={r.id} reflection={r} subjectName={st.subject.name} />)
-                : <p className="text-muted">The agent reflects weekly, or when progress stalls.</p>}
+              {pastReflections?.length
+                ? pastReflections.map((r) => <ReflectionCard key={r.id} reflection={r} subjectName={st.subject.name} />)
+                : <p className="text-muted">{latestDemoReflection ? 'Earlier reflections appear here as you advance.' : 'The agent reflects weekly, or when progress stalls.'}</p>}
             </div>
           </div>
           </details>

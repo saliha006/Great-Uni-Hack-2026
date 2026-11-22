@@ -13,7 +13,12 @@ const DIAG: Record<DiagnosisName, { label: string; tone: 'ok' | 'warn' | 'accent
 function decisionText(r: Reflection): string {
   const d = r.decision
   switch (d.action) {
-    case 'KEEP': return 'Keep the current plan.'
+    case 'KEEP': {
+      const outcome = r.evidence.trial_outcome
+      if (outcome === 'adopted' && d.method) return `Keep ${METHOD_LABEL[d.method]} after the trial.`
+      if ((outcome === 'reverted' || outcome === 'insufficient_data') && d.method) return `Return to ${METHOD_LABEL[d.method]} after the trial.`
+      return 'Keep the current plan.'
+    }
     case 'TRIAL_METHOD': return `Try ${d.method ? METHOD_LABEL[d.method] : 'another method'} for ${d.trial_days ?? 7} days, then compare.`
     case 'SHORTEN_SESSIONS': return `Shorter sessions${d.session_minutes ? ` (${d.session_minutes} min)` : ''} for a while. Same method.`
     case 'EASE_IN': return 'Ease back in with a short 5-minute session.'
@@ -23,10 +28,11 @@ function decisionText(r: Reflection): string {
 
 export function ReflectionCard({ reflection, subjectName }: { reflection: Reflection; subjectName?: string }) {
   const d = DIAG[reflection.diagnosis]
+  const seeded = reflection.explanation.startsWith('[Demo data]')
   return (
     <Card as="article" className="border-ink">
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-lg font-bold">Your study plan</h3>
+        <h3 className="text-lg font-bold">{reflection.evidence.trial_outcome ? 'Trial result' : seeded ? 'Study plan reflection' : 'Your study plan'}</h3>
         <Chip tone={d.tone}>{d.label}</Chip>
         {subjectName && <span className="text-sm text-muted">{subjectName}</span>}
         <span className="ml-auto text-sm text-muted">
@@ -35,7 +41,9 @@ export function ReflectionCard({ reflection, subjectName }: { reflection: Reflec
         </span>
       </div>
       <p className="mt-3 font-semibold">{decisionText(reflection)}</p>
-      <details className="mt-2 text-sm text-muted"><summary className="cursor-pointer">Why this plan?</summary><p className="mt-2 leading-relaxed">{reflection.explanation}</p></details>
+      {seeded || reflection.evidence.trial_outcome
+        ? <p className="mt-2 text-sm leading-relaxed text-muted">{reflection.explanation}</p>
+        : <details className="mt-2 text-sm text-muted"><summary className="cursor-pointer">Why this plan?</summary><p className="mt-2 leading-relaxed">{reflection.explanation}</p></details>}
     </Card>
   )
 }

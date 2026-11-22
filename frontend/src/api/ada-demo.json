@@ -1,0 +1,597 @@
+[
+  {
+    "sessions": [
+      {
+        "ts": "2026-10-22T18:00:00+00:00",
+        "method": "ACTIVE_RECALL",
+        "probe_score": 0.35,
+        "active_minutes": 17.3,
+        "drift_share": 0.123,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-23T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.68,
+        "active_minutes": 17.2,
+        "drift_share": 0.122,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-24T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.8,
+        "active_minutes": 17.4,
+        "drift_share": 0.122,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-25T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.673,
+        "active_minutes": 17.6,
+        "drift_share": 0.118,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-26T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.699,
+        "active_minutes": 16.5,
+        "drift_share": 0.119,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-27T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.726,
+        "active_minutes": 17.3,
+        "drift_share": 0.121,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-28T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.752,
+        "active_minutes": 17.0,
+        "drift_share": 0.132,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-10-29T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.736,
+        "active_minutes": 16.9,
+        "drift_share": 0.446,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-10-30T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.752,
+        "active_minutes": 16.7,
+        "drift_share": 0.462,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-10-31T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.736,
+        "active_minutes": 17.7,
+        "drift_share": 0.446,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-11-01T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.743,
+        "active_minutes": 17.6,
+        "drift_share": 0.453,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-11-02T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.738,
+        "active_minutes": 17.7,
+        "drift_share": 0.448,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-11-03T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.731,
+        "active_minutes": 17.0,
+        "drift_share": 0.441,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-11-04T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.743,
+        "active_minutes": 16.5,
+        "drift_share": 0.453,
+        "lapse_share": 0.113,
+        "felt": 2
+      },
+      {
+        "ts": "2026-11-05T23:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.732,
+        "active_minutes": 16.9,
+        "drift_share": 0.442,
+        "lapse_share": 0.113,
+        "felt": 2
+      }
+    ],
+    "sampler": {
+      "ACTIVE_RECALL": {
+        "done": true,
+        "probe_score": 0.35
+      },
+      "PRACTICE_TEST": {
+        "done": true,
+        "probe_score": 0.68
+      },
+      "FEYNMAN": {
+        "done": true,
+        "probe_score": 0.8
+      }
+    },
+    "plan": {
+      "method": "PRACTICE_TEST",
+      "mode": "ADAPTIVE",
+      "session_minutes": 15,
+      "trial_until": null,
+      "reason": "Shorter 15-minute sessions while focus recovers."
+    },
+    "stats": {
+      "ACTIVE_RECALL": {
+        "alpha": 2.7846253379727783,
+        "beta": 2.2153746620272217,
+        "n": 1
+      },
+      "PRACTICE_TEST": {
+        "alpha": 10.555340630061282,
+        "beta": 6.4446593699387185,
+        "n": 13
+      },
+      "FEYNMAN": {
+        "alpha": 2.9287611823925697,
+        "beta": 2.0712388176074303,
+        "n": 1
+      }
+    },
+    "reflections": [
+      {
+        "id": 1,
+        "ts": "2026-10-29T06:00:00+00:00",
+        "trigger": "WEEKLY",
+        "diagnosis": "ON_TRACK",
+        "evidence": {
+          "sessions": 6,
+          "days": 5,
+          "method": "PRACTICE_TEST",
+          "mean_probe": 0.706,
+          "slope_per_session": 0.026,
+          "sudden_drop": false,
+          "sessions_last_7d": 7,
+          "mean_completion": 0.9,
+          "median_gap_days": 1.0,
+          "median_not_focused": 0.15,
+          "attention_rising": false,
+          "engagement_ok": true,
+          "attention_ok": true
+        },
+        "decision": {
+          "action": "KEEP",
+          "method": null,
+          "trial_days": null,
+          "session_minutes": null
+        },
+        "explanation": "[Demo data] Your practice test scores are moving the right way over 5 days, so the plan stays."
+      },
+      {
+        "id": 2,
+        "ts": "2026-11-06T11:00:00+00:00",
+        "trigger": "WEEKLY",
+        "diagnosis": "FATIGUE",
+        "evidence": {
+          "sessions": 6,
+          "days": 5,
+          "method": "PRACTICE_TEST",
+          "mean_probe": 0.737,
+          "slope_per_session": -0.001,
+          "sudden_drop": false,
+          "sessions_last_7d": 7,
+          "mean_completion": 0.9,
+          "median_gap_days": 1.0,
+          "median_not_focused": 0.56,
+          "attention_rising": false,
+          "engagement_ok": true,
+          "attention_ok": false
+        },
+        "decision": {
+          "action": "SHORTEN_SESSIONS",
+          "method": null,
+          "trial_days": null,
+          "session_minutes": 15
+        },
+        "explanation": "[Demo data] Over 5 days your focus slipped to about 44% while scores held, which looks like tiredness, not the method. Sessions drop to 15 minutes; practice test stays."
+      }
+    ],
+    "timeline": [
+      {
+        "ts": "2026-10-24T18:00:00+00:00",
+        "kind": "SAMPLER_DONE",
+        "label": "[Demo data] Calibration finished"
+      },
+      {
+        "ts": "2026-10-29T06:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: on track"
+      },
+      {
+        "ts": "2026-11-06T11:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: fatigue"
+      }
+    ]
+  },
+  {
+    "sessions": [
+      {
+        "ts": "2026-11-06T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.734,
+        "active_minutes": 12.8,
+        "drift_share": 0.114,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-07T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.738,
+        "active_minutes": 12.5,
+        "drift_share": 0.118,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-08T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.734,
+        "active_minutes": 13.4,
+        "drift_share": 0.114,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-09T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.743,
+        "active_minutes": 12.3,
+        "drift_share": 0.123,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-10T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.75,
+        "active_minutes": 12.6,
+        "drift_share": 0.13,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-11T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.745,
+        "active_minutes": 12.2,
+        "drift_share": 0.125,
+        "lapse_share": 0.03,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-12T18:00:00+00:00",
+        "method": "PRACTICE_TEST",
+        "probe_score": 0.738,
+        "active_minutes": 12.6,
+        "drift_share": 0.118,
+        "lapse_share": 0.03,
+        "felt": 4
+      }
+    ],
+    "sampler": {
+      "ACTIVE_RECALL": {
+        "done": true,
+        "probe_score": 0.35
+      },
+      "PRACTICE_TEST": {
+        "done": true,
+        "probe_score": 0.68
+      },
+      "FEYNMAN": {
+        "done": true,
+        "probe_score": 0.8
+      }
+    },
+    "plan": {
+      "method": "FEYNMAN",
+      "mode": "TRIAL",
+      "session_minutes": 15,
+      "trial_until": "2026-11-20",
+      "reason": "Trying Feynman until 2026-11-20 to see if it beats the plateau."
+    },
+    "stats": {
+      "ACTIVE_RECALL": {
+        "alpha": 2.7811247563814825,
+        "beta": 2.2188752436185175,
+        "n": 1
+      },
+      "PRACTICE_TEST": {
+        "alpha": 15.573866198675917,
+        "beta": 8.426133801324083,
+        "n": 20
+      },
+      "FEYNMAN": {
+        "alpha": 2.9240072886083848,
+        "beta": 2.0759927113916152,
+        "n": 1
+      }
+    },
+    "reflections": [
+      {
+        "id": 3,
+        "ts": "2026-11-13T06:00:00+00:00",
+        "trigger": "WEEKLY",
+        "diagnosis": "PLATEAU",
+        "evidence": {
+          "sessions": 6,
+          "days": 5,
+          "method": "PRACTICE_TEST",
+          "mean_probe": 0.741,
+          "slope_per_session": 0.001,
+          "sudden_drop": false,
+          "sessions_last_7d": 8,
+          "mean_completion": 0.9,
+          "median_gap_days": 1.0,
+          "median_not_focused": 0.15,
+          "attention_rising": false,
+          "engagement_ok": true,
+          "attention_ok": true,
+          "trial_previous_method": "PRACTICE_TEST",
+          "trial_until": "2026-11-20"
+        },
+        "decision": {
+          "action": "TRIAL_METHOD",
+          "method": "FEYNMAN",
+          "trial_days": 7,
+          "session_minutes": null
+        },
+        "explanation": "[Demo data] Your focus was steady (about 85%) but practice test scores stayed flat for 5 days. Let's try Feynman for 7 days and compare."
+      }
+    ],
+    "timeline": [
+      {
+        "ts": "2026-10-24T18:00:00+00:00",
+        "kind": "SAMPLER_DONE",
+        "label": "[Demo data] Calibration finished"
+      },
+      {
+        "ts": "2026-10-29T06:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: on track"
+      },
+      {
+        "ts": "2026-11-06T11:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: fatigue"
+      },
+      {
+        "ts": "2026-11-13T06:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: plateau"
+      },
+      {
+        "ts": "2026-11-13T06:00:00+00:00",
+        "kind": "TRIAL_START",
+        "label": "[Demo data] Trial of Feynman started"
+      }
+    ]
+  },
+  {
+    "sessions": [
+      {
+        "ts": "2026-11-13T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.752,
+        "active_minutes": 12.9,
+        "drift_share": 0.092,
+        "lapse_share": 0.025,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-14T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.777,
+        "active_minutes": 12.4,
+        "drift_share": 0.092,
+        "lapse_share": 0.025,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-15T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.818,
+        "active_minutes": 12.9,
+        "drift_share": 0.108,
+        "lapse_share": 0.025,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-16T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.827,
+        "active_minutes": 13.1,
+        "drift_share": 0.092,
+        "lapse_share": 0.025,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-17T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.869,
+        "active_minutes": 13.4,
+        "drift_share": 0.109,
+        "lapse_share": 0.025,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-18T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.886,
+        "active_minutes": 13.4,
+        "drift_share": 0.101,
+        "lapse_share": 0.025,
+        "felt": 4
+      },
+      {
+        "ts": "2026-11-19T18:00:00+00:00",
+        "method": "FEYNMAN",
+        "probe_score": 0.914,
+        "active_minutes": 13.0,
+        "drift_share": 0.104,
+        "lapse_share": 0.025,
+        "felt": 4
+      }
+    ],
+    "sampler": {
+      "ACTIVE_RECALL": {
+        "done": true,
+        "probe_score": 0.35
+      },
+      "PRACTICE_TEST": {
+        "done": true,
+        "probe_score": 0.68
+      },
+      "FEYNMAN": {
+        "done": true,
+        "probe_score": 0.8
+      }
+    },
+    "plan": {
+      "method": "FEYNMAN",
+      "mode": "ADAPTIVE",
+      "session_minutes": 15,
+      "trial_until": null,
+      "reason": "Keeping Feynman after probe scores rose by 9.4 percentage points."
+    },
+    "stats": {
+      "ACTIVE_RECALL": {
+        "alpha": 2.7765779699509774,
+        "beta": 2.2234220300490226,
+        "n": 1
+      },
+      "PRACTICE_TEST": {
+        "alpha": 15.449191107324431,
+        "beta": 8.55080889267557,
+        "n": 20
+      },
+      "FEYNMAN": {
+        "alpha": 8.45518578882793,
+        "beta": 3.544814211172071,
+        "n": 8
+      }
+    },
+    "reflections": [
+      {
+        "id": 4,
+        "ts": "2026-11-20T06:00:00+00:00",
+        "trigger": "WEEKLY",
+        "diagnosis": "ON_TRACK",
+        "evidence": {
+          "sessions": 6,
+          "days": 5,
+          "method": "FEYNMAN",
+          "mean_probe": 0.849,
+          "slope_per_session": 0.027,
+          "sudden_drop": false,
+          "sessions_last_7d": 7,
+          "mean_completion": 0.9,
+          "median_gap_days": 1.0,
+          "median_not_focused": 0.13,
+          "attention_rising": false,
+          "engagement_ok": true,
+          "attention_ok": true,
+          "trial_outcome": "adopted",
+          "trial_method": "FEYNMAN",
+          "trial_previous_method": "PRACTICE_TEST",
+          "trial_delta": 0.094,
+          "trial_sessions": 7,
+          "trial_baseline_sessions": 7,
+          "trial_until": "2026-11-20"
+        },
+        "decision": {
+          "action": "KEEP",
+          "method": "FEYNMAN",
+          "trial_days": null,
+          "session_minutes": null
+        },
+        "explanation": "[Demo data] Keeping Feynman after probe scores rose by 9.4 percentage points."
+      }
+    ],
+    "timeline": [
+      {
+        "ts": "2026-10-24T18:00:00+00:00",
+        "kind": "SAMPLER_DONE",
+        "label": "[Demo data] Calibration finished"
+      },
+      {
+        "ts": "2026-10-29T06:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: on track"
+      },
+      {
+        "ts": "2026-11-06T11:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: fatigue"
+      },
+      {
+        "ts": "2026-11-13T06:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: plateau"
+      },
+      {
+        "ts": "2026-11-13T06:00:00+00:00",
+        "kind": "TRIAL_START",
+        "label": "[Demo data] Trial of Feynman started"
+      },
+      {
+        "ts": "2026-11-20T00:00:00+00:00",
+        "kind": "TRIAL_END",
+        "label": "[Demo data] Keeping Feynman after probe scores rose by 9.4 percentage points."
+      },
+      {
+        "ts": "2026-11-20T06:00:00+00:00",
+        "kind": "RECALIBRATION",
+        "label": "[Demo data] Reflection: on track"
+      }
+    ]
+  }
+]
