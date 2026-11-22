@@ -2,12 +2,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, presenterToolsEnabled, usingMock } from '../api/client'
 import type { StudyItem, StudyKind } from '../api/types'
 import { PageShell } from '../components/PageShell'
 import { QuizCard } from '../components/QuizCard'
 import { TutorChat } from '../components/TutorChat'
-import { Card, ErrorBox, Spinner } from '../components/ui'
+import { ButtonLink, Card, ErrorBox, Spinner } from '../components/ui'
 
 const TABS: { kind: StudyKind; label: string; blurb: string }[] = [
   { kind: 'quiz', label: 'Quiz', blurb: 'Mixed questions across all your notes. Wrong answers get hints, not the answer.' },
@@ -16,10 +16,26 @@ const TABS: { kind: StudyKind; label: string; blurb: string }[] = [
 ]
 
 export function Tools() {
+  if (usingMock) {
+    return (
+      <PageShell where="Study tools">
+        <h1 className="text-3xl font-extrabold">Study tools</h1>
+        <Card className="mt-4 max-w-xl">
+          <p>Quizzes, flashcards, practice papers and Ask your notes need the Attune backend.</p>
+          <ButtonLink to="/study" className="mt-4">Go to Study</ButtonLink>
+        </Card>
+      </PageShell>
+    )
+  }
+  return <BackendStudyTools />
+}
+
+function BackendStudyTools() {
   const [params, setParams] = useSearchParams()
   const subjects = useQuery({ queryKey: ['subjects'], queryFn: api.listSubjects })
   const subjectId = Number(params.get('subject')) || subjects.data?.[0]?.subject.id
-  const kind = (params.get('kind') as StudyKind) || 'quiz'
+  const tab = TABS.find((t) => t.kind === params.get('kind')) ?? TABS[0]
+  const kind = tab.kind
   const set = useQuery({
     queryKey: ['study-set', subjectId, kind],
     queryFn: () => api.studySet(subjectId!, kind),
@@ -42,9 +58,9 @@ export function Tools() {
           </select>
         )}
       </div>
-      <p className="mt-3 text-sm text-muted">{TABS.find((t) => t.kind === kind)!.blurb}</p>
+      <p className="mt-3 text-sm text-muted">{tab.blurb}</p>
 
-      {!subjectId && !subjects.isPending && <Card className="mt-6">Add a subject or load the demo student first.</Card>}
+      {!subjectId && !subjects.isPending && <Card className="mt-6">{presenterToolsEnabled ? 'Add a subject or load the demo student first.' : 'Add a subject first.'}</Card>}
       {set.isPending && subjectId && <Spinner label="Building from your notes" />}
       {set.error && <div className="mt-6"><ErrorBox error={set.error} onRetry={() => set.refetch()} /></div>}
       {set.data && (

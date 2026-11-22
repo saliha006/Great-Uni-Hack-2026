@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { api, clockNow } from '../api/client'
+import { api, clockNow, presenterToolsEnabled } from '../api/client'
 import { METHOD_LABEL, type SubjectSummary } from '../api/types'
 import { PageShell } from '../components/PageShell'
 import { ReflectionCard } from '../components/ReflectionCard'
@@ -61,7 +61,7 @@ export function Home() {
           <p className="mt-2 text-muted">Add a subject and your notes. Try three short sessions to find a study method that helps.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <ButtonLink to="/onboarding" variant="primary" size="lg">Add a subject</ButtonLink>
-            <ButtonLink to="/dev">Load the demo student</ButtonLink>
+            {presenterToolsEnabled && <ButtonLink to="/dev">Load the demo student</ButtonLink>}
           </div>
         </Card>
       )}

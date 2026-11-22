@@ -81,6 +81,29 @@ built-in mock API with demo data.
 
 **Tests:** `.venv/bin/python -m pytest tests -q` (run from `backend/`).
 
+### Presenter controls
+
+The ordinary browser demo and the full local app both start with presenter tools off. Set
+`VITE_PRESENTER_TOOLS=true` in the frontend environment and restart Vite or rebuild to enable the
+`/dev` page and demo controls. To use presenter tools with a backend, start it in development mode
+(`ATTUNE_ENV=dev`) so it serves the demo endpoints. Keep the frontend switch off for ordinary use.
+
+Browser mode supports core study sessions with text notes and typed Feynman explanations. PDF upload,
+Ask your notes and generated quizzes, flashcards and practice papers need the backend. Feynman voice also
+needs ElevenLabs credentials.
+
+<details>
+<summary>Mode verification matrix</summary>
+
+| Frontend `VITE_API_URL` | `VITE_PRESENTER_TOOLS` | Ordinary flow | Presenter controls |
+|---|---|---|---|
+| Empty | Off | Create a subject and start a session with text notes. `/tools` explains the backend requirement. | Direct navigation to `/dev` shows Page not found. |
+| Local API URL | Off | Create a subject and start a session. The notes form accepts PDFs and `/tools` offers generated sets. | Direct navigation to `/dev` shows Page not found. |
+| Empty | On | The same browser-only study capabilities apply. | `/dev` manages browser demo data. |
+| Local API URL | On | The same backend study capabilities apply. | `/dev` manages backend demo data when `ATTUNE_ENV=dev`. |
+
+</details>
+
 ## Demo in two minutes
 
 All history below is **seeded demo data** for a simulated student, Ada. The app labels it as demo data.

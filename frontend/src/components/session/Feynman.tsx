@@ -1,7 +1,7 @@
 // Feynman: teach "Sam", a curious student. Voice (ElevenLabs, backend-signed URL) or typed fallback.
 import { ConversationProvider, useConversation } from '@elevenlabs/react'
 import { useEffect, useRef, useState } from 'react'
-import { api, ApiError } from '../../api/client'
+import { api, ApiError, usingMock } from '../../api/client'
 import type { EventType, FeynmanResult, FeynmanTurn, Item, SessionEvent, VoiceContext } from '../../api/types'
 import { Button, Card, ErrorBox } from '../ui'
 import { VoiceOrb, type OrbState } from '../VoiceOrb'
@@ -12,8 +12,8 @@ type Emit = (type: EventType, extra?: Partial<SessionEvent>) => void
 
 export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; item: Item; emit: Emit; onDone: (r: FeynmanResult) => void }) {
   const [ctx, setCtx] = useState<{ signed: string; context: VoiceContext } | null>(null)
-  const [mode, setMode] = useState<'voice' | 'typed'>('voice')
-  const [voiceNote, setVoiceNote] = useState<string | null>(null)
+  const [mode, setMode] = useState<'voice' | 'typed'>(usingMock ? 'typed' : 'voice')
+  const [voiceNote, setVoiceNote] = useState<string | null>(usingMock ? 'Voice requires the Attune backend and ElevenLabs. Type your explanation here.' : null)
   const [turns, setTurns] = useState<FeynmanTurn[]>([])
   const [grading, setGrading] = useState(false)
   const [error, setError] = useState<unknown>(null)
@@ -24,6 +24,7 @@ export function Feynman({ sessionId, item, emit, onDone }: { sessionId: number; 
   // The signed URL is fetched as the screen opens (it stays valid for minutes), so one tap on the orb can start
   // the microphone and the conversation inside the same click. 502 voice_unavailable means typed Feynman.
   useEffect(() => {
+    if (usingMock) return
     let live = true
     api.signedUrl(sessionId).then((r) => {
       if (!r.signed_url) throw new ApiError('voice_unavailable', 502)
